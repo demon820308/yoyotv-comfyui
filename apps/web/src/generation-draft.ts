@@ -51,3 +51,46 @@ export function initialGenerationDraft(
     executionPolicy: lastRun?.execution?.policy ?? defaultGenerationSettings.executionPolicy,
   };
 }
+
+export function removePromptMention(prompt: string, alias: string): string {
+  const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return prompt
+    .replace(new RegExp(`@${escaped}(?=[\\s，。；：、,.!?！？<>()\\[\\]{}“”‘’「」]|$)`, "g"), "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+export function togglePromptMention(prompt: string, alias: string): string {
+  if (prompt.includes(`@${alias}`)) {
+    return removePromptMention(prompt, alias);
+  }
+  return `${prompt}${prompt && !/\s$/.test(prompt) ? " " : ""}@${alias} `;
+}
+
+export function splitPromptMentionSegments(
+  prompt: string,
+  aliases: string[] = [],
+): { text: string; isMention: boolean }[] {
+  if (!prompt) return [];
+  const pattern = /@([^\s@，。；：、,.!?！？<>()[\]{}“”‘’「」]+)/g;
+  const segments: { text: string; isMention: boolean }[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(prompt)) !== null) {
+    const [token, alias] = match;
+    const offset = match.index;
+    if (offset > lastIndex) {
+      segments.push({ text: prompt.slice(lastIndex, offset), isMention: false });
+    }
+    const isMention = Boolean(alias && (aliases.length === 0 || aliases.includes(alias)));
+    segments.push({ text: token, isMention });
+    lastIndex = offset + token.length;
+  }
+
+  if (lastIndex < prompt.length) {
+    segments.push({ text: prompt.slice(lastIndex), isMention: false });
+  }
+
+  return segments;
+}

@@ -668,8 +668,8 @@ html[data-theme="chroma"] {
   --red: #a6485c;
   --app-bg: #eef0f7;
   --glass: rgb(252 252 255 / 90%);
-  --accent: #5e7a75;
-  --accent-strong: #405853;
+  --accent: #7668c1;
+  --accent-strong: #5c50a9;
   --shadow: rgb(61 65 98 / 16%);
   --surface-root: #eceef6;
   --surface-1: #f7f7fb;
@@ -6431,11 +6431,176 @@ html[data-theme="chroma"] .loading-mark {
   font-size: 8px;
 }
 
-.shot-inline-console > textarea {
+.prompt-mirror-wrap {
+  position: relative;
+  display: grid;
+  grid-template-areas: "editor";
+  width: 100%;
+  min-width: 0;
+}
+
+.prompt-mirror-backdrop,
+.prompt-mirror-textarea {
+  grid-area: editor;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+  border-radius: 4px;
+}
+
+.shot-inline-console .prompt-mirror-backdrop,
+.shot-inline-console .prompt-mirror-textarea {
   min-height: 68px;
   padding: 8px;
+}
+
+.prompt-field .prompt-mirror-backdrop,
+.prompt-field .prompt-mirror-textarea {
+  min-height: 76px;
+  padding: 9px 10px;
+}
+
+.shot-inspector .prompt-field .prompt-mirror-backdrop,
+.shot-inspector .prompt-field .prompt-mirror-textarea {
+  min-height: 132px;
+  line-height: 1.65;
+}
+
+.prompt-mirror-backdrop {
+  pointer-events: none;
+  color: var(--text-1);
+  background: var(--surface-root);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  user-select: none;
+}
+
+.prompt-mirror-backdrop mark.prompt-mention-highlight {
+  background: transparent;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.prompt-mirror-textarea {
+  position: relative;
+  z-index: 1;
+  color: transparent;
+  caret-color: var(--text-1);
+  background: transparent;
+  border: 1px solid transparent;
   resize: vertical;
-  line-height: 1.45;
+  outline: none;
+}
+
+.prompt-mirror-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.prompt-mirror-textarea::placeholder {
+  color: var(--text-2);
+}
+
+.prompt-mirror-textarea::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: transparent;
+}
+
+.shot-inline-active-mentions,
+.prompt-active-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--surface-root);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-radius: 4px;
+}
+
+.prompt-active-bar {
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: var(--surface-1);
+}
+
+.shot-inline-active-title,
+.prompt-active-label {
+  color: var(--faint);
+  font-size: calc(9px * var(--ui-scale));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.shot-inline-active-pill,
+.prompt-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  border-radius: 3px;
+  color: var(--accent-strong);
+  font-size: calc(9.5px * var(--ui-scale));
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.prompt-active-pill {
+  font-size: calc(11px * var(--ui-scale));
+  padding: 2px 6px 2px 8px;
+  border-radius: 4px;
+}
+
+.prompt-active-thumb {
+  width: 14px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.prompt-active-pill small {
+  color: var(--text-2);
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.shot-inline-active-pill button,
+.prompt-active-pill button {
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.shot-inline-active-pill button:hover,
+.prompt-active-pill button:hover {
+  color: var(--accent-strong);
+}
+
+:is(.shot-inline-mentions, .prompt-mention-chips) button.is-active {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.shot-inline-mention-check,
+.chip-check {
+  margin-right: 2px;
+  font-weight: 700;
+  color: var(--accent-strong);
 }
 
 .shot-inline-mentions {

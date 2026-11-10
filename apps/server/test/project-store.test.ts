@@ -181,6 +181,69 @@ describe("ProjectStore", () => {
     backupDatabase.close();
   });
 
+  it("migrates legacy camelCase createdAt column in event_log to created_at", async () => {
+    const root = await mkdtemp(join(tmpdir(), "takeboard-project-legacy-col-"));
+    temporaryDirectories.push(root);
+    const projectDirectory = join(root, "legacy.takeboard");
+    await mkdir(projectDirectory, { recursive: true });
+    const client = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    client.exec(`
+      CREATE TABLE schema_migrations (
+        id TEXT PRIMARY KEY NOT NULL,
+        applied_at TEXT NOT NULL
+      );
+      INSERT INTO schema_migrations (id, applied_at) VALUES ('001_project_state', '${now}');
+      INSERT INTO schema_migrations (id, applied_at) VALUES ('002_command_log', '${now}');
+      CREATE TABLE project_state (
+        project_id TEXT PRIMARY KEY NOT NULL,
+        schema_version TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision > 0),
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE event_log (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        createdAt TEXT NOT NULL
+      );
+      CREATE TABLE command_log (
+        id TEXT PRIMARY KEY NOT NULL,
+        project_id TEXT NOT NULL,
+        command_type TEXT NOT NULL,
+        request_id TEXT,
+        request_json TEXT NOT NULL,
+        inverse_json TEXT,
+        result_json TEXT NOT NULL,
+        effects_json TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('applied', 'undone')),
+        applied_revision INTEGER NOT NULL CHECK (applied_revision > 0),
+        created_at TEXT NOT NULL,
+        undone_at TEXT,
+        undo_command_id TEXT
+      );
+    `);
+    client
+      .prepare(
+        "INSERT INTO project_state (project_id, schema_version, snapshot_json, revision, updated_at) VALUES (?, ?, ?, ?, ?)",
+      )
+      .run(projectId, schemaVersion, `${JSON.stringify(snapshot())}\n`, 1, now);
+    client.close();
+
+    const store = ProjectStore.openExisting(projectDirectory);
+    expect(store).not.toBeNull();
+    await expect(store?.save(snapshot())).resolves.toMatchObject({ revision: 2 });
+    store?.close();
+
+    const clientAfter = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    const cols = clientAfter.prepare("PRAGMA table_info(event_log)").all() as Array<{ name: string }>;
+    expect(cols.some((c) => c.name === "created_at")).toBe(true);
+    expect(cols.some((c) => c.name === "createdAt")).toBe(false);
+    clientAfter.close();
+  });
+
   it("restores the pre-upgrade database when a migration cannot be applied", async () => {
     const root = await mkdtemp(join(tmpdir(), "takeboard-project-migration-rollback-"));
     temporaryDirectories.push(root);

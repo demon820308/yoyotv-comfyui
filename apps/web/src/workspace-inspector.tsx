@@ -25,6 +25,11 @@ import { ResultPreview } from "./result-preview";
 import { recordedSettings } from "./result-reuse";
 import { openSettings } from "./settings-navigation";
 import { VideoThumbnail } from "./video-preview";
+import {
+  removePromptMention,
+  splitPromptMentionSegments,
+  togglePromptMention,
+} from "./generation-draft";
 
 const rejectionReasons = ["角色漂移", "运动方向错误", "构图不稳定", "细节异常"];
 
@@ -543,6 +548,7 @@ export function Inspector({
   }, [selectedTakeId]);
   const [mentionOpen, setMentionOpen] = useState(false);
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const promptBackdropRef = useRef<HTMLDivElement>(null);
   const [shotDraft, setShotDraft] = useState(() => ({
     title: shot.label,
     body: shot.intent,
@@ -800,23 +806,76 @@ export function Inspector({
                     <span>
                       镜头提示词 <small>{settings.prompt.length}/20000</small>
                     </span>
-                    <textarea
-                      ref={promptRef}
-                      value={settings.prompt}
-                      onChange={(event) => {
-                        onSettingsChange({ ...settings, prompt: event.target.value });
-                        setMentionOpen(/@[^\s，。；：,.!?]*$/.test(event.target.value));
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "@" && mentions.length > 0) setMentionOpen(true);
-                        if (event.key === "Escape") setMentionOpen(false);
-                      }}
-                      placeholder={generationPromptPlaceholder(
-                        profile.family,
-                        workflow?.capability,
-                        mentions.length > 0,
-                      )}
-                    />
+                    {mentions.some((item) => settings.prompt.includes(`@${item.alias}`)) ? (
+                      <div className="prompt-active-bar" role="status" aria-label="已关联素材">
+                        <span className="prompt-active-label">已引用:</span>
+                        {mentions
+                          .filter((item) => settings.prompt.includes(`@${item.alias}`))
+                          .map((mention) => (
+                            <span key={mention.alias} className="prompt-active-pill">
+                              {mention.thumbnailUrl ? (
+                                <img src={mention.thumbnailUrl} alt="" className="prompt-active-thumb" />
+                              ) : null}
+                              <strong>@{mention.alias}</strong>
+                              <small>{mention.role}</small>
+                              <button
+                                type="button"
+                                aria-label={`移除引用 @${mention.alias}`}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  onSettingsChange({
+                                    ...settings,
+                                    prompt: removePromptMention(settings.prompt, mention.alias),
+                                  });
+                                }}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                      </div>
+                    ) : null}
+                    <div className="prompt-mirror-wrap">
+                      <div ref={promptBackdropRef} className="prompt-mirror-backdrop" aria-hidden="true">
+                        {splitPromptMentionSegments(
+                          settings.prompt,
+                          mentions.map((item) => item.alias),
+                        ).map((segment, index) =>
+                          segment.isMention ? (
+                            <mark key={index} className="prompt-mention-highlight">
+                              {segment.text}
+                            </mark>
+                          ) : (
+                            <span key={index}>{segment.text}</span>
+                          ),
+                        )}
+                        {settings.prompt.endsWith("\n") ? "\n" : null}
+                      </div>
+                      <textarea
+                        ref={promptRef}
+                        className="prompt-mirror-textarea"
+                        value={settings.prompt}
+                        onScroll={(event) => {
+                          if (promptBackdropRef.current) {
+                            promptBackdropRef.current.scrollTop = event.currentTarget.scrollTop;
+                          }
+                        }}
+                        onChange={(event) => {
+                          onSettingsChange({ ...settings, prompt: event.target.value });
+                          setMentionOpen(/@[^\s，。；：,.!?]*$/.test(event.target.value));
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "@" && mentions.length > 0) setMentionOpen(true);
+                          if (event.key === "Escape") setMentionOpen(false);
+                        }}
+                        placeholder={generationPromptPlaceholder(
+                          profile.family,
+                          workflow?.capability,
+                          mentions.length > 0,
+                        )}
+                      />
+                    </div>
                     {mentions.length ? (
                       <div className={`prompt-mention-menu ${mentionOpen ? "open" : ""}`}>
                         {mentions.map((mention) => (
@@ -856,17 +915,48 @@ export function Inspector({
                     ) : null}
                     {mentions.length ? (
                       <div className="prompt-mention-chips">
-                        {mentions.map((mention) => (
-                          <button
-                            type="button"
-                            key={mention.alias}
-                            title={mention.canonicalToken}
-                            onClick={() => setMentionOpen(true)}
-                          >
-                            @{mention.alias}
-                            <small>{mention.role}</small>
-                          </button>
-                        ))}
+                        {mentions.map((mention) => {
+                          const isActive = settings.prompt.includes(`@${mention.alias}`);
+                          return (
+                            <button
+                              type="button"
+                              key={mention.alias}
+                              className={isActive ? "is-active" : ""}
+                              title={mention.canonicalToken}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (isActive) {
+                                  onSettingsChange({
+                                    ...settings,
+                                    prompt: removePromptMention(settings.prompt, mention.alias),
+                                  });
+                                } else {
+                                  const textarea = promptRef.current;
+                                  const cursor = textarea?.selectionStart ?? settings.prompt.length;
+                                  const before = settings.prompt
+                                    .slice(0, cursor)
+                                    .replace(/@[^\s，。；：,.!?]*$/, "");
+                                  const after = settings.prompt.slice(cursor);
+                                  const token = `${before && !/\s$/.test(before) ? " " : ""}@${mention.alias} `;
+                                  onSettingsChange({
+                                    ...settings,
+                                    prompt: `${before}${token}${after}`,
+                                  });
+                                  setMentionOpen(false);
+                                  window.requestAnimationFrame(() => {
+                                    textarea?.focus();
+                                    const nextCursor = before.length + token.length;
+                                    textarea?.setSelectionRange(nextCursor, nextCursor);
+                                  });
+                                }
+                              }}
+                            >
+                              {isActive ? <span className="chip-check">✓ </span> : null}
+                              @{mention.alias}
+                              <small>{mention.role}</small>
+                            </button>
+                          );
+                        })}
                       </div>
                     ) : null}
                   </label>

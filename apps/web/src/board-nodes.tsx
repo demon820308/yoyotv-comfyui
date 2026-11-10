@@ -15,6 +15,11 @@ import {
   scaleResolutionToMegapixels,
 } from "./resolution-presets";
 import { CanvasVideo } from "./video-preview";
+import {
+  removePromptMention,
+  splitPromptMentionSegments,
+  togglePromptMention,
+} from "./generation-draft";
 
 export type BoardNodeData = {
   kind: "text" | "entity" | "asset" | "shot" | "take_stack";
@@ -376,6 +381,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
   };
   const settingsDraftRef = useRef(settingsDraft);
   settingsDraftRef.current = settingsDraft;
+  const promptBackdropRef = useRef<HTMLDivElement>(null);
   const updateSettingsDraft = (input: Partial<typeof settingsDraft>) => {
     const next = { ...settingsDraftRef.current, ...input };
     settingsDraftRef.current = next;
@@ -716,12 +722,61 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               选择工作流
             </button>
           </div>
-          <textarea
-            aria-label="画布提示词"
-            value={settingsDraft.prompt}
-            placeholder={data.inlineControls.promptPlaceholder}
-            onChange={(event) => updateSettingsDraft({ prompt: event.target.value })}
-          />
+          {data.inlineControls.mentionAliases.some((alias) =>
+            settingsDraft.prompt.includes(`@${alias}`),
+          ) ? (
+            <div className="shot-inline-active-mentions" role="status" aria-label="已关联素材">
+              <span className="shot-inline-active-title">已引用:</span>
+              {data.inlineControls.mentionAliases
+                .filter((alias) => settingsDraft.prompt.includes(`@${alias}`))
+                .map((alias) => (
+                  <span key={alias} className="shot-inline-active-pill">
+                    <span>@{alias}</span>
+                    <button
+                      type="button"
+                      aria-label={`移除 @${alias}`}
+                      onClick={() =>
+                        updateSettingsDraft({
+                          prompt: removePromptMention(settingsDraftRef.current.prompt, alias),
+                        })
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+            </div>
+          ) : null}
+          <div className="prompt-mirror-wrap">
+            <div ref={promptBackdropRef} className="prompt-mirror-backdrop" aria-hidden="true">
+              {splitPromptMentionSegments(
+                settingsDraft.prompt,
+                data.inlineControls.mentionAliases,
+              ).map((segment, index) =>
+                segment.isMention ? (
+                  <mark key={index} className="prompt-mention-highlight">
+                    {segment.text}
+                  </mark>
+                ) : (
+                  <span key={index}>{segment.text}</span>
+                ),
+              )}
+              {settingsDraft.prompt.endsWith("\n") ? "\n" : null}
+            </div>
+            <textarea
+              rows={2}
+              aria-label="画布提示词"
+              className="prompt-mirror-textarea"
+              value={settingsDraft.prompt}
+              placeholder={data.inlineControls.promptPlaceholder}
+              onScroll={(event) => {
+                if (promptBackdropRef.current) {
+                  promptBackdropRef.current.scrollTop = event.currentTarget.scrollTop;
+                }
+              }}
+              onChange={(event) => updateSettingsDraft({ prompt: event.target.value })}
+            />
+          </div>
           {data.inlineControls.resolutionOptions?.length ? (
             <label className="shot-inline-aspect">
               <span>比例</span>
@@ -763,20 +818,24 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
           ) : null}
           {data.inlineControls.mentionAliases.length ? (
             <div className="shot-inline-mentions">
-              {data.inlineControls.mentionAliases.map((alias) => (
-                <button
-                  type="button"
-                  key={alias}
-                  onClick={() => {
-                    const prompt = settingsDraftRef.current.prompt;
-                    updateSettingsDraft({
-                      prompt: `${prompt}${prompt && !/\s$/.test(prompt) ? " " : ""}@${alias} `,
-                    });
-                  }}
-                >
-                  @{alias}
-                </button>
-              ))}
+              {data.inlineControls.mentionAliases.map((alias) => {
+                const isActive = settingsDraft.prompt.includes(`@${alias}`);
+                return (
+                  <button
+                    type="button"
+                    key={alias}
+                    className={isActive ? "is-active" : ""}
+                    onClick={() =>
+                      updateSettingsDraft({
+                        prompt: togglePromptMention(settingsDraftRef.current.prompt, alias),
+                      })
+                    }
+                  >
+                    {isActive ? <span className="shot-inline-mention-check">✓</span> : null}
+                    @{alias}
+                  </button>
+                );
+              })}
             </div>
           ) : null}
           <div className="shot-inline-parameters">

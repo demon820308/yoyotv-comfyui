@@ -27,7 +27,7 @@ const largest = measurements.reduce(
 
 const initialBudget = 900 * 1024;
 const lazyChunkBudget = 950 * 1024;
-const cssBudget = 260 * 1024;
+const cssBudget = 275 * 1024;
 const cssBytes = measurements
   .filter((item) => item.name.endsWith(".css"))
   .reduce((total, item) => total + item.size, 0);

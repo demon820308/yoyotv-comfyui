@@ -110,3 +110,6 @@ node scripts/takeboard-easy.mjs remote <host>
 ## 📄 开源许可证
 
 本项目基于 [Apache-2.0](LICENSE) 许可证开源。所连接的各 ComfyUI 模型与第三方插件遵循其各自的开源协议。
+
+<!-- release: https://github.com/Fourques/Takeboard/releases/tag/v0.2.0-beta.21 -->
+

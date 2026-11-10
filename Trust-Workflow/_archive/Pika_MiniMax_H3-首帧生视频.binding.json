@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "workflowPath": "Pika_MiniMax_H3-首帧生视频.json",
+  "workflowHash": "c2f80455526fe7d7ee789d1634c6f938e018ca0c0f27cf795b03503ea665bc9a",
+  "capability": "image_to_video",
+  "outputMediaType": "video",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "2",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "31",
+        "input": "noise_seed"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "55",
+        "input": "audio_denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "75",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "75",
+        "input": "height"
+      }
+    ],
+    "duration": [
+      {
+        "nodeId": "17",
+        "input": "value"
+      }
+    ],
+    "fps": [
+      {
+        "nodeId": "12",
+        "input": "preview_fps"
+      },
+      {
+        "nodeId": "83",
+        "input": "frame_rate"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "39",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-10T15:50:19.816Z"
+}

@@ -1,7 +1,12 @@
 import type { ProjectSnapshot, Run, Shot } from "@takeboard/contracts";
 import { describe, expect, it } from "vitest";
 import { compileMiniMaxH3Mentions } from "./canvas-projection";
-import { initialGenerationDraft } from "./generation-draft";
+import {
+  initialGenerationDraft,
+  removePromptMention,
+  splitPromptMentionSegments,
+  togglePromptMention,
+} from "./generation-draft";
 import type { PromptMention } from "./generation-model";
 import { findWorkflow } from "./generation-model";
 import { generationProblem } from "./generation-readiness";
@@ -120,5 +125,27 @@ describe("generation input and ownership boundaries", () => {
       { id: "b-unknown", shotId: "b", status: "orphaned" },
     ] as Run[];
     expect(cancellableRunIds(runs, "b")).toEqual(["b-running", "b-collect", "b-unknown"]);
+  });
+  it("toggles and removes @ prompt mentions cleanly without corrupting neighboring text", () => {
+    const original = "亚也 @亚也-三视图 从公交车 @公交车进站 的后门，下车";
+    expect(removePromptMention(original, "亚也-三视图")).toBe("亚也 从公交车 @公交车进站 的后门，下车");
+    expect(removePromptMention(original, "公交车进站")).toBe("亚也 @亚也-三视图 从公交车 的后门，下车");
+
+    // Toggle removes if exists
+    expect(togglePromptMention(original, "亚也-三视图")).toBe("亚也 从公交车 @公交车进站 的后门，下车");
+
+    // Toggle appends if absent
+    expect(togglePromptMention("女孩在海边", "亚也-三视图")).toBe("女孩在海边 @亚也-三视图 ");
+
+    // Splits into highlighted mention segments
+    expect(
+      splitPromptMentionSegments(original, ["亚也-三视图", "公交车进站"]),
+    ).toEqual([
+      { text: "亚也 ", isMention: false },
+      { text: "@亚也-三视图", isMention: true },
+      { text: " 从公交车 ", isMention: false },
+      { text: "@公交车进站", isMention: true },
+      { text: " 的后门，下车", isMention: false },
+    ]);
   });
 });

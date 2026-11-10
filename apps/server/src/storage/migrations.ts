@@ -80,6 +80,20 @@ export function migrateDatabase(client: BetterSqlite3.Database) {
     );
   `);
 
+  const hasEventLog = client
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'event_log' LIMIT 1")
+    .pluck()
+    .get();
+  if (hasEventLog) {
+    const columns = client.prepare("PRAGMA table_info(event_log)").all() as Array<{ name: string }>;
+    if (
+      columns.some((col) => col.name === "createdAt") &&
+      !columns.some((col) => col.name === "created_at")
+    ) {
+      client.exec("ALTER TABLE event_log RENAME COLUMN createdAt TO created_at;");
+    }
+  }
+
   for (const migration of migrations) {
     const applied = client
       .prepare("SELECT 1 FROM schema_migrations WHERE id = ?")

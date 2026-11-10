@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "workflowPath": "Pika+MiniMax-H3-参考生视频.json",
+  "workflowHash": "b2a6f91fbb153007955a08cc96584297d1e04ff5c9b6d4529be2d6792cb7d15f",
+  "capability": "reference_video",
+  "outputMediaType": "video",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "2",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "31",
+        "input": "noise_seed"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "55",
+        "input": "audio_denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "75",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "75",
+        "input": "height"
+      }
+    ],
+    "duration": [
+      {
+        "nodeId": "17",
+        "input": "value"
+      }
+    ],
+    "fps": [
+      {
+        "nodeId": "12",
+        "input": "preview_fps"
+      }
+    ]
+  },
+  "media": {
+    "reference_image": [
+      {
+        "nodeId": "39",
+        "input": "image"
+      },
+      {
+        "nodeId": "40",
+        "input": "image"
+      },
+      {
+        "nodeId": "62",
+        "input": "image"
+      },
+      {
+        "nodeId": "63",
+        "input": "image"
+      },
+      {
+        "nodeId": "65",
+        "input": "image"
+      },
+      {
+        "nodeId": "64",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-10T15:42:29.544Z"
+}
