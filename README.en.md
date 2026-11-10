@@ -1,60 +1,93 @@
-# TakeBoard
+# YoYoTV ComfyUI (YoYo)
 
 <p align="right">English · <a href="README.md">简体中文</a></p>
 
-**One canvas for AI image and video creation.**
+**One unified canvas for AI image and video filmmaking.**
 
-TakeBoard is an open-source AI creation canvas built on ComfyUI. Choose models, connect media, write prompts and generate images or videos in one workspace. Use a result in your next generation, or explore several directions side by side. The desktop app connects to your own local or remote ComfyUI.
+**YoYo** is an open-source AI creation canvas and filmmaking workstation powered by **ComfyUI**. Organize storyboard nodes, manage reference assets, connect multi-step generations, and explore multiple directions side by side in an infinite workspace.
 
-[**Download beta**](docs/downloads.en.md) · [Watch the film · 42 sec](https://fourques.github.io/Takeboard/#demo) · [Get started](docs/first-session.md#english) · [Website](https://fourques.github.io/Takeboard/)
+[![CI](https://github.com/demon820308/yoyotv-comfyui/actions/workflows/ci.yml/badge.svg)](https://github.com/demon820308/yoyotv-comfyui/actions/workflows/ci.yml) [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-315EFB.svg)](LICENSE)
 
-[![CI](https://github.com/Fourques/Takeboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Fourques/Takeboard/actions/workflows/ci.yml) [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-315EFB.svg)](LICENSE)
+---
 
-[![A real TakeBoard project: references, generated media and creative branches](docs/assets/takeboard-film-poster.en.jpg)](https://fourques.github.io/Takeboard/#demo)
+## 🌟 Key Features
 
-*From a starting frame to a result—and the next scene. [Watch the real-project film](https://fourques.github.io/Takeboard/#demo).*
+- 🎬 **Infinite Storyboard Canvas**  
+  Freely place reference images, videos, and prompt cards. Connect output frames directly into downstream generation nodes. Iterate through shots and scenes with a clear visual hierarchy.
 
-## Why use TakeBoard?
+- ⚡ **Out-of-the-Box Trust-Workflow Library**  
+  Pre-configured workflows and standardized parameter bindings eliminate tedious manual graph mapping:
+  - **YoYo Pika + MiniMax 2-Pass**: High-quality two-stage video generation combining agile motion with rich facial and textural detail.
+  - **Z-Image Turbo / Krea2 Turbo / Qwen2.1**: High-responsiveness text-to-image and image-to-image recipes.
+  - **RealEsRGAN / RelayVSR**: Integrated image super-resolution and temporal video upscaling.
+  - Import custom ComfyUI workflow/API JSON files with automated schema preflight, slot detection, and persistent parameter binding.
 
-Turn configured ComfyUI workflows into tools you can use on a creative canvas. Work on a single image or multiple video shots without returning to the underlying node graph for every attempt.
+- 📦 **Asset & Clip Export Manager**  
+  Export storyboard clips, high-bitrate video concatenations, project asset packages, and lossless project ZIP archives ready for editing suites (Premiere, DaVinci Resolve, Final Cut).
 
-- **Create across connected steps.** Add reference images or videos, create generation nodes, connect inputs, adjust prompts and parameters, and view results. Keep multiple attempts or connect a result to another node to continue creating.
-- **Choose models by task.** Text-to-image, image editing, text-to-video, image-to-video and reference generation expose the inputs and controls supported by the available workflow. Add recommended templates or import your own; open ComfyUI when you need to edit the graph.
-- **Open source. Your own setup.** Run ComfyUI locally or on a remote GPU, and choose where projects live. A local project can collect outputs from remote generation. The source is open and no official cloud subscription is required.
+- 🖥️ **Local-First & Hybrid Computing**  
+  Run ComfyUI locally or connect to a remote GPU server. Projects remain safely stored on your machine, with generation outputs fetched automatically. No subscription or cloud vendor lock-in.
 
-For creators who want a visual image and video workspace while keeping control over their ComfyUI workflows. An existing ComfyUI setup is the quickest way to start generating; you can explore the canvas and media tools before connecting one.
+- 🎨 **Refined Creator Workspace**  
+  Designed for film and content creators: aspect ratio presets (16:9, 9:16, 2.39:1, etc.), live VRAM and worker monitoring, session drafts, and intuitive side-by-side comparison.
 
-## Get started
+---
 
-The current public release is [**v0.2.0-beta.21**](https://github.com/Fourques/Takeboard/releases/tag/v0.2.0-beta.21). Installers are available for macOS, Windows and Debian/Ubuntu on x64 and ARM64. They include the app runtime; no development tools are needed.
+## 🚀 Quick Start
 
-The app interface is currently primarily Chinese. This overview, the website and getting-started materials are available in English.
+### Prerequisites
+- **Node.js**: `>= 22.12`
+- **pnpm**: `>= 10.0`
+- **ComfyUI**: Running locally or reachable over the network
 
-1. [Install TakeBoard](docs/downloads.en.md), create a project and choose its save location.
-2. Connect your existing ComfyUI in Settings and add a workflow suited to that device.
-3. Create a shot, choose its generation type and an available workflow, connect the required media, write a prompt and generate.
-4. Review the result and its record. Keep the version you want or use it as the input for another attempt.
+### 1. Clone & Install
 
-Local use needs no account. **ComfyUI, models and custom nodes are not bundled.** Without a generation setup, you can still try media import, the canvas and project saving. Mac packages are not Apple-notarized and Windows packages are not commercially code-signed; see [first-launch help](docs/downloads.en.md#install-and-open).
+```bash
+git clone https://github.com/demon820308/yoyotv-comfyui.git
+cd yoyotv-comfyui
+pnpm install
+```
 
-## Workflows and requirements
+### 2. Launch
 
-- **Add recommended templates when you need them.** Adaptations include Qwen Image, MiniMax H3, Wan 2.2 and LTX 2.3. Availability depends on the models and nodes installed on the generation device.
-- **Import your own workflows.** TakeBoard accepts Workflow JSON, API Prompt JSON and PNGs containing workflow metadata. It checks dependencies and inputs; custom workflows may need confirmed parameter bindings and execution trust. For graphs it cannot convert, export API format from ComfyUI and import that instead.
-- **Currently in beta.** Input capabilities and hardware requirements vary by workflow. Start with one compatible workflow. [Workflow guide](docs/creator-workstation.md) · [Compatibility record](docs/compatibility-matrix.md) (Chinese).
+**Option A: 1-Click Launchers**
+- Windows: Double-click `START-YOYO.cmd`
+- macOS / Linux: Run `./START-YOYO.command`
 
-beta.21 improves workflow validation, result comparison, parameter reuse and remote resource cleanup. Updating older versions is recommended. See the [changelog](CHANGELOG.md) for release details.
+**Option B: Development Mode**
+```bash
+# Start backend server and web frontend simultaneously
+pnpm dev
+```
+Open `http://127.0.0.1:48120` in your browser.
 
-## Go further
+### 3. Connect ComfyUI
+1. Open **Settings** in the top-right corner.
+2. Enter your ComfyUI address (e.g. `http://127.0.0.1:8188` or remote host).
+3. Check the connected models and nodes, and start creating on your canvas!
 
-| What you want to do | Start here |
-| --- | --- |
-| Complete a first generation | [First session](docs/first-session.md#english) · [Practical guide](https://fourques.github.io/Takeboard/guides/organize-comfyui-results/) |
-| Connect a laptop to a GPU server | [Generation devices and project storage](docs/generation-and-storage.md) (Chinese) |
-| Change storage, back up or update | [Settings](docs/settings-and-updates.md) · [Data layout](docs/data-layout.md) (Chinese) |
-| Share or self-host projects | [Access control](docs/access-control.md) · [Self-hosting](docs/self-hosting.md) (Chinese) |
-| Use optional tools or contribute | [Extensions](docs/extensions.md) (Chinese) · [Contributing](CONTRIBUTING.md) · [Documentation](docs/README.md) |
+---
 
-If something fails, run diagnostics from Settings or [tell us which step blocked you](https://github.com/Fourques/Takeboard/issues/new?template=first_try.yml). You do not need to diagnose it first. Remove private media and credentials from public reports.
+## 📁 Repository Structure
 
-Code is licensed under [Apache-2.0](LICENSE). Models and custom nodes have their own licenses. TakeBoard is an independent project, not affiliated with Comfy Org. [Security reports](SECURITY.md) · [Roadmap](docs/roadmap.md)
+```text
+├── apps/
+│   ├── web/               # Web storyboard canvas UI (React + Vite + Tailwind)
+│   ├── server/            # Backend generation controller, Trust-Workflow & export engine (Fastify)
+│   ├── desktop/           # Cross-platform desktop shell (Tauri + Rust)
+│   └── portal/            # Remote pairing & connection gateway
+├── packages/
+│   ├── contracts/         # Shared schemas and data contracts
+│   ├── domain/            # Domain models and validation logic
+│   └── executor-comfy/    # ComfyUI prompt translation, execution engine & event listener
+├── Trust-Workflow/        # Preset ComfyUI workflows and verified parameter bindings
+├── scripts/               # Build, packaging, and launcher scripts
+├── START-YOYO.cmd         # 1-click Windows starter
+└── START-YOYO.command     # 1-click macOS/Linux starter
+```
+
+---
+
+## 📄 License
+
+Distributed under the [Apache-2.0](LICENSE) License. Connected ComfyUI models, nodes, and weights follow their respective licenses.

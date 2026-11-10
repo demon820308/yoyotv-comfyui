@@ -6,6 +6,8 @@ export function generationPromptPlaceholder(
   capability?: string,
   hasReferences = false,
 ) {
+  if (capability === "upscale_image" || capability === "upscale_video")
+    return "无需提示词，连接素材后直接点击运行放大。";
   if (capability === "reference_video")
     return "用 @素材名指定人物、场景或声音，再描述动作、运镜和对白。\n例如：@人物走进 @场景，镜头缓慢推进。";
   if (capability === "text_to_image" || capability === "image_to_image")
@@ -73,8 +75,8 @@ export const defaultGenerationSettings: GenerationSettings = {
   referenceAssetId: null,
   referenceImageSize: "match",
   referenceVideoAudio: false,
-  width: 480,
-  height: 848,
+  width: 736,
+  height: 416,
   durationSeconds: 5,
   fps: 16,
   seed: 26081301,

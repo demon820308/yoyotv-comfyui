@@ -189,6 +189,26 @@ fn start_server(app: &tauri::AppHandle) -> Result<(u16, u64), String> {
     if !launcher.is_file() {
         return Err("桌面包缺少 TakeBoard 运行资源，请重新安装。".into());
     }
+    let install_dir = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    let trust_workflow_dir = install_dir
+        .and_then(|dir| {
+            let candidate = dir.join("Trust-Workflow");
+            if std::fs::create_dir_all(&candidate).is_ok() {
+                let test_file = candidate.join(".write_check");
+                if std::fs::write(&test_file, b"").is_ok() {
+                    let _ = std::fs::remove_file(&test_file);
+                    return Some(candidate);
+                }
+            }
+            None
+        })
+        .unwrap_or_else(|| {
+            let fallback = data_root.join("Trust-Workflow");
+            let _ = std::fs::create_dir_all(&fallback);
+            fallback
+        });
     let command = app
         .shell()
         .sidecar("takeboard-node")
@@ -199,6 +219,7 @@ fn start_server(app: &tauri::AppHandle) -> Result<(u16, u64), String> {
             "--no-open".into(),
         ])
         .env("TAKEBOARD_DATA_ROOT", data_root)
+        .env("TAKEBOARD_TRUST_WORKFLOW_DIR", trust_workflow_dir.to_string_lossy().to_string())
         .env("TAKEBOARD_PORT", port.to_string())
         .env("TAKEBOARD_DESKTOP", "1")
         .current_dir(resource_root);

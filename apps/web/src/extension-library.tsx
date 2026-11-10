@@ -214,7 +214,7 @@ export function ExtensionLibrary({
         className="extension-shell"
         role="dialog"
         aria-modal="true"
-        aria-label="TakeBoard 扩展库"
+        aria-label="YoYo 扩展库"
         ref={dialog}
         tabIndex={-1}
       >

@@ -18,6 +18,8 @@ const capabilities = new Set([
   "image_to_video",
   "first_last_video",
   "reference_video",
+  "upscale_image",
+  "upscale_video",
 ]);
 
 type RecipePackageFile = {

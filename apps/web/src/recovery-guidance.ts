@@ -27,7 +27,7 @@ export function recoveryGuidance(message: string, code = ""): RecoveryGuidance {
       action: "workflows",
       label: "检查工作流",
     };
-  if (/REVISION_CONFLICT|其他设备发生变化|版本冲突/i.test(text))
+  if (/REVISION_CONFLICT|其他(?:设备|操作)发生变化|其他操作更新|版本冲突/i.test(text))
     return { title: "项目有新的修改", next: message, action: "review", label: "返回画布核对" };
   if (/ENOSPC|磁盘空间不足|存储空间不足/i.test(text))
     return {
@@ -81,7 +81,7 @@ export function recoveryGuidance(message: string, code = ""): RecoveryGuidance {
     };
   if (/提示词|没有对应.*素材/i.test(text))
     return { title: "需要调整提示词", next: message, action: "prompt", label: "编辑提示词" };
-  if (/起始帧|结束帧|参考图|参考视频|连线|可用素材/i.test(text))
+  if (/起始帧|结束帧|参考图|参考视频|输入端口|连线|可用素材|最多连接.*参考/i.test(text))
     return { title: "检查镜头输入", next: message, action: "assets", label: "查看素材" };
   if (/分辨率|帧率|时长|Seed|Steps|重绘强度/i.test(text))
     return { title: "检查生成参数", next: message, action: "parameters", label: "调整参数" };

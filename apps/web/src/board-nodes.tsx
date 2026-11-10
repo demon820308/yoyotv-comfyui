@@ -1,7 +1,19 @@
-import { Handle, type Node, type NodeProps, Position, useUpdateNodeInternals } from "@xyflow/react";
+import {
+  Handle,
+  type Node,
+  type NodeProps,
+  NodeResizer,
+  Position,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { NumericInput } from "./numeric-input";
-import { closestAspectRatio } from "./resolution-presets";
+import {
+  closestAspectRatio,
+  megapixelsFromResolution,
+  resolutionPresets,
+  scaleResolutionToMegapixels,
+} from "./resolution-presets";
 import { CanvasVideo } from "./video-preview";
 
 export type BoardNodeData = {
@@ -21,6 +33,16 @@ export type BoardNodeData = {
   mediaHeight?: number | undefined;
   aspectRatio?: string | undefined;
   details?: string[];
+  progress?:
+    | {
+        phase: "preparing" | "queued" | "running" | "collecting";
+        label: string;
+        detail: string;
+        percent: number | null;
+        elapsedSeconds: number;
+      }
+    | null
+    | undefined;
   inputSlots?: Array<{
     id: "first_frame" | "last_frame" | "reference" | "reference_video" | "reference_audio";
     label: string;
@@ -43,13 +65,22 @@ export type BoardNodeData = {
     width: number;
     height: number;
     durationSeconds: number;
+    fps?: number;
     seed: number;
     outputLabel: "图片" | "视频";
     minDurationSeconds: number;
     resolutionOptions?: Array<{ label: string; width: number; height: number }>;
+    resolutionPolicy?: import("@takeboard/contracts").ResolutionPolicy;
     supportsDuration?: boolean;
+    supportsFps?: boolean;
     supportsResolution?: boolean;
     supportsSeed?: boolean;
+    supportsDenoise?: boolean;
+    denoiseLabel?: string;
+    denoiseMin?: number;
+    denoiseMax?: number;
+    denoiseStep?: number;
+    denoise?: number;
     mentionAliases: string[];
     busy: boolean;
     progress: {
@@ -66,19 +97,26 @@ export type BoardNodeData = {
       width?: number;
       height?: number;
       durationSeconds?: number;
+      fps?: number;
       seed?: number;
+      denoise?: number;
     }) => void;
     onGenerate: (input: {
       prompt: string;
       width: number;
       height: number;
       durationSeconds: number;
+      fps?: number;
       seed: number;
+      denoise?: number;
     }) => void;
     onOpenDetails: () => void;
     onOpenWorkflows: () => void;
     onCommitTitle: (title: string) => void;
   };
+  onResizeItem?:
+    | ((params: { x: number; y: number; width: number; height: number }) => void)
+    | undefined;
 };
 
 export type BoardNode = Node<BoardNodeData>;
@@ -173,13 +211,31 @@ function EntityNode({ data }: NodeProps<BoardNode>) {
   );
 }
 
-function AssetNode({ data }: NodeProps<BoardNode>) {
-  const mediaStyle =
-    data.mediaWidth && data.mediaHeight
-      ? { aspectRatio: `${data.mediaWidth} / ${data.mediaHeight}` }
-      : undefined;
+function AssetNode({ id, data, selected }: NodeProps<BoardNode>) {
+  const [naturalResolution, setNaturalResolution] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const width = data.mediaWidth ?? naturalResolution?.width;
+  const height = data.mediaHeight ?? naturalResolution?.height;
+  const resolutionText = width && height ? `${width} × ${height}` : null;
+  const mediaStyle = width && height ? { aspectRatio: `${width} / ${height}` } : undefined;
+  const isSelected = Boolean(selected ?? data.selected);
+
   return (
-    <NodeShell selected={data.selected}>
+    <NodeShell selected={isSelected}>
+      <NodeResizer
+        nodeId={id}
+        isVisible={isSelected}
+        minWidth={180}
+        minHeight={100}
+        color="#8b724b"
+        handleClassName="board-handle"
+        keepAspectRatio={Boolean(width && height)}
+        onResizeEnd={(_event, params) => {
+          data.onResizeItem?.(params);
+        }}
+      />
       <article className="board-card asset-node">
         <div
           className="node-media harbor-art"
@@ -188,15 +244,48 @@ function AssetNode({ data }: NodeProps<BoardNode>) {
           style={mediaStyle}
         >
           {data.mediaUrl && data.mediaType === "video" ? (
-            <CanvasVideo src={data.mediaUrl} label={`${data.title} 参考视频`} />
+            <CanvasVideo
+              src={data.mediaUrl}
+              label={`${data.title} 参考视频`}
+              onDimensions={(dimensions) => {
+                if (!data.mediaWidth) {
+                  setNaturalResolution(dimensions);
+                }
+              }}
+            />
           ) : data.mediaUrl && data.mediaType === "audio" ? (
             <div className="asset-audio-preview">
-              <span aria-hidden="true">♪</span>
+              <span aria-hidden="true">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 13V3l7-1v10" />
+                  <circle cx="4" cy="13" r="2" />
+                  <circle cx="11" cy="12" r="2" />
+                </svg>
+              </span>
               {/* biome-ignore lint/a11y/useMediaCaption: raw reference audio has no authored caption track */}
               <audio src={data.mediaUrl} controls preload="metadata" />
             </div>
           ) : data.mediaUrl ? (
-            <img src={data.mediaUrl} alt={data.title} />
+            <img
+              src={data.mediaUrl}
+              alt={data.title}
+              onLoad={(event) => {
+                const img = event.currentTarget;
+                if (!data.mediaWidth && img.naturalWidth && img.naturalHeight) {
+                  setNaturalResolution({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              }}
+            />
           ) : (
             <>
               <span className="harbor-sun" />
@@ -206,10 +295,32 @@ function AssetNode({ data }: NodeProps<BoardNode>) {
             </>
           )}
           <span className="asset-label">SOURCE</span>
+          {resolutionText ? (
+            <span className="asset-label asset-resolution">{resolutionText}</span>
+          ) : null}
         </div>
       </article>
     </NodeShell>
   );
+}
+
+export function shotMediaFactsText({
+  mediaType,
+  width,
+  height,
+  duration,
+}: {
+  mediaType?: "image" | "video" | "audio" | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  duration?: number | undefined;
+}) {
+  const resolutionText = width && height ? `${width} × ${height}` : null;
+  return mediaType === "image"
+    ? [resolutionText, "图片"].filter(Boolean).join(" · ")
+    : [resolutionText, duration ? `${Number(duration.toFixed(2))} 秒` : null, "视频"]
+        .filter(Boolean)
+        .join(" · ");
 }
 
 function ShotNode({ data, id }: NodeProps<BoardNode>) {
@@ -224,6 +335,17 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
   const [titleDraft, setTitleDraft] = useState(data.title);
   const [failedMediaUrl, setFailedMediaUrl] = useState<string | null>(null);
   const [loadedMediaUrl, setLoadedMediaUrl] = useState<string | null>(null);
+  const [naturalResolution, setNaturalResolution] = useState<{
+    width: number;
+    height: number;
+    duration?: number | undefined;
+  } | null>(null);
+  useEffect(() => {
+    setNaturalResolution(null);
+  }, [data.mediaUrl]);
+  const mediaWidth = data.mediaWidth ?? naturalResolution?.width;
+  const mediaHeight = data.mediaHeight ?? naturalResolution?.height;
+  const duration = data.duration ?? naturalResolution?.duration;
   const quickSettingsId = useId();
   useEffect(() => setTitleDraft(data.title), [data.title]);
   const mediaFailed = Boolean(data.mediaUrl && failedMediaUrl === data.mediaUrl);
@@ -232,16 +354,20 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
   );
   const [settingsDraft, setSettingsDraft] = useState(() => ({
     prompt: data.inlineControls?.prompt ?? "",
-    width: data.inlineControls?.width ?? 1024,
-    height: data.inlineControls?.height ?? 1024,
+    width: data.inlineControls?.width ?? 736,
+    height: data.inlineControls?.height ?? 416,
     durationSeconds: data.inlineControls?.durationSeconds ?? 5,
+    fps: data.inlineControls?.fps ?? 16,
     seed: data.inlineControls?.seed ?? 0,
+    denoise: data.inlineControls?.denoise ?? 1.0,
   }));
   const [numericDraftValidity, setNumericDraftValidity] = useState({
     width: true,
     height: true,
     duration: true,
+    fps: true,
     seed: true,
+    denoise: true,
   });
   const updateNumericDraftValidity = (field: keyof typeof numericDraftValidity, valid: boolean) => {
     setNumericDraftValidity((current) =>
@@ -259,7 +385,9 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
   const inlineWidth = data.inlineControls?.width;
   const inlineHeight = data.inlineControls?.height;
   const inlineDurationSeconds = data.inlineControls?.durationSeconds;
+  const inlineFps = data.inlineControls?.fps;
   const inlineSeed = data.inlineControls?.seed;
+  const inlineDenoise = data.inlineControls?.denoise;
   useEffect(() => {
     if (
       inlinePrompt === undefined ||
@@ -275,20 +403,41 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
       width: inlineWidth,
       height: inlineHeight,
       durationSeconds: inlineDurationSeconds,
+      fps: inlineFps ?? settingsDraftRef.current.fps ?? 16,
       seed: inlineSeed,
+      denoise: inlineDenoise ?? settingsDraftRef.current.denoise ?? 1.0,
     };
     settingsDraftRef.current = next;
     setSettingsDraft(next);
-  }, [inlineDurationSeconds, inlineHeight, inlinePrompt, inlineSeed, inlineWidth]);
+  }, [
+    inlineDenoise,
+    inlineDurationSeconds,
+    inlineFps,
+    inlineHeight,
+    inlinePrompt,
+    inlineSeed,
+    inlineWidth,
+  ]);
   const statusLabel = {
     draft: "待生成",
     generating: "生成中",
     review: "待选择",
     approved: "已批准",
   }[data.status ?? "draft"];
+  const isGenerating = data.status === "generating" || Boolean(data.inlineControls?.progress);
+  const progress = data.inlineControls?.progress ?? data.progress;
+  const progressText = progress
+    ? [
+        progress.label,
+        progress.detail,
+        typeof progress.elapsedSeconds === "number" ? `${progress.elapsedSeconds}s` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "正在生成镜头…";
   const generatedStyle =
-    data.mediaWidth && data.mediaHeight
-      ? { aspectRatio: `${data.mediaWidth} / ${data.mediaHeight}` }
+    mediaWidth && mediaHeight
+      ? { aspectRatio: `${mediaWidth} / ${mediaHeight}` }
       : data.aspectRatio?.includes(":")
         ? { aspectRatio: data.aspectRatio.replace(":", " / ") }
         : undefined;
@@ -308,34 +457,50 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
         (workflow) => workflow.capability === currentWorkflow.capability,
       ) ?? [])
     : (data.inlineControls?.workflows ?? []);
+  const isUpscale = Boolean(
+    currentWorkflow && ["upscale_image", "upscale_video"].includes(currentWorkflow.capability),
+  );
   const draftParameterInvalid =
-    (data.inlineControls?.supportsResolution !== false &&
-      (!numericDraftValidity.width || !numericDraftValidity.height)) ||
-    (data.inlineControls?.supportsSeed !== false && !numericDraftValidity.seed) ||
-    (data.inlineControls?.outputLabel === "视频" &&
-      data.inlineControls.supportsDuration !== false &&
-      !numericDraftValidity.duration) ||
-    (data.inlineControls?.supportsResolution !== false &&
-      (!Number.isFinite(settingsDraft.width) ||
+    (Boolean(data.inlineControls?.supportsResolution) &&
+      (!numericDraftValidity.width ||
+        !numericDraftValidity.height ||
+        !Number.isFinite(settingsDraft.width) ||
         settingsDraft.width < 256 ||
-        settingsDraft.width > 2048 ||
+        settingsDraft.width > 4096 ||
         !Number.isFinite(settingsDraft.height) ||
         settingsDraft.height < 256 ||
-        settingsDraft.height > 2048)) ||
-    (data.inlineControls?.supportsSeed !== false &&
-      (!Number.isSafeInteger(settingsDraft.seed) || settingsDraft.seed < 0)) ||
+        settingsDraft.height > 4096)) ||
+    (Boolean(data.inlineControls?.supportsSeed) &&
+      (!numericDraftValidity.seed ||
+        !Number.isSafeInteger(settingsDraft.seed) ||
+        settingsDraft.seed < 0)) ||
     (data.inlineControls?.outputLabel === "视频" &&
-      data.inlineControls.supportsDuration !== false &&
-      (!Number.isFinite(settingsDraft.durationSeconds) ||
-        settingsDraft.durationSeconds < (data.inlineControls?.minDurationSeconds ?? 1) ||
-        settingsDraft.durationSeconds > 15));
-  const draftDisabledReason = !settingsDraft.prompt.trim()
-    ? "请先输入镜头提示词"
-    : draftParameterInvalid
-      ? "请检查分辨率、时长和 Seed"
-      : data.inlineControls?.disabledReason === "请先输入镜头提示词"
-        ? null
-        : data.inlineControls?.disabledReason;
+      Boolean(data.inlineControls.supportsDuration) &&
+      (!numericDraftValidity.duration ||
+        !Number.isFinite(settingsDraft.durationSeconds) ||
+        settingsDraft.durationSeconds < 1 ||
+        settingsDraft.durationSeconds > 15)) ||
+    (data.inlineControls?.outputLabel === "视频" &&
+      Boolean(data.inlineControls.supportsFps) &&
+      (!numericDraftValidity.fps ||
+        !Number.isFinite(settingsDraft.fps) ||
+        settingsDraft.fps < 8 ||
+        settingsDraft.fps > 60)) ||
+    (Boolean(data.inlineControls?.supportsDenoise) &&
+      (!numericDraftValidity.denoise ||
+        !Number.isFinite(settingsDraft.denoise) ||
+        settingsDraft.denoise < (data.inlineControls?.denoiseMin ?? 0.05) ||
+        settingsDraft.denoise > (data.inlineControls?.denoiseMax ?? 16)));
+  const draftDisabledReason =
+    !isUpscale && !settingsDraft.prompt.trim()
+      ? "请先输入镜头提示词"
+      : draftParameterInvalid
+        ? isUpscale
+          ? "请检查参数设置"
+          : "请检查分辨率、时长、帧率和 Seed"
+        : data.inlineControls?.disabledReason === "请先输入镜头提示词"
+          ? null
+          : data.inlineControls?.disabledReason;
   return (
     <NodeShell selected={data.selected}>
       <Port type="target" position={Position.Left} className="board-provenance-handle" />
@@ -376,9 +541,23 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                   setFailedMediaUrl(null);
                   setLoadedMediaUrl(data.mediaUrl ?? null);
                 }}
+                onDimensions={(dimensions) => {
+                  if (!data.mediaWidth) {
+                    setNaturalResolution(dimensions);
+                  }
+                }}
               />
             ) : (
-              <img src={data.mediaUrl} alt={`${data.title} 生成画面`} />
+              <img
+                src={data.mediaUrl}
+                alt={`${data.title} 生成画面`}
+                onLoad={(event) => {
+                  const img = event.currentTarget;
+                  if (!data.mediaWidth && img.naturalWidth && img.naturalHeight) {
+                    setNaturalResolution({ width: img.naturalWidth, height: img.naturalHeight });
+                  }
+                }}
+              />
             )}
             {mediaLoading ? (
               <div className="shot-video-loading" role="status">
@@ -404,11 +583,12 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               <span className="shot-generated-facts">
                 <strong>{data.engine}</strong>
                 <i>
-                  {data.mediaType === "image"
-                    ? "图片"
-                    : data.duration
-                      ? `${Number(data.duration.toFixed(2))} 秒 · 视频`
-                      : "视频"}
+                  {shotMediaFactsText({
+                    mediaType: data.mediaType,
+                    width: mediaWidth,
+                    height: mediaHeight,
+                    duration,
+                  })}
                 </i>
               </span>
             </div>
@@ -426,8 +606,14 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 <i />
               </span>
               <div>
-                <strong>{data.body.trim() ? "提示已就绪" : "等待创作"}</strong>
-                <p>{data.body.trim() || "写下镜头，或连接一张参考素材。"}</p>
+                <strong>
+                  {isGenerating ? "生成创作中……" : data.body.trim() ? "提示已就绪" : "等待创作"}
+                </strong>
+                <p title={isGenerating ? progressText : data.body.trim() || undefined}>
+                  {isGenerating
+                    ? progressText
+                    : data.body.trim() || "写下镜头，或连接一张参考素材。"}
+                </p>
               </div>
             </div>
             <NodeFacts details={data.details} />
@@ -488,6 +674,11 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 if (workflow) data.inlineControls?.onWorkflowChange(workflow.path);
               }}
             >
+              {!currentWorkflow ? (
+                <option value="" disabled>
+                  选择生成方式
+                </option>
+              ) : null}
               {capabilityGroups.map(([capability, label]) => (
                 <option value={capability} key={capability}>
                   {label}
@@ -503,6 +694,11 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 data.inlineControls?.onWorkflowChange(event.target.value);
               }}
             >
+              {!currentWorkflow ? (
+                <option value={data.inlineControls.workflowPath || ""} disabled>
+                  {data.inlineControls.workflowPath ? "未知工作流" : "选择工作流"}
+                </option>
+              ) : null}
               {visibleWorkflows.map((workflow) => (
                 <option value={workflow.path} key={workflow.path}>
                   {workflow.name}
@@ -531,18 +727,33 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               <span>比例</span>
               <select
                 aria-label="画布生成比例"
-                value={closestAspectRatio(settingsDraft.width, settingsDraft.height)}
+                value={closestAspectRatio(
+                  settingsDraft.width,
+                  settingsDraft.height,
+                  resolutionPresets(
+                    settingsDraft.width,
+                    settingsDraft.height,
+                    data.inlineControls.resolutionPolicy ?? "exact",
+                  ),
+                )}
                 onChange={(event) => {
-                  const preset = data.inlineControls?.resolutionOptions?.find(
-                    (item) => item.label === event.target.value,
+                  const options = resolutionPresets(
+                    settingsDraft.width,
+                    settingsDraft.height,
+                    data.inlineControls?.resolutionPolicy ?? "exact",
                   );
+                  const preset = options.find((item) => item.label === event.target.value);
                   if (preset) updateSettingsDraft({ width: preset.width, height: preset.height });
                 }}
               >
                 <option value="custom" disabled>
                   自定义
                 </option>
-                {data.inlineControls.resolutionOptions.map((preset) => (
+                {resolutionPresets(
+                  settingsDraft.width,
+                  settingsDraft.height,
+                  data.inlineControls.resolutionPolicy ?? "exact",
+                ).map((preset) => (
                   <option key={preset.label} value={preset.label}>
                     {preset.label} · {preset.width} × {preset.height}
                   </option>
@@ -570,7 +781,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
           ) : null}
           <div className="shot-inline-parameters">
             {data.inlineControls.supportsResolution !== false ? (
-              <label htmlFor={`${quickSettingsId}-width`}>
+              <label className="shot-inline-resolution" htmlFor={`${quickSettingsId}-width`}>
                 <span>尺寸</span>
                 <div>
                   <NumericInput
@@ -578,7 +789,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                     draftKey={`${id}:${data.inlineControls.workflowPath}:width`}
                     aria-label="画布宽度"
                     min={256}
-                    max={2048}
+                    max={4096}
                     step={32}
                     value={settingsDraft.width}
                     preserveEmptyOnBlur
@@ -591,7 +802,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                     draftKey={`${id}:${data.inlineControls.workflowPath}:height`}
                     aria-label="画布高度"
                     min={256}
-                    max={2048}
+                    max={4096}
                     step={32}
                     value={settingsDraft.height}
                     preserveEmptyOnBlur
@@ -601,9 +812,33 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 </div>
               </label>
             ) : null}
+            {data.inlineControls.supportsResolution !== false ? (
+              <label className="shot-inline-megapixels" htmlFor={`${quickSettingsId}-megapixels`}>
+                <span>百万像素</span>
+                <NumericInput
+                  id={`${quickSettingsId}-megapixels`}
+                  draftKey={`${id}:${data.inlineControls.workflowPath}:megapixels`}
+                  aria-label="画布百万像素"
+                  min={0.1}
+                  max={data.inlineControls.outputLabel === "图片" ? 4 : 2}
+                  step={0.1}
+                  value={megapixelsFromResolution(settingsDraft.width, settingsDraft.height)}
+                  onValueChange={(mp) =>
+                    updateSettingsDraft(
+                      scaleResolutionToMegapixels(
+                        settingsDraft.width,
+                        settingsDraft.height,
+                        mp,
+                        data.inlineControls?.resolutionPolicy ?? "exact",
+                      ),
+                    )
+                  }
+                />
+              </label>
+            ) : null}
             {data.inlineControls.outputLabel === "视频" &&
-            data.inlineControls.supportsDuration !== false ? (
-              <label htmlFor={`${quickSettingsId}-duration`}>
+            Boolean(data.inlineControls.supportsDuration) ? (
+              <label className="shot-inline-duration" htmlFor={`${quickSettingsId}-duration`}>
                 <span>时长</span>
                 <NumericInput
                   id={`${quickSettingsId}-duration`}
@@ -619,20 +854,65 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 />
               </label>
             ) : null}
+            {data.inlineControls.outputLabel === "视频" &&
+            Boolean(data.inlineControls.supportsFps) ? (
+              <label className="shot-inline-fps" htmlFor={`${quickSettingsId}-fps`}>
+                <span>帧率</span>
+                <NumericInput
+                  id={`${quickSettingsId}-fps`}
+                  draftKey={`${id}:${data.inlineControls.workflowPath}:fps`}
+                  aria-label="画布帧率"
+                  min={8}
+                  max={60}
+                  step={1}
+                  value={settingsDraft.fps}
+                  preserveEmptyOnBlur
+                  onDraftValidityChange={(valid) => updateNumericDraftValidity("fps", valid)}
+                  onValueChange={(fps) => updateSettingsDraft({ fps })}
+                />
+              </label>
+            ) : null}
             {data.inlineControls.supportsSeed !== false ? (
-              <label htmlFor={`${quickSettingsId}-seed`}>
+              <label
+                className="shot-inline-seed"
+                htmlFor={`${quickSettingsId}-seed`}
+                title={`当前种子: ${settingsDraft.seed}`}
+              >
                 <span>Seed</span>
                 <NumericInput
                   id={`${quickSettingsId}-seed`}
                   draftKey={`${id}:${data.inlineControls.workflowPath}:seed`}
                   aria-label="画布 Seed"
                   min={0}
-                  max={2_147_483_647}
+                  max={Number.MAX_SAFE_INTEGER}
                   step={1}
                   value={settingsDraft.seed}
                   preserveEmptyOnBlur
+                  title={`当前种子: ${settingsDraft.seed}`}
                   onDraftValidityChange={(valid) => updateNumericDraftValidity("seed", valid)}
                   onValueChange={(seed) => updateSettingsDraft({ seed })}
+                />
+              </label>
+            ) : null}
+            {Boolean(data.inlineControls.supportsDenoise) ? (
+              <label
+                className="shot-inline-denoise"
+                htmlFor={`${quickSettingsId}-denoise`}
+                title={`${data.inlineControls.denoiseLabel ?? "细节程度"}: ${settingsDraft.denoise}`}
+              >
+                <span>{data.inlineControls.denoiseLabel ?? "细节程度"}</span>
+                <NumericInput
+                  id={`${quickSettingsId}-denoise`}
+                  draftKey={`${id}:${data.inlineControls.workflowPath}:denoise`}
+                  aria-label={data.inlineControls.denoiseLabel ?? "细节程度"}
+                  min={data.inlineControls.denoiseMin ?? 0.05}
+                  max={data.inlineControls.denoiseMax ?? 2.0}
+                  step={data.inlineControls.denoiseStep ?? 0.05}
+                  value={settingsDraft.denoise}
+                  preserveEmptyOnBlur
+                  title={`${data.inlineControls.denoiseLabel ?? "细节程度"}: ${settingsDraft.denoise}`}
+                  onDraftValidityChange={(valid) => updateNumericDraftValidity("denoise", valid)}
+                  onValueChange={(denoise) => updateSettingsDraft({ denoise })}
                 />
               </label>
             ) : null}

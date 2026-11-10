@@ -1,10 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it, vi } from "vitest";
 import {
   applyWorkflowBinding,
+  disableTrustWorkflow,
   discoverBindingCandidates,
+  loadExecutableWorkflow,
+  readTrustWorkflow,
+  suggestedBinding,
   validateWorkflowBinding,
   type WorkflowBinding,
   workflowHash,
+  writeTrustWorkflow,
 } from "../src/workflow-bindings.js";
 
 const binding: WorkflowBinding = {
@@ -105,5 +113,114 @@ describe("workflow binding execution", () => {
         parameters: { ...frames.parameters, fps: [{ nodeId: "video", input: "fps" }] },
       }),
     ).toEqual([]);
+  });
+
+  it("suggests reference-only bindings for reference_video and prunes unsupplied reference slots", () => {
+    const prompt = {
+      ref0: { class_type: "LoadImage", inputs: { image: "ref0.png" } },
+      ref1: { class_type: "LoadImage", inputs: { image: "ref1.png" } },
+      h3: {
+        class_type: "MiniMaxH3ReferenceToVideo",
+        inputs: {
+          prompt: "shot",
+          "ref_images.ref_image_0": ["ref0", 0],
+          "ref_images.ref_image_1": ["ref1", 0],
+        },
+      },
+      save: { class_type: "SaveVideo", inputs: { filename_prefix: "out" } },
+    };
+    const candidates = discoverBindingCandidates(prompt);
+    const suggested = suggestedBinding(
+      "custom-ref2v.json",
+      "test-hash",
+      "reference_video",
+      "video",
+      candidates,
+    );
+    expect(suggested.media.first_frame).toBeUndefined();
+    expect(suggested.media.reference_image).toEqual([
+      { nodeId: "ref0", input: "image" },
+      { nodeId: "ref1", input: "image" },
+    ]);
+
+    const singleImageResult = applyWorkflowBinding(
+      prompt,
+      { ...suggested, trusted: true, verifiedAt: "2026-11-08T00:00:00.000Z" } as unknown as WorkflowBinding,
+      {
+        prompt: "action",
+        referenceImages: ["actual-char.png"],
+        filenamePrefix: "test",
+      },
+    );
+    expect(singleImageResult.ref0?.inputs.image).toBe("actual-char.png");
+    expect(singleImageResult.ref1).toBeUndefined();
+    expect(singleImageResult.h3?.inputs["ref_images.ref_image_0"]).toEqual(["ref0", 0]);
+    expect(singleImageResult.h3?.inputs["ref_images.ref_image_1"]).toBeUndefined();
+  });
+
+  it("saves, reads, executes and disables snapshots in Trust-Workflow directory", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "trust-wf-test-"));
+    try {
+      const mockWorkflow = {
+        nodes: [
+          { type: "PromptNode", id: 1, widgets_values: ["hello"] },
+          { type: "SaveImage", id: 2, widgets_values: [] },
+        ],
+      };
+      const mockBinding: WorkflowBinding = {
+        version: 1,
+        workflowPath: "test_workflow.json",
+        workflowHash: workflowHash(mockWorkflow),
+        capability: "text_to_image",
+        outputMediaType: "image",
+        parameters: { prompt: [{ nodeId: "1", input: "prompt" }] },
+        media: {},
+        trusted: true,
+        verifiedAt: new Date().toISOString(),
+      };
+
+      writeTrustWorkflow("test_workflow.json", mockWorkflow, mockBinding, tempDir);
+      const snapshot = readTrustWorkflow("test_workflow.json", tempDir);
+      expect(snapshot).not.toBeNull();
+      expect(snapshot?.binding.workflowHash).toBe(mockBinding.workflowHash);
+
+      // Verify loadExecutableWorkflow reads snapshot without error
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: string | URL | Request) => {
+          const url = String(input);
+          if (url.includes("/object_info")) {
+            return Response.json({
+              PromptNode: { input: { required: { prompt: ["STRING", {}] } } },
+              SaveImage: { input: { required: {} } },
+            });
+          }
+          return Response.json({});
+        }),
+      );
+
+      process.env.TAKEBOARD_TRUST_WORKFLOW_DIR = tempDir;
+      const loaded = await loadExecutableWorkflow("http://127.0.0.1:8188", "test_workflow.json");
+      expect(loaded.binding.workflowHash).toBe(mockBinding.workflowHash);
+
+      // Test disable
+      disableTrustWorkflow("test_workflow.json", tempDir);
+      expect(readTrustWorkflow("test_workflow.json", tempDir)).toBeNull();
+
+      // Test upscale binding round-trip
+      const upscaleBinding: WorkflowBinding = {
+        ...mockBinding,
+        capability: "upscale_image",
+        outputMediaType: "image",
+      };
+      writeTrustWorkflow("test_upscale.json", mockWorkflow, upscaleBinding, tempDir);
+      const readUpscale = readTrustWorkflow("test_upscale.json", tempDir);
+      expect(readUpscale?.binding.capability).toBe("upscale_image");
+      expect(readUpscale?.binding.trusted).toBe(true);
+    } finally {
+      delete process.env.TAKEBOARD_TRUST_WORKFLOW_DIR;
+      vi.unstubAllGlobals();
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

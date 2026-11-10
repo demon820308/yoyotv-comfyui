@@ -93,11 +93,12 @@ export function reduceEditorSelection(
       );
     case "activate": {
       const base = { ...emptySelection, projectId: action.snapshot.project.id };
+      if (!action.reveal) return base;
       const shot = action.snapshot.shots[0];
       const next = shot
         ? reduceEditorSelection(base, { type: "shot", snapshot: action.snapshot, shotId: shot.id })
         : base;
-      return { ...next, inspectorOpen: action.reveal && Boolean(shot) };
+      return { ...next, inspectorOpen: Boolean(shot) };
     }
     case "reconcile": {
       return reconcileSelection(state, action.snapshot);

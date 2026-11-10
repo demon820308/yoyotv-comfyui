@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "workflowPath": "image_krea2_turbo_t2i.json",
+  "workflowHash": "aef76ee695a6fabf53b9bc182dc34421e3d969ec4aac3040fc5e4d2f219aef8c",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "51",
+        "input": "value"
+      },
+      {
+        "nodeId": "59",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "64",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "64",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "64",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "71",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "71",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-08T15:39:34.097Z"
+}

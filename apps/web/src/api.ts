@@ -103,6 +103,8 @@ export type ProjectCatalogItem = {
   shotCount: number;
   activeRunCount: number;
   updatedAt: string;
+  hasCover?: boolean;
+  coverUpdatedAt?: number | null;
   /** Effective role used by older clients and action guards. */
   role: ProjectRole;
   /** The actual project membership, which can be absent for an instance administrator. */
@@ -313,7 +315,9 @@ export type WorkflowCapability =
   | "text_to_video"
   | "image_to_video"
   | "first_last_video"
-  | "reference_video";
+  | "reference_video"
+  | "upscale_image"
+  | "upscale_video";
 
 export type WorkflowSummary = {
   id: string;
@@ -339,6 +343,8 @@ export type WorkflowSummary = {
   bindingStatus?: "built_in" | "ready" | "stale" | "needs_binding";
   workflowHash?: string;
   origin?: "built_in" | "imported" | "comfyui";
+  trustSnapshot?: boolean;
+  trustPath?: string | null;
   diagnostic?: WorkflowDiagnostic;
   library?: { included: boolean; favorite: boolean; name?: string };
   libraryError?: string;
@@ -411,6 +417,8 @@ export type WorkflowBindingInspection = {
   warning?: string;
   message?: string;
   diagnostic?: WorkflowDiagnostic;
+  trustSnapshot?: boolean;
+  trustPath?: string | null;
   bindingProposal?: "recipe_package" | null;
 };
 
@@ -643,6 +651,58 @@ export const projectApi = {
     }>("/api/projects/import", { method: "POST", body });
   },
   exportUrl: (key: string) => `/api/projects/${encodeURIComponent(key)}/export`,
+  exportZip: async (
+    key: string,
+    assetIds: string[],
+    filenames?: Record<string, string>,
+    title?: string,
+  ) => {
+    const response = await apiFetch(`/api/projects/${encodeURIComponent(key)}/export/zip`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ assetIds, filenames, title }),
+    });
+    if (!response.ok) {
+      const err = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error || "导出 ZIP 失败");
+    }
+    return await response.blob();
+  },
+  exportConcat: async (key: string, assetIds: string[], title?: string) => {
+    const response = await apiFetch(`/api/projects/${encodeURIComponent(key)}/export/concat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ assetIds, title }),
+    });
+    if (!response.ok) {
+      const err = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error || "拼接视频失败");
+    }
+    return await response.blob();
+  },
+  coverUrl: (key: string, timestamp?: string | number) =>
+    `/api/projects/${encodeURIComponent(key)}/cover${timestamp ? `?t=${encodeURIComponent(timestamp)}` : ""}`,
+  setCover: async (key: string, input: File | { assetId: string }) => {
+    if (input instanceof File) {
+      const body = new FormData();
+      body.append("file", input);
+      return await jsonRequest<{ ok: true; hasCover: true; coverUpdatedAt?: number }>(
+        `/api/projects/${encodeURIComponent(key)}/cover`,
+        { method: "POST", body },
+      );
+    }
+    return await jsonRequest<{ ok: true; hasCover: true; coverUpdatedAt?: number }>(
+      `/api/projects/${encodeURIComponent(key)}/cover`,
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+    );
+  },
+  deleteCover: (key: string) =>
+    jsonRequest<{ ok: true; hasCover: false }>(`/api/projects/${encodeURIComponent(key)}/cover`, {
+      method: "DELETE",
+    }),
   createShot: (
     key: string,
     input: {
@@ -714,6 +774,8 @@ export const projectApi = {
     >,
   move: (key: string, itemId: string, x: number, y: number) =>
     executeProjectCommand(key, { type: "canvas.move_item", itemId, x, y }),
+  resize: (key: string, itemId: string, x: number, y: number, width: number, height: number) =>
+    executeProjectCommand(key, { type: "canvas.resize_item", itemId, x, y, width, height }),
   uploadAsset: async (
     key: string,
     file: File,
@@ -1329,6 +1391,13 @@ export const workflowApi = {
       {
         method: "PUT",
         body: JSON.stringify({ ...binding, trusted: true }),
+      },
+    ),
+  disableBinding: (path: string) =>
+    jsonRequest<{ status: "needs_binding"; path: string }>(
+      `/api/workflows/binding?path=${encodeURIComponent(path)}`,
+      {
+        method: "DELETE",
       },
     ),
   archivePreview: (path: string) =>

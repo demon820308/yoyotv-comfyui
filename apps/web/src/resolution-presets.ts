@@ -10,33 +10,71 @@ export function generationResolutionPolicy(native: boolean, family: string): Res
   return "multiple_32";
 }
 
-const ratios = [
-  ["16:9", 16 / 9],
-  ["9:16", 9 / 16],
-  ["1:1", 1],
-  ["4:3", 4 / 3],
-  ["3:4", 3 / 4],
-  ["4:5", 4 / 5],
-  ["2.35:1", 2.35],
+export const standardAspectRatios = [
+  ["1:1 (Square)", 1, 1],
+  ["2:3 (Portrait Photo)", 2, 3],
+  ["3:2 (Photo)", 3, 2],
+  ["3:4 (Portrait Standard)", 3, 4],
+  ["4:3 (Standard)", 4, 3],
+  ["9:16 (Portrait Widescreen)", 9, 16],
+  ["16:9 (Widescreen)", 16, 9],
+  ["21:9 (Ultrawide)", 21, 9],
 ] as const;
 
-/** Presets are concrete generation dimensions, not separate shot metadata. */
-export function resolutionPresets(width: number, height: number, policy: ResolutionPolicy) {
-  const area = Math.max(256 * 256, Math.min(2048 * 2048, width * height));
-  return ratios.map(([label, ratio]) => {
-    const scale = Math.min(1, 2048 / Math.max(Math.sqrt(area * ratio), Math.sqrt(area / ratio)));
+export function megapixelsFromResolution(width: number, height: number) {
+  return Math.max(0.1, Math.round(((width * height) / (1024 * 1024)) * 10) / 10);
+}
+
+/** Presets are concrete generation dimensions from the 32-multiple standard aspect ratio table. */
+export function resolutionPresets(
+  width: number,
+  height: number,
+  policy: ResolutionPolicy = "exact",
+  _outputLabel?: "图片" | "视频",
+) {
+  const megapixels = megapixelsFromResolution(width, height);
+  const totalPixels = megapixels * 1024 * 1024;
+  return standardAspectRatios.map(([label, wRatio, hRatio]) => {
+    const scale = Math.sqrt(totalPixels / (wRatio * hRatio));
     const size = resolveGenerationResolution(
       policy,
-      Math.max(256, Math.round((Math.sqrt(area * ratio) * scale) / 32) * 32),
-      Math.max(256, Math.round((Math.sqrt(area / ratio) * scale) / 32) * 32),
+      Math.max(256, Math.round((wRatio * scale) / 32) * 32),
+      Math.max(256, Math.round((hRatio * scale) / 32) * 32),
     ).effective;
     return { label, ...size };
   });
 }
 
-export function closestAspectRatio(width: number, height: number) {
-  const nearest = [...ratios].sort(
-    (a, b) => Math.abs(Math.log(width / height / a[1])) - Math.abs(Math.log(width / height / b[1])),
-  )[0];
-  return nearest && Math.abs(Math.log(width / height / nearest[1])) < 0.035 ? nearest[0] : "custom";
+export function scaleResolutionToMegapixels(
+  width: number,
+  height: number,
+  megapixels: number,
+  policy: ResolutionPolicy = "exact",
+) {
+  const currentPresets = resolutionPresets(width, height, policy);
+  const matched = currentPresets.find((p) => p.width === width && p.height === height);
+  const ratioEntry = matched
+    ? standardAspectRatios.find(([label]) => label === matched.label)
+    : undefined;
+  const wRatio = ratioEntry ? ratioEntry[1] : width;
+  const hRatio = ratioEntry ? ratioEntry[2] : height;
+  const totalPixels = Math.max(0.1, megapixels) * 1024 * 1024;
+  const scale = Math.sqrt(totalPixels / (wRatio * hRatio));
+  return resolveGenerationResolution(
+    policy,
+    Math.max(256, Math.round((wRatio * scale) / 32) * 32),
+    Math.max(256, Math.round((hRatio * scale) / 32) * 32),
+  ).effective;
+}
+
+export function closestAspectRatio(
+  width: number,
+  height: number,
+  presets?: ReadonlyArray<{ label: string; width: number; height: number }>,
+) {
+  const candidatePresets = presets ?? resolutionPresets(width, height, "exact");
+  const exact = candidatePresets.find(
+    (preset) => preset.width === width && preset.height === height,
+  );
+  return exact ? exact.label : "custom";
 }

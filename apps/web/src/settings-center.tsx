@@ -156,7 +156,7 @@ function SettingsCenter({
       <header className="settings-heading">
         <div>
           <h2 id="settings-title">设置</h2>
-          <p>按你的创作习惯调整 TakeBoard</p>
+          <p>按你的创作习惯调整 YoYo</p>
         </div>
         <button type="button" aria-label="关闭设置" disabled={busy} onClick={onClose}>
           ×
@@ -281,20 +281,11 @@ function SettingsCenter({
           {section === "diagnostics" ? <RuntimeDiagnostics /> : null}
           {section === "about" ? (
             <section>
-              <h3>TakeBoard</h3>
+              <h3>YoYo</h3>
               <p>项目设备 · {device?.name ?? "读取中"}</p>
               {desktop ? (
                 <DesktopActionButton action="updates">检查 App 更新</DesktopActionButton>
-              ) : (
-                <a
-                  href="https://github.com/Fourques/Takeboard/releases"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  下载桌面 App
-                </a>
-              )}
-              <p>更新当前电脑上的 App，不会重启远程服务。</p>
+              ) : null}
             </section>
           ) : null}
           {error ? <p role="alert">{error}</p> : null}

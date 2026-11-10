@@ -17,7 +17,9 @@ import { RecoveryNotice } from "./recovery-notice";
 import {
   closestAspectRatio,
   generationResolutionPolicy,
+  megapixelsFromResolution,
   resolutionPresets,
+  scaleResolutionToMegapixels,
 } from "./resolution-presets";
 import { ResultPreview } from "./result-preview";
 import { recordedSettings } from "./result-reuse";
@@ -910,11 +912,15 @@ export function Inspector({
                         <span>比例</span>
                         <select
                           aria-label="生成比例"
-                          value={closestAspectRatio(settings.width, settings.height)}
+                          value={closestAspectRatio(
+                            settings.width,
+                            settings.height,
+                            resolutionPresets(settings.width, settings.height, resolutionPolicy),
+                          )}
                           onChange={(event) => {
                             const preset = resolutionPresets(
-                              profile.defaults.width,
-                              profile.defaults.height,
+                              settings.width,
+                              settings.height,
                               resolutionPolicy,
                             ).find((item) => item.label === event.target.value);
                             if (preset)
@@ -928,15 +934,13 @@ export function Inspector({
                           <option value="custom" disabled>
                             自定义
                           </option>
-                          {resolutionPresets(
-                            profile.defaults.width,
-                            profile.defaults.height,
-                            resolutionPolicy,
-                          ).map((preset) => (
-                            <option key={preset.label} value={preset.label}>
-                              {preset.label} · {preset.width} × {preset.height}
-                            </option>
-                          ))}
+                          {resolutionPresets(settings.width, settings.height, resolutionPolicy).map(
+                            (preset) => (
+                              <option key={preset.label} value={preset.label}>
+                                {preset.label} · {preset.width} × {preset.height}
+                              </option>
+                            ),
+                          )}
                         </select>
                       </label>
                     ) : null}
@@ -947,7 +951,7 @@ export function Inspector({
                           <NumericInput
                             id="generation-width"
                             min={256}
-                            max={2048}
+                            max={4096}
                             step={32}
                             value={settings.width}
                             onValueChange={(width) => onSettingsChange({ ...settings, width })}
@@ -958,10 +962,31 @@ export function Inspector({
                           <NumericInput
                             id="generation-height"
                             min={256}
-                            max={2048}
+                            max={4096}
                             step={32}
                             value={settings.height}
                             onValueChange={(height) => onSettingsChange({ ...settings, height })}
+                          />
+                        </label>
+                        <label htmlFor="generation-megapixels">
+                          <span>百万像素</span>
+                          <NumericInput
+                            id="generation-megapixels"
+                            min={0.1}
+                            max={profile.outputLabel === "图片" ? 4 : 2}
+                            step={0.1}
+                            value={megapixelsFromResolution(settings.width, settings.height)}
+                            onValueChange={(mp) =>
+                              onSettingsChange({
+                                ...settings,
+                                ...scaleResolutionToMegapixels(
+                                  settings.width,
+                                  settings.height,
+                                  mp,
+                                  resolutionPolicy,
+                                ),
+                              })
+                            }
                           />
                         </label>
                         {workflow.inputs.includes("fps") && profile.family !== "minimax_h3" ? (
@@ -1017,7 +1042,7 @@ export function Inspector({
                         <NumericInput
                           id="generation-seed"
                           min={0}
-                          max={2_147_483_647}
+                          max={Number.MAX_SAFE_INTEGER}
                           step={1}
                           value={settings.seed}
                           onValueChange={(seed) => onSettingsChange({ ...settings, seed })}
@@ -1441,7 +1466,19 @@ export function Inspector({
                 {busy ? (
                   <span className="spinner" aria-hidden="true" />
                 ) : (
-                  <span aria-hidden="true">✦</span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polygon points="5 3 13 8 5 13 5 3" fill="currentColor" stroke="none" />
+                  </svg>
                 )}
                 {busy
                   ? progress

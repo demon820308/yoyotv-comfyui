@@ -1051,6 +1051,11 @@ describe("real generation routes", () => {
               "prompt-video": {
                 status: { status_str: "success", completed: true },
                 outputs: {
+                  "107_load": {
+                    images: [
+                      { filename: "source_input.mp4", subfolder: "", type: "input" },
+                    ],
+                  },
                   save: {
                     [outputField]: [
                       { filename: "shot_00001_.mp4", subfolder: "takeboard/test", type: "output" },
@@ -1062,6 +1067,8 @@ describe("real generation routes", () => {
             });
           }
           if (url.includes("/view?")) {
+            expect(url).toContain("filename=shot_00001_.mp4");
+            expect(url).not.toContain("source_input.mp4");
             // Output download and persistence can outlive the first status request.
             await new Promise((resolve) => setTimeout(resolve, 25));
             return new Response(new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]));

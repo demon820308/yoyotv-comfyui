@@ -109,7 +109,34 @@ export function GenerationRecord({
                       {projectKey && asset.mediaType === "image" ? (
                         <img src={projectApi.assetUrl(projectKey, asset.id, true)} alt="" />
                       ) : (
-                        <span aria-hidden="true">{asset.mediaType === "video" ? "▷" : "♪"}</span>
+                        <span aria-hidden="true">
+                          {asset.mediaType === "video" ? (
+                            <svg
+                              viewBox="0 0 16 16"
+                              width="11"
+                              height="11"
+                              fill="currentColor"
+                              stroke="none"
+                              aria-hidden="true"
+                            >
+                              <polygon points="4 2.5 13 8 4 13.5 4 2.5" />
+                            </svg>
+                          ) : (
+                            <svg
+                              viewBox="0 0 16 16"
+                              width="11"
+                              height="11"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              aria-hidden="true"
+                            >
+                              <path d="M6 13V3l7-1v10" />
+                              <circle cx="4" cy="13" r="2" />
+                              <circle cx="11" cy="12" r="2" />
+                            </svg>
+                          )}
+                        </span>
                       )}
                       <strong>{names.get(asset.id)}</strong>
                     </button>

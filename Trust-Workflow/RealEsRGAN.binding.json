@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "workflowPath": "RealEsRGAN.json",
+  "workflowHash": "6df1a8d82b9ac2d079ea328b929ebaf63159d332c14188814987ed9854c99ab5",
+  "capability": "upscale_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "denoise": [
+      {
+        "nodeId": "16",
+        "input": "rescale_factor"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "13",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-09T05:00:00.000Z"
+}

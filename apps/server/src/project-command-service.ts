@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
 import type {
   Asset,
   CanvasEdge,
@@ -1002,27 +1004,61 @@ function buildPlan(
 
   const shot = snapshot.shots.find((candidate) => candidate.id === command.shotId);
   if (!shot) throw new ProjectCommandError(404, "镜头不存在");
-  if (snapshot.runs.some((run) => run.shotId === shot.id)) {
+  const shotRuns = snapshot.runs.filter((run) => run.shotId === shot.id);
+  const activeRuns = shotRuns.filter(
+    (run) => !["completed", "failed", "cancelled", "orphaned"].includes(run.status),
+  );
+  if (activeRuns.length > 0) {
     throw new ProjectCommandError(
       409,
-      "这个镜头已有生成记录。为保留成片与参数溯源，请先保留镜头或仅移除画布节点。",
+      `该镜头有 ${activeRuns.length} 个正在进行的生成任务，请等待完成或取消后再删除。`,
     );
   }
+  const shotRunIds = new Set(shotRuns.map((run) => run.id));
+  const shotTakes = snapshot.takes.filter(
+    (take) => take.shotId === shot.id || shotRunIds.has(take.runId),
+  );
+  const shotTakeIds = new Set(shotTakes.map((take) => take.id));
+
   const items = snapshot.canvasItems.filter(
     (item) => item.refId === shot.id && (item.refType === "shot" || item.refType === "take_stack"),
   );
   const itemIds = new Set(items.map((item) => item.id));
   const edges = snapshot.canvasEdges.filter(
-    (edge) => itemIds.has(edge.sourceItemId) || itemIds.has(edge.targetItemId),
+    (edge) =>
+      itemIds.has(edge.sourceItemId) ||
+      itemIds.has(edge.targetItemId) ||
+      (edge.runId !== null && shotRunIds.has(edge.runId)),
   );
   const sceneOrders = snapshot.shots
     .filter((candidate) => candidate.sceneId === shot.sceneId)
     .map((candidate) => ({ shotId: candidate.id, order: candidate.order }));
+
   snapshot.shots = snapshot.shots.filter((candidate) => candidate.id !== shot.id);
   snapshot.canvasItems = snapshot.canvasItems.filter((item) => !itemIds.has(item.id));
   snapshot.canvasEdges = snapshot.canvasEdges.filter(
-    (edge) => !itemIds.has(edge.sourceItemId) && !itemIds.has(edge.targetItemId),
+    (edge) =>
+      !itemIds.has(edge.sourceItemId) &&
+      !itemIds.has(edge.targetItemId) &&
+      (edge.runId === null || !shotRunIds.has(edge.runId)),
   );
+  snapshot.runs = snapshot.runs.filter((run) => run.shotId !== shot.id);
+  snapshot.takes = snapshot.takes.filter((take) => !shotTakeIds.has(take.id));
+  snapshot.approvals = snapshot.approvals.filter(
+    (approval) => approval.shotId !== shot.id && !shotTakeIds.has(approval.takeId),
+  );
+
+  const shotRenderPrefix = `renders/${shot.id}/`;
+  const referencedAssetIds = new Set(
+    snapshot.runs.flatMap((run) =>
+      run.inputs.filter((input) => input.refType === "asset").map((input) => input.refId),
+    ),
+  );
+  snapshot.assets = snapshot.assets.filter(
+    (asset) =>
+      !asset.storagePath.startsWith(shotRenderPrefix) || referencedAssetIds.has(asset.id),
+  );
+
   snapshot.shots
     .filter((candidate) => candidate.sceneId === shot.sceneId)
     .sort((left, right) => left.order - right.order)
@@ -1038,16 +1074,27 @@ function buildPlan(
       effect("remove", "shot", shot.id, shot.label),
       ...items.map((item) => effect("remove", "canvas_item", item.id, `${shot.label} 的画布节点`)),
       ...edges.map((edge) => effect("disconnect", "canvas_edge", edge.id, "随镜头删除的连线")),
+      ...(shotRuns.length > 0
+        ? [effect("remove", "shot", shot.id, `${shotRuns.length} 条生成记录与成片`)]
+        : []),
     ],
-    warnings: ["镜头会从镜头列表和画布中同时移除"],
+    warnings: [
+      "镜头会从镜头列表和画布中同时移除",
+      ...(shotRuns.length > 0
+        ? [`将同时清理 ${shotRuns.length} 条生成记录与成片，彻底删除后无法撤销`]
+        : []),
+    ],
     requiresConfirmation: true,
-    inverse: {
-      kind: "restore_shot",
-      shot: clone(shot),
-      items: clone(items),
-      edges: clone(edges),
-      sceneOrders,
-    },
+    inverse:
+      shotRuns.length === 0
+        ? {
+            kind: "restore_shot",
+            shot: clone(shot),
+            items: clone(items),
+            edges: clone(edges),
+            sceneOrders,
+          }
+        : null,
     result: { removedShotId: shot.id, removedItemIds: [...itemIds] },
   };
 }
@@ -1374,6 +1421,10 @@ export class ProjectCommandService {
         summary: plan.summary,
       },
     });
+    if (envelope.command.type === "shot.delete") {
+      const renderDir = join(store.projectDirectory, "renders", envelope.command.shotId);
+      await rm(renderDir, { recursive: true, force: true }).catch(() => undefined);
+    }
     return {
       commandId,
       replayed: false,

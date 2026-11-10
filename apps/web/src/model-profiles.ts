@@ -54,11 +54,11 @@ export function workflowInputSlots(workflow: WorkflowSummary | null): WorkflowIn
   if (workflow.inputs.includes("first_frame")) {
     slots.push({
       id: "first_frame",
-      label: workflow.capability === "image_to_image" ? "源图" : "首帧",
-      required: ["image_to_image", "image_to_video", "first_last_video"].includes(
+      label: ["image_to_image", "upscale_image"].includes(workflow.capability) ? "源图" : "首帧",
+      required: ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(
         workflow.capability,
       ),
-      hint: workflow.capability === "image_to_image" ? "保留并编辑这张图" : "视频从这里开始",
+      hint: workflow.capability === "upscale_image" ? "待放大的原图" : workflow.capability === "image_to_image" ? "保留并编辑这张图" : "视频从这里开始",
       maxCount: workflow.mediaInputs?.first_frame ?? 1,
       mediaType: "image",
     });
@@ -86,9 +86,9 @@ export function workflowInputSlots(workflow: WorkflowSummary | null): WorkflowIn
   if (workflow.inputs.includes("reference_videos")) {
     slots.push({
       id: "reference_video",
-      label: "参考视频",
-      required: false,
-      hint: "动作、运镜或节奏参考",
+      label: workflow.capability === "upscale_video" ? "源视频" : "参考视频",
+      required: workflow.capability === "upscale_video",
+      hint: workflow.capability === "upscale_video" ? "待放大的原视频" : "动作、运镜或节奏参考",
       maxCount: workflow.mediaInputs?.reference_video ?? 3,
       mediaType: "video",
     });
@@ -137,7 +137,7 @@ export function modelProfile(
     };
   }
   if (haystack.includes("ltx")) {
-    const size = orientedSize(848, 480, aspectRatio);
+    const size = orientedSize(736, 416, aspectRatio);
     return {
       family: "ltx23",
       title: "LTX Video 工作参数",
@@ -148,7 +148,7 @@ export function modelProfile(
     };
   }
   if (haystack.includes("wan")) {
-    const size = orientedSize(848, 480, aspectRatio);
+    const size = orientedSize(736, 416, aspectRatio);
     const preview = haystack.includes("preview") || haystack.includes("快速预演");
     return {
       family: "wan22",
@@ -161,16 +161,27 @@ export function modelProfile(
       slots,
     };
   }
-  const size = orientedSize(848, 480, aspectRatio);
+  const size = orientedSize(736, 416, aspectRatio);
   const imageOutput = workflow
-    ? ["text_to_image", "image_to_image"].includes(workflow.capability)
+    ? ["text_to_image", "image_to_image", "upscale_image"].includes(workflow.capability)
     : false;
   return {
     family: "custom",
     title: "Workflow 工作参数",
     description: "只显示当前 Workflow 实际声明的输入；其余参数留在 ComfyUI 中编辑。",
     outputLabel: imageOutput ? "图片" : "视频",
-    defaults: { ...size, durationSeconds: 5, fps: 16, steps: 20, denoise: 0.65 },
+    defaults: {
+      ...size,
+      durationSeconds: 5,
+      fps: 16,
+      steps: 20,
+      denoise:
+        workflow?.capability === "upscale_image"
+          ? 2
+          : workflow?.capability === "upscale_video"
+            ? 1.0
+            : 0.65,
+    },
     slots,
   };
 }

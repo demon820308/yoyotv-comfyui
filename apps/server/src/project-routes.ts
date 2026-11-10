@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
-import { createWriteStream, existsSync } from "node:fs";
-import { mkdir, readdir, rename, rm, stat, unlink } from "node:fs/promises";
-import { basename, join, resolve, sep } from "node:path";
+import { createReadStream, createWriteStream, existsSync, statSync } from "node:fs";
+import { copyFile, mkdir, readFile, readdir, rename, rm, stat, unlink } from "node:fs/promises";
+import { basename, extname, join, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { concatVideos, createZipArchive } from "./export-service.js";
 import {
   type AspectRatio,
   type BatchApprovalDecision,
@@ -42,6 +43,21 @@ import { ProjectStore } from "./storage/project-store.js";
 import type { WorkerPool } from "./worker-pool.js";
 
 const allowedRatios = new Set<AspectRatio>(["9:16", "16:9", "1:1", "4:5", "2.35:1"]);
+const coverFilenames = ["cover.jpg", "cover.png", "cover.webp", "cover.jpeg"];
+
+function findProjectCover(directory: string): { file: string; mtimeMs: number } | null {
+  for (const name of coverFilenames) {
+    const file = join(directory, name);
+    if (existsSync(file)) {
+      try {
+        return { file, mtimeMs: Math.round(statSync(file).mtimeMs) };
+      } catch {
+        return { file, mtimeMs: Date.now() };
+      }
+    }
+  }
+  return null;
+}
 
 function approvalConfirmationToken(revision: number, decisions: readonly BatchApprovalDecision[]) {
   const canonical = [...decisions]
@@ -397,16 +413,21 @@ export function registerProjectRoutes(
               membershipRole: role,
               accessSource: role ? "membership" : "instance_admin",
               boards: [],
+              hasCover: false,
               unavailable: true,
             };
           }
           if (opened && accessible && !accessible.has(opened.snapshot.project.id)) return null;
+          const projectDir = projectDirectory(root, entry.name);
+          const coverInfo = findProjectCover(projectDir);
           return opened
             ? {
                 key: entry.name,
                 revision: opened.revision,
                 id: opened.snapshot.project.id,
                 title: opened.snapshot.project.title,
+                hasCover: Boolean(coverInfo),
+                coverUpdatedAt: coverInfo?.mtimeMs,
                 aspectRatio: (() => {
                   const ratios = new Set(opened.snapshot.shots.map((shot) => shot.aspectRatio));
                   if (ratios.size === 0) return "自由画布";
@@ -656,12 +677,213 @@ export function registerProjectRoutes(
       .send(archive);
   });
 
+  app.post<{
+    Params: { key: string };
+    Body: { assetIds: string[]; filenames?: Record<string, string>; title?: string };
+  }>("/api/projects/:key/export/zip", async (request, reply) => {
+    const key = projectKey(request.params.key);
+    if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+    const { assetIds, filenames = {}, title } = request.body || {};
+    if (!Array.isArray(assetIds) || assetIds.length === 0) {
+      return await reply.code(400).send({ error: "请选择至少一个素材进行导出" });
+    }
+    const directory = projectDirectory(root, key);
+    const store = ProjectStore.openExisting(directory);
+    if (!store) return await reply.code(404).send({ error: "项目不存在" });
+    let current: ReturnType<ProjectStore["loadCurrent"]>;
+    try {
+      current = store.loadCurrent();
+    } finally {
+      store.close();
+    }
+    if (!current) return await reply.code(404).send({ error: "项目不存在" });
+
+    const entries: Array<{ name: string; data: Buffer }> = [];
+    const usedNames = new Set<string>();
+
+    for (const id of assetIds) {
+      const asset = current.snapshot.assets.find((item) => item.id === id);
+      if (!asset) continue;
+      const absPath = join(directory, asset.storagePath);
+      if (!existsSync(absPath)) continue;
+      const data = await readFile(absPath);
+      let baseName = filenames[id] || asset.originalName || `${asset.id}${extname(asset.storagePath)}`;
+      let finalName = baseName;
+      let counter = 1;
+      while (usedNames.has(finalName)) {
+        const ext = extname(baseName);
+        const stem = basename(baseName, ext);
+        finalName = `${stem}_${counter}${ext}`;
+        counter++;
+      }
+      usedNames.add(finalName);
+      entries.push({ name: finalName, data });
+    }
+
+    if (entries.length === 0) {
+      return await reply.code(400).send({ error: "未找到有效的素材文件进行打包" });
+    }
+
+    const zipBuffer = createZipArchive(entries);
+    const zipName = `${(title || current.snapshot.project.title || "assets").trim()}_export.zip`;
+    return reply
+      .header("content-type", "application/zip")
+      .header(
+        "content-disposition",
+        `attachment; filename="assets.zip"; filename*=UTF-8''${encodeURIComponent(zipName)}`,
+      )
+      .send(zipBuffer);
+  });
+
+  app.post<{
+    Params: { key: string };
+    Body: { assetIds: string[]; title?: string };
+  }>("/api/projects/:key/export/concat", async (request, reply) => {
+    const key = projectKey(request.params.key);
+    if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+    const { assetIds, title } = request.body || {};
+    if (!Array.isArray(assetIds) || assetIds.length === 0) {
+      return await reply.code(400).send({ error: "请至少选择一个视频素材进行拼接" });
+    }
+    const directory = projectDirectory(root, key);
+    const store = ProjectStore.openExisting(directory);
+    if (!store) return await reply.code(404).send({ error: "项目不存在" });
+    let current: ReturnType<ProjectStore["loadCurrent"]>;
+    try {
+      current = store.loadCurrent();
+    } finally {
+      store.close();
+    }
+    if (!current) return await reply.code(404).send({ error: "项目不存在" });
+
+    const filePaths: string[] = [];
+    for (const id of assetIds) {
+      const asset = current.snapshot.assets.find((item) => item.id === id);
+      if (!asset || asset.mediaType !== "video") continue;
+      const absPath = join(directory, asset.storagePath);
+      if (existsSync(absPath)) {
+        filePaths.push(absPath);
+      }
+    }
+
+    if (filePaths.length === 0) {
+      return await reply.code(400).send({ error: "未找到有效的视频文件进行拼接" });
+    }
+
+    const exportDir = join(directory, "exports");
+    await mkdir(exportDir, { recursive: true });
+    const tempId = randomUUID();
+    const outputPath = join(exportDir, `concat_${tempId}.mp4`);
+
+    try {
+      await concatVideos(filePaths, outputPath);
+      const outName = `${(title || current.snapshot.project.title || "video").trim()}_combined.mp4`;
+      reply
+        .header("content-type", "video/mp4")
+        .header(
+          "content-disposition",
+          `attachment; filename="video_combined.mp4"; filename*=UTF-8''${encodeURIComponent(outName)}`,
+        );
+      const stream = createReadStream(outputPath);
+      stream.on("close", () => {
+        unlink(outputPath).catch(() => {});
+      });
+      return reply.send(stream);
+    } catch (err) {
+      await unlink(outputPath).catch(() => {});
+      return await reply.code(500).send({
+        error: `视频拼接失败: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+  });
+
   app.get<{ Params: { key: string } }>("/api/projects/:key", async (request, reply) => {
     const key = projectKey(request.params.key);
     if (!key) return await reply.code(400).send({ error: "项目标识无效" });
     const opened = await service.open(projectDirectory(root, key));
     if (!opened) return await reply.code(404).send({ error: "项目不存在" });
     return { key, ...opened };
+  });
+
+  app.get<{ Params: { key: string } }>("/api/projects/:key/cover", async (request, reply) => {
+    const key = projectKey(request.params.key);
+    if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+    const directory = projectDirectory(root, key);
+    const coverInfo = findProjectCover(directory);
+    if (!coverInfo) return await reply.code(404).send({ error: "项目未设置封面" });
+    const ext = extname(coverInfo.file).toLowerCase();
+    const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+    reply.header("content-type", mime);
+    reply.header("cache-control", "no-cache, no-store, must-revalidate");
+    reply.header("pragma", "no-cache");
+    reply.header("expires", "0");
+    return reply.send(createReadStream(coverInfo.file));
+  });
+
+  app.post<{ Params: { key: string } }>("/api/projects/:key/cover", async (request, reply) => {
+    const key = projectKey(request.params.key);
+    if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+    const directory = projectDirectory(root, key);
+    if (!existsSync(directory)) return await reply.code(404).send({ error: "项目不存在" });
+
+    if (request.isMultipart()) {
+      const part = await request.file();
+      if (!part) return await reply.code(400).send({ error: "请选择封面图片" });
+      const ext = extname(part.filename).toLowerCase();
+      const targetExt = ext === ".png" ? ".png" : ext === ".webp" ? ".webp" : ".jpg";
+      for (const name of coverFilenames) {
+        await unlink(join(directory, name)).catch(() => undefined);
+      }
+      const targetPath = join(directory, `cover${targetExt}`);
+      await pipeline(part.file, createWriteStream(targetPath));
+      return { ok: true, hasCover: true, coverUpdatedAt: Date.now() };
+    }
+
+    const body = (
+      typeof request.body === "object" && request.body !== null ? request.body : {}
+    ) as {
+      assetId?: string;
+    };
+    if (body.assetId) {
+      const store = ProjectStore.openExisting(directory);
+      if (!store) return await reply.code(404).send({ error: "项目不存在" });
+      let current: ReturnType<ProjectStore["loadCurrent"]>;
+      try {
+        current = store.loadCurrent();
+      } finally {
+        store.close();
+      }
+      const asset = current?.snapshot.assets.find((a) => a.id === body.assetId);
+      if (!asset) return await reply.code(404).send({ error: "素材不存在" });
+      const candidates = [
+        join(directory, asset.storagePath),
+        asset.proxyPath ? join(directory, asset.proxyPath) : null,
+        join(directory, "assets", "originals", asset.storagePath),
+      ].filter((p): p is string => Boolean(p && existsSync(p)));
+      const sourceFile = candidates[0];
+      if (!sourceFile) return await reply.code(404).send({ error: "素材文件不存在" });
+
+      const ext = extname(sourceFile).toLowerCase();
+      const targetExt = ext === ".png" ? ".png" : ext === ".webp" ? ".webp" : ".jpg";
+      for (const name of coverFilenames) {
+        await unlink(join(directory, name)).catch(() => undefined);
+      }
+      const targetPath = join(directory, `cover${targetExt}`);
+      await copyFile(sourceFile, targetPath);
+      return { ok: true, hasCover: true, coverUpdatedAt: Date.now() };
+    }
+
+    return await reply.code(400).send({ error: "无效的封面请求" });
+  });
+
+  app.delete<{ Params: { key: string } }>("/api/projects/:key/cover", async (request, reply) => {
+    const key = projectKey(request.params.key);
+    if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+    const directory = projectDirectory(root, key);
+    for (const name of coverFilenames) {
+      await unlink(join(directory, name)).catch(() => undefined);
+    }
+    return { ok: true, hasCover: false };
   });
 
   app.get<{ Params: { key: string } }>("/api/projects/:key/sync", async (request, reply) => {

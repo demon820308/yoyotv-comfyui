@@ -47,11 +47,13 @@ export function CanvasVideo({
   label,
   onLoaded,
   onError,
+  onDimensions,
 }: {
   src: string;
   label: string;
   onLoaded?: () => void;
   onError?: () => void;
+  onDimensions?: (dimensions: { width: number; height: number; duration?: number | undefined }) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -77,11 +79,28 @@ export function CanvasVideo({
         }}
         onLoadedMetadata={(event) => {
           const element = event.currentTarget;
-          setDuration(Number.isFinite(element.duration) ? element.duration : 0);
+          const dur = Number.isFinite(element.duration) ? element.duration : 0;
+          setDuration(dur);
           seekPreviewFrame(element);
+          if (element.videoWidth && element.videoHeight) {
+            onDimensions?.({
+              width: element.videoWidth,
+              height: element.videoHeight,
+              duration: dur || undefined,
+            });
+          }
         }}
         onLoadedData={(event) => {
-          seekPreviewFrame(event.currentTarget);
+          const element = event.currentTarget;
+          seekPreviewFrame(element);
+          if (element.videoWidth && element.videoHeight) {
+            const dur = Number.isFinite(element.duration) ? element.duration : 0;
+            onDimensions?.({
+              width: element.videoWidth,
+              height: element.videoHeight,
+              duration: dur || undefined,
+            });
+          }
           onLoaded?.();
         }}
         onError={onError}

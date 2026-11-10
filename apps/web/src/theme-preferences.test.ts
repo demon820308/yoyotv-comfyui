@@ -34,10 +34,10 @@ function browser(storage = new Map<string, string>(), initialCookie = "") {
 }
 
 describe("theme preferences", () => {
-  it("uses soft color for a fresh install and rejects unknown cookie values", async () => {
+  it("uses dark noir style for a fresh install and rejects unknown cookie values", async () => {
     browser();
     const theme = await import("./theme-preferences");
-    expect(theme.readThemePreference()).toBe("chroma");
+    expect(theme.readThemePreference()).toBe("noir");
     expect(theme.themeFromCookie("takeboard_theme=unexpected")).toBeNull();
     expect(theme.themeFromCookie("other_takeboard_theme=noir")).toBeNull();
   });
@@ -83,7 +83,7 @@ describe("theme preferences", () => {
       throw new Error("blocked");
     };
     const theme = await import("./theme-preferences");
-    expect(theme.readThemePreference()).toBe("chroma");
+    expect(theme.readThemePreference()).toBe("noir");
     expect(() => theme.rememberTheme("noir")).not.toThrow();
     expect(theme.readThemePreference()).toBe("noir");
     expect(doc.documentElement.dataset.theme).toBe("noir");

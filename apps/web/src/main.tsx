@@ -9,7 +9,8 @@ import { readThemePreference, rememberTheme } from "./theme-preferences";
 import "./styles.css";
 import "./workspace-refinements.css";
 
-rememberTheme(readThemePreference());
+const preferredTheme = readThemePreference();
+rememberTheme(preferredTheme === "chroma" ? "noir" : preferredTheme);
 const displayScale = savedScale();
 document.documentElement.style.setProperty("--ui-scale", String(displayScale));
 document.documentElement.style.setProperty("--ui-scale-inverse", String(1 / displayScale));

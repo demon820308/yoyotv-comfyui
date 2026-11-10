@@ -29,6 +29,8 @@ describe("user-facing recovery guidance", () => {
   it("keeps version-conflict instructions visible rather than hiding them as technical details", () => {
     const message = "项目刚刚在其他设备发生变化；已载入最新版本，请确认后再次执行刚才的操作。";
     expect(recoveryGuidance(message)).toMatchObject({ next: message, action: "review" });
+    expect(recoveryGuidance("项目已由其他操作更新（当前版本 108，请求基于版本 107），请刷新后重试")).toMatchObject({ action: "review" });
+    expect(recoveryGuidance("请连接到镜头的图片、视频或音频输入端口")).toMatchObject({ action: "assets" });
     expect(recoveryGuidance("ENOSPC").action).toBe("storage");
   });
 });

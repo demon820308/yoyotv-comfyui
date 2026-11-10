@@ -28,14 +28,12 @@ const GenerationConnectionPanel = lazy(() =>
 );
 
 const hubChromeCss = `.hub-header {
-  height: 72px;
-  padding: 0 clamp(14px, 2.6vw, 38px);
-  border-bottom: 1px solid color-mix(in srgb, var(--hub-line) 68%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 2.5%, transparent), transparent),
-    color-mix(in srgb, var(--hub-bg) 84%, transparent);
-  box-shadow: 0 14px 44px color-mix(in srgb, black 16%, transparent);
-  backdrop-filter: blur(28px) saturate(116%);
+  height: 64px;
+  padding: 0 clamp(16px, 2.5vw, 36px);
+  border-bottom: 1px solid var(--hub-line);
+  background: color-mix(in srgb, var(--hub-surface) 96%, transparent);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(16px);
 }
 
 .hub-header-inner {
@@ -47,15 +45,11 @@ const hubChromeCss = `.hub-header {
 .hub-header-actions {
   min-width: 0;
   padding: 4px;
-  border: 1px solid color-mix(in srgb, var(--hub-line) 78%, transparent);
-  border-radius: 15px;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, white 3%, transparent), transparent 48%),
-    color-mix(in srgb, var(--hub-surface) 68%, transparent);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, white 5%, transparent) inset,
-    0 12px 34px color-mix(in srgb, black 12%, transparent);
-  gap: 5px;
+  border: 1px solid var(--hub-line);
+  border-radius: 8px;
+  background: var(--hub-surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+  gap: 4px;
 }
 
 .hub-header-actions > :is(.hub-status-group, .hub-utility-control) {
@@ -64,12 +58,12 @@ const hubChromeCss = `.hub-header {
 
 .hub-status-group {
   display: flex;
-  height: 38px;
+  height: 32px;
   align-items: stretch;
   padding: 2px;
-  border: 1px solid color-mix(in srgb, var(--hub-line) 82%, transparent);
-  border-radius: 11px;
-  background: color-mix(in srgb, var(--hub-surface-raised) 48%, transparent);
+  border: 1px solid var(--hub-line);
+  border-radius: 6px;
+  background: var(--hub-surface-raised);
 }
 
 .hub-status-divider {
@@ -88,25 +82,35 @@ const hubChromeCss = `.hub-header {
 }
 
 .hub-brand strong {
-  font-family: Georgia, "Songti SC", serif;
-  font-weight: 580;
-  letter-spacing: -0.025em;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .hub-brand span:last-child {
-  color: var(--faint);
-  letter-spacing: 0.12em;
+  color: var(--hub-muted);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
 }
 
 .hub-brand .brand-mark {
-  border: 1px solid color-mix(in srgb, var(--hub-accent) 54%, var(--hub-line));
-  border-radius: 9px;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, white 36%, transparent), transparent 52%),
-    var(--hub-accent);
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 34%) inset,
-    0 9px 24px color-mix(in srgb, var(--hub-accent) 18%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--hub-accent) 55%, var(--hub-line));
+  border-radius: 6px;
+  color: var(--hub-accent);
+  background: var(--hub-surface-raised);
+  font-family: Inter, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 26%);
 }
 
 .hub-header .hub-status-group .operations-control.is-compact .operations-pill {
@@ -533,6 +537,421 @@ const hubChromeCss = `.hub-header {
     color-mix(in srgb, var(--hub-bg) 84%, transparent),
     color-mix(in srgb, var(--hub-bg) 68%, transparent)
   );
+}
+
+.hub-hero.hub-object-hero.has-recent-project {
+  min-height: auto !important;
+  padding: 24px 0 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 5 !important;
+  width: var(--hub-layout-width);
+  pointer-events: auto !important;
+}
+
+.hero-recent-container,
+.hero-recent-card,
+.hero-recent-resume-btn {
+  pointer-events: auto !important;
+}
+
+.hero-recent-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-recent-card {
+  width: 100%;
+  padding: 22px 28px;
+  border-radius: 12px;
+  border: 1px solid var(--hub-line);
+  background: var(--hub-surface);
+  box-shadow: 0 6px 24px color-mix(in srgb, black 6%, transparent);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-recent-card:hover,
+.hero-recent-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--hub-accent) 45%, var(--hub-line));
+  box-shadow: 0 12px 36px color-mix(in srgb, black 10%, transparent);
+  outline: none;
+}
+
+.hero-recent-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-recent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--hub-accent);
+  font-weight: 600;
+}
+
+.hero-recent-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--hub-accent);
+  box-shadow: 0 0 6px var(--hub-accent);
+}
+
+.hero-recent-time {
+  font-size: 12px;
+  color: var(--hub-muted);
+}
+
+.hero-recent-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.hero-recent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hero-recent-title {
+  margin: 0;
+  font-size: clamp(22px, 2.2vw, 32px);
+  font-weight: 600;
+  color: var(--hub-copy);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-recent-meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--hub-muted);
+}
+
+.hero-recent-dot {
+  opacity: 0.45;
+}
+
+.hero-recent-running {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.hero-recent-resume-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 99px;
+  background: var(--hub-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: filter 150ms ease, transform 150ms ease;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--hub-accent) 28%, transparent);
+}
+
+.hero-recent-resume-btn:hover {
+  filter: brightness(1.08);
+  transform: scale(1.02);
+}
+
+.hero-recent-resume-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+  filter: none;
+}
+
+.hub-object-hero.has-recent-project + .hub-projects {
+  padding-top: 14px !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (max-width: 768px) {
+  .hero-recent-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .hero-recent-resume-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.project-card-cover-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.project-card-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 320ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.project-card:hover .project-card-cover-image {
+  transform: scale(1.03);
+}
+
+.project-card-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 40%, rgba(0, 0, 0, 0.72) 100%);
+  pointer-events: none;
+}
+
+.hero-recent-card.has-cover-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-recent-cover-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-recent-cover-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.22;
+  filter: blur(1px);
+  transform: scale(1.05);
+}
+
+.hero-recent-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--hub-surface) 30%, rgba(20, 24, 22, 0.75) 100%);
+}
+
+.hero-recent-card.has-cover-bg > :not(.hero-recent-cover-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Cover Modal */
+.project-cover-modal {
+  width: min(580px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid var(--hub-line);
+  border-radius: 12px;
+  color: var(--hub-copy);
+  background: var(--hub-surface);
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+}
+
+.cover-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.cover-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  border: 1px dashed var(--hub-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hub-surface-raised) 50%, transparent);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.cover-upload-zone:hover,
+.cover-upload-zone:focus-visible {
+  border-color: var(--hub-accent);
+  background: color-mix(in srgb, var(--hub-accent) 8%, var(--hub-surface));
+  outline: none;
+}
+
+.cover-upload-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  color: var(--hub-accent);
+}
+
+.cover-upload-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cover-upload-zone strong {
+  font-size: 14px;
+  color: var(--hub-copy);
+  margin-bottom: 4px;
+}
+
+.cover-upload-zone p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--hub-muted);
+}
+
+.cover-browse-btn {
+  margin-top: 12px;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--hub-line);
+  background: var(--hub-surface-raised);
+  color: var(--hub-copy);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.cover-browse-btn:hover {
+  border-color: var(--hub-accent);
+  color: var(--hub-accent);
+}
+
+.cover-board-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cover-picker-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--hub-muted);
+  text-transform: uppercase;
+}
+
+.cover-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.cover-asset-card {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--hub-line);
+  background: #000;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.cover-asset-card:hover,
+.cover-asset-card:focus-visible {
+  border-color: var(--hub-accent);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.cover-asset-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-asset-card-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 4px;
+  font-size: 9px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.cover-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.cover-remove-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--red, #e05252) 40%, var(--hub-line));
+  background: transparent;
+  color: var(--red, #e05252);
+  font-size: 12px;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.cover-remove-btn:hover {
+  background: color-mix(in srgb, var(--red, #e05252) 12%, transparent);
+}
+
+.cover-cancel-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--hub-line);
+  background: var(--hub-surface-raised);
+  color: var(--hub-copy);
+  font-size: 13px;
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.cover-cancel-btn:hover {
+  border-color: var(--hub-accent);
+  color: var(--hub-accent);
+}
 }`;
 
 const companionMessages = {
@@ -582,7 +1001,16 @@ type NewProjectInput = {
   storageFolder?: string;
 };
 
-function ActionIcon({ name }: { name: "open" | "rename" | "delete" | "export" }) {
+function ActionIcon({ name }: { name: "open" | "rename" | "delete" | "export" | "cover" }) {
+  if (name === "cover") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="m21 15-5-5L5 21" />
+      </svg>
+    );
+  }
   if (name === "rename") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -656,6 +1084,7 @@ function ProjectCard({
   onDelete,
   onOpen,
   onRename,
+  onSetCover,
   project,
 }: {
   busy: boolean;
@@ -663,12 +1092,23 @@ function ProjectCard({
   onDelete: () => void;
   onOpen: () => void;
   onRename: () => void;
+  onSetCover: () => void;
   project: ProjectCatalogItem;
 }) {
   const [boardIndex, setBoardIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"cover" | "board">(project.hasCover ? "cover" : "board");
   const previewRef = useRef<HTMLButtonElement>(null);
   const [previewAspect, setPreviewAspect] = useState(2);
   const [previewVisible, setPreviewVisible] = useState(false);
+
+  useEffect(() => {
+    if (project.hasCover) {
+      setViewMode("cover");
+    } else {
+      setViewMode("board");
+    }
+  }, [project.hasCover, project.coverUpdatedAt]);
+
   useEffect(() => {
     const element = previewRef.current;
     if (!element) return;
@@ -708,15 +1148,34 @@ function ProjectCard({
     <article className="project-card project-card-managed">
       <div className={`project-card-art project-board-preview art-${(index % 3) + 1}`}>
         <div className="project-board-toolbar">
-          <div className="project-board-tabs" role="tablist" aria-label={`${project.title} 的画板`}>
+          <div
+            className="project-board-tabs"
+            role="tablist"
+            aria-label={`${project.title} 的画板与封面`}
+          >
+            {project.hasCover ? (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === "cover"}
+                className={viewMode === "cover" ? "active" : ""}
+                onClick={() => setViewMode("cover")}
+                title="项目封面"
+              >
+                封面
+              </button>
+            ) : null}
             {project.boards.slice(0, 3).map((board, boardPosition) => (
               <button
                 type="button"
                 role="tab"
-                aria-selected={boardPosition === boardIndex}
-                className={boardPosition === boardIndex ? "active" : ""}
+                aria-selected={viewMode === "board" && boardPosition === boardIndex}
+                className={viewMode === "board" && boardPosition === boardIndex ? "active" : ""}
                 key={board.sceneId}
-                onClick={() => setBoardIndex(boardPosition)}
+                onClick={() => {
+                  setViewMode("board");
+                  setBoardIndex(boardPosition);
+                }}
                 title={board.title || board.label}
               >
                 {board.label}
@@ -724,7 +1183,13 @@ function ProjectCard({
             ))}
             {project.boards.length > 3 ? <span>+{project.boards.length - 3}</span> : null}
           </div>
-          <small>{activeBoard ? `${activeBoard.itemCount} 个节点` : "空画板"}</small>
+          <small>
+            {viewMode === "cover" && project.hasCover
+              ? "项目封面"
+              : activeBoard
+                ? `${activeBoard.itemCount} 个节点`
+                : "空画板"}
+          </small>
         </div>
         <button
           className="project-board-open"
@@ -732,9 +1197,19 @@ function ProjectCard({
           type="button"
           onClick={onOpen}
           disabled={busy}
-          aria-label={`打开 ${project.title} 的${activeBoard?.label ?? "画板"}`}
+          aria-label={`打开 ${project.title} 的${viewMode === "cover" && project.hasCover ? "封面" : (activeBoard?.label ?? "画板")}`}
         >
-          {activeBoard ? (
+          {viewMode === "cover" && project.hasCover ? (
+            <div className="project-card-cover-wrapper">
+              <img
+                className="project-card-cover-image"
+                key={project.coverUpdatedAt ?? project.key}
+                src={projectApi.coverUrl(project.key, project.coverUpdatedAt || project.updatedAt)}
+                alt={project.title}
+              />
+              <span className="project-card-cover-overlay" />
+            </div>
+          ) : activeBoard ? (
             <>
               <svg
                 className="project-board-edges"
@@ -786,7 +1261,11 @@ function ProjectCard({
           )}
           <span className="project-board-title">
             <small>{String(index + 1).padStart(2, "0")}</small>
-            <strong>{activeBoard?.title || activeBoard?.label || "项目画板"}</strong>
+            <strong>
+              {viewMode === "cover" && project.hasCover
+                ? "项目封面"
+                : activeBoard?.title || activeBoard?.label || "项目画板"}
+            </strong>
           </span>
         </button>
       </div>
@@ -817,6 +1296,16 @@ function ProjectCard({
           >
             {project.unavailable ? "项目位置不可用" : "打开画板"} <ActionIcon name="open" />
           </button>
+          {canManage ? (
+            <button
+              type="button"
+              onClick={onSetCover}
+              aria-label={`设置 ${project.title} 封面`}
+              title="设置项目封面"
+            >
+              <ActionIcon name="cover" />
+            </button>
+          ) : null}
           {canManage ? (
             <button type="button" onClick={onRename} aria-label={`重命名 ${project.title}`}>
               <ActionIcon name="rename" />
@@ -870,6 +1359,8 @@ export function ProjectHub({
   onOpen,
   onRename,
   onRestore,
+  onSetCover,
+  onDeleteCover,
   projects,
   trashedProjects,
   worker,
@@ -884,6 +1375,8 @@ export function ProjectHub({
   onOpen: (key: string) => Promise<void>;
   onRename: (key: string, title: string) => Promise<void>;
   onRestore: (trashKey: string) => Promise<void>;
+  onSetCover?: (key: string, input: File | { assetId: string }) => Promise<void>;
+  onDeleteCover?: (key: string) => Promise<void>;
   projects: ProjectCatalogItem[];
   trashedProjects: TrashedProjectItem[];
   worker: WorkerStatus | null;
@@ -893,6 +1386,10 @@ export function ProjectHub({
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<ProjectCatalogItem | null>(null);
   const [deleting, setDeleting] = useState<ProjectCatalogItem | null>(null);
+  const [editingCover, setEditingCover] = useState<ProjectCatalogItem | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
   const [renameTitle, setRenameTitle] = useState("");
   const [title, setTitle] = useState("");
   const [projectLocation, setProjectLocation] = useState<ProjectLocationChoice | null>(null);
@@ -991,6 +1488,10 @@ export function ProjectHub({
   }, [creating, renaming]);
 
   useEffect(() => {
+    if (projects.length > 0) {
+      setProjectsVisible(true);
+      return;
+    }
     const section = projectsRef.current;
     if (!section || typeof IntersectionObserver === "undefined") {
       setProjectsVisible(true);
@@ -1006,7 +1507,7 @@ export function ProjectHub({
     );
     observer.observe(section);
     return () => observer.disconnect();
-  }, []);
+  }, [projects.length]);
 
   useEffect(
     () => () => {
@@ -1028,6 +1529,7 @@ export function ProjectHub({
     const shell = shellRef.current;
     if (!shell) return;
     const handleWheel = (event: WheelEvent) => {
+      if (projects.length > 0) return;
       const target = event.target;
       if (
         !(target instanceof Element) ||
@@ -1079,6 +1581,7 @@ export function ProjectHub({
       ref={shellRef}
       className="hub-shell"
       onScroll={(event) => {
+        if (projects.length > 0) return;
         const shell = event.currentTarget;
         const section = projectsRef.current;
         const boundedTop = section
@@ -1088,14 +1591,12 @@ export function ProjectHub({
       }}
     >
       <style>{hubChromeCss}</style>
-      <div className="hub-ambient ambient-one" />
-      <div className="hub-ambient ambient-two" />
       <header className="hub-header">
         <div className="hub-header-inner">
           <div className="brand hub-brand">
-            <span className="brand-mark">T</span>
+            <span className="brand-mark">YoYo</span>
             <div>
-              <strong>TakeBoard</strong>
+              <strong>YoYo</strong>
               <span>FILMMAKING WORKSPACE</span>
             </div>
           </div>
@@ -1172,7 +1673,7 @@ export function ProjectHub({
               className="visually-hidden"
               type="file"
               accept=".tgz,.gz,application/gzip,application/x-gzip"
-              aria-label="选择 TakeBoard 项目包"
+              aria-label="选择 YoYo 项目包"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";
@@ -1273,84 +1774,156 @@ export function ProjectHub({
         </div>
       </header>
 
-      <div className="hub-artifact-background">
-        <div className="scene-companions">
-          {(Object.keys(companionMessages) as Array<keyof typeof companionMessages>).map(
-            (companion) => (
-              <button
-                className={`scene-companion scene-${companion} ${companionMoment === companion ? "is-active" : ""}`}
-                type="button"
-                key={companion}
-                aria-label={`${companionMessages[companion]}互动`}
-                onClick={() => revealCompanionMoment(companion)}
-              >
-                <span className="scene-companion-visual" aria-hidden="true" />
-                <em role="status">{companionMessages[companion]}</em>
-              </button>
-            ),
-          )}
-          <div className="scene-curiosities" aria-hidden="true">
-            <span className="curiosity-constellation">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-            <span className="curiosity-loose-frame">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span className="curiosity-orbit">
-              <i />
-              <i />
-              <i />
-            </span>
+      {projects.length === 0 ? (
+        <div className="hub-artifact-background">
+          <div className="scene-companions">
+            {(Object.keys(companionMessages) as Array<keyof typeof companionMessages>).map(
+              (companion) => (
+                <button
+                  className={`scene-companion scene-${companion} ${companionMoment === companion ? "is-active" : ""}`}
+                  type="button"
+                  key={companion}
+                  aria-label={`${companionMessages[companion]}互动`}
+                  onClick={() => revealCompanionMoment(companion)}
+                >
+                  <span className="scene-companion-visual" aria-hidden="true" />
+                  <em role="status">{companionMessages[companion]}</em>
+                </button>
+              ),
+            )}
+            <div className="scene-curiosities" aria-hidden="true">
+              <span className="curiosity-constellation">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="curiosity-loose-frame">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="curiosity-orbit">
+                <i />
+                <i />
+                <i />
+              </span>
+            </div>
           </div>
-        </div>
-        {sceneQuality !== "lite" ? (
-          <Suspense
-            fallback={
-              <div className="studio-universe">
-                <div className="universe-fallback" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <span />
+          {sceneQuality !== "lite" ? (
+            <Suspense
+              fallback={
+                <div className="studio-universe">
+                  <div className="universe-fallback" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <span />
+                  </div>
                 </div>
+              }
+            >
+              <StudioUniverse
+                quality={sceneQuality === "full" ? "full" : "balanced"}
+                workerReady={worker?.status === "ready"}
+                projectCount={projects.length}
+                recentProjectTitle={recentProject?.title ?? null}
+              />
+            </Suspense>
+          ) : (
+            <div
+              className="studio-universe artifact-universe universe-lite-mode"
+              role="img"
+              aria-label="YoYo 导演板静态封面；可在显示设置中启用三维效果"
+            >
+              <span className="universe-fallback artifact-fallback" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <span />
+              </span>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      <section className={`hub-hero hub-object-hero ${recentProject ? "has-recent-project" : ""}`}>
+        {recentProject ? (
+          <div className="hero-recent-container">
+            <div
+              className={`hero-recent-card ${recentProject.hasCover ? "has-cover-bg" : ""}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => void onOpen(recentProject.key)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  void onOpen(recentProject.key);
+                }
+              }}
+            >
+              {recentProject.hasCover ? (
+                <div className="hero-recent-cover-bg" aria-hidden="true">
+                  <img
+                    key={recentProject.coverUpdatedAt ?? recentProject.key}
+                    src={projectApi.coverUrl(
+                      recentProject.key,
+                      recentProject.coverUpdatedAt || recentProject.updatedAt,
+                    )}
+                    alt=""
+                  />
+                  <span className="hero-recent-cover-overlay" />
+                </div>
+              ) : null}
+              <div className="hero-recent-top">
+                <div className="hero-recent-badge">
+                  <span className="hero-recent-pulse" />
+                  <span>最近编辑 · 继续创作</span>
+                </div>
+                <span className="hero-recent-time">{formatUpdatedAt(recentProject.updatedAt)}</span>
               </div>
-            }
-          >
-            <StudioUniverse
-              quality={sceneQuality === "full" ? "full" : "balanced"}
-              workerReady={worker?.status === "ready"}
-              projectCount={projects.length}
-              recentProjectTitle={recentProject?.title ?? null}
-            />
-          </Suspense>
+              <div className="hero-recent-main">
+                <div className="hero-recent-info">
+                  <h1 className="hero-recent-title">{recentProject.title}</h1>
+                  <p className="hero-recent-meta">
+                    <span>
+                      {recentProject.shotCount > 0
+                        ? `${recentProject.shotCount} 个镜头`
+                        : "空白画板"}
+                    </span>
+                    <span className="hero-recent-dot">·</span>
+                    <span>画幅 {recentProject.aspectRatio}</span>
+                    {recentProject.activeRunCount > 0 ? (
+                      <>
+                        <span className="hero-recent-dot">·</span>
+                        <span className="hero-recent-running">正在生成</span>
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="hero-recent-resume-btn"
+                  disabled={busy}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void onOpen(recentProject.key);
+                  }}
+                >
+                  <b>{busy ? "正在进入…" : "进入画板继续编辑"}</b>
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
-          <div
-            className="studio-universe artifact-universe universe-lite-mode"
-            role="img"
-            aria-label="TakeBoard 导演板静态封面；可在显示设置中启用三维效果"
-          >
-            <span className="universe-fallback artifact-fallback" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <span />
-            </span>
+          <div className="visually-hidden">
+            <span>TAKEBOARD / FILMMAKING WORKSPACE</span>
+            <h1>从素材到成片，都在一张画布。</h1>
+            <p>连接 ComfyUI，管理素材、镜头、Workflow 与生成结果。</p>
           </div>
         )}
-      </div>
-
-      <section className="hub-hero hub-object-hero">
-        <div className="visually-hidden">
-          <span>TAKEBOARD / FILMMAKING WORKSPACE</span>
-          <h1>从素材到成片，都在一张画布。</h1>
-          <p>连接 ComfyUI，管理素材、镜头、Workflow 与生成结果。</p>
-        </div>
       </section>
 
       <section className={`hub-projects ${projectsVisible ? "is-visible" : ""}`} ref={projectsRef}>
@@ -1406,6 +1979,10 @@ export function ProjectHub({
               onRename={() => {
                 setRenaming(project);
                 setRenameTitle(project.title);
+              }}
+              onSetCover={() => {
+                setCoverError(null);
+                setEditingCover(project);
               }}
               onDelete={() => {
                 if (project.activeRunCount > 0) {
@@ -1494,7 +2071,7 @@ export function ProjectHub({
             <div className="modal-title">
               <div>
                 <span className="section-kicker">QUICK START</span>
-                <h2 id="start-guide-title">开始使用 TakeBoard</h2>
+                <h2 id="start-guide-title">开始使用 YoYo</h2>
                 <p>本机使用、远程连接和故障检查都有独立入口。</p>
               </div>
               <button type="button" aria-label="关闭开始使用" onClick={() => setHelpOpen(false)}>
@@ -1506,7 +2083,7 @@ export function ProjectHub({
                 <span>01</span>
                 <strong>本机打开</strong>
                 <p>
-                  安装 TakeBoard 后，从“应用程序”或开始菜单打开即可。默认无需注册，
+                  安装 YoYo 后，从“应用程序”或开始菜单打开即可。默认无需注册，
                   新建项目后就能导入素材；生成需要连接 ComfyUI。
                 </p>
               </article>
@@ -1541,7 +2118,7 @@ export function ProjectHub({
               </div>
             </div>
             <small className="start-guide-note">
-              “导入项目包”用于恢复 TakeBoard 导出的 .takeboard.tgz
+              “导入项目包”用于恢复 YoYo 导出的 .takeboard.tgz
               文件，不要求原来的文件夹结构。普通图片和视频请在项目画布或资产库中导入。
             </small>
           </section>
@@ -1598,7 +2175,39 @@ export function ProjectHub({
       ) : null}
       {notice ? (
         <div className="toast success" role="status">
-          ✓ {notice}
+          <svg
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" />
+          </svg>
+          <span>{notice}</span>
+        </div>
+      ) : null}
+      {error && !creating && !recycleOpen && !renaming && !deleting ? (
+        <div className="toast error" role="alert">
+          <svg
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="4" y1="4" x2="12" y2="12" />
+            <line x1="12" y1="4" x2="4" y2="12" />
+          </svg>
+          <span>{error}</span>
         </div>
       ) : null}
 
@@ -1660,7 +2269,7 @@ export function ProjectHub({
             <span className="section-kicker">项目管理</span>
             <h2 id="delete-project-title">停止生成并移除“{deleting.title}”？</h2>
             <p>
-              TakeBoard 会先安全停止 {deleting.activeRunCount}
+              YoYo 会先安全停止 {deleting.activeRunCount}
               个生成任务；只有执行端确认停止后，项目才会移入回收区。
             </p>
             {error ? <p className="form-error">{error}</p> : null}
@@ -1679,6 +2288,170 @@ export function ProjectHub({
                 }
               >
                 {busy ? "正在停止任务…" : `停止 ${deleting.activeRunCount} 个任务并移除`}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {editingCover ? (
+        <div className="modal-backdrop">
+          <section
+            className="project-cover-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cover-modal-title"
+          >
+            <div className="modal-title">
+              <div>
+                <span className="section-kicker">PROJECT COVER</span>
+                <h2 id="cover-modal-title">设置项目封面 · {editingCover.title}</h2>
+                <p>上传本地图片，或直接选取画板中已有的镜头画面作为封面。</p>
+              </div>
+              <button
+                type="button"
+                aria-label="关闭设置封面"
+                disabled={coverUploading}
+                onClick={() => setEditingCover(null)}
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="4" y1="4" x2="12" y2="12" />
+                  <line x1="12" y1="4" x2="4" y2="12" />
+                </svg>
+              </button>
+            </div>
+
+            <input
+              ref={coverFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file || !onSetCover) return;
+                setCoverUploading(true);
+                setCoverError(null);
+                void onSetCover(editingCover.key, file)
+                  .then(() => setEditingCover(null))
+                  .catch((err: unknown) =>
+                    setCoverError(err instanceof Error ? err.message : "上传封面失败"),
+                  )
+                  .finally(() => {
+                    setCoverUploading(false);
+                    if (e.target) e.target.value = "";
+                  });
+              }}
+            />
+
+            <div className="cover-modal-body">
+              <button
+                type="button"
+                className="cover-upload-zone"
+                aria-label="点击上传本地封面图片"
+                onClick={() => coverFileInputRef.current?.click()}
+              >
+                <div className="cover-upload-icon" aria-hidden="true">
+                  <ActionIcon name="cover" />
+                </div>
+                <strong>本地上传图片</strong>
+                <p>支持 JPG、PNG、WEBP 格式，建议 16:9 比例</p>
+                <span className="cover-browse-btn">
+                  {coverUploading ? "正在处理…" : "浏览本地文件"}
+                </span>
+              </button>
+
+              {(() => {
+                const boardAssets = editingCover.boards
+                  .flatMap((b) => b.nodes)
+                  .filter((node): node is typeof node & { assetId: string } =>
+                    Boolean(node.assetId),
+                  );
+                const uniqueAssets = Array.from(
+                  new Map(boardAssets.map((a) => [a.assetId, a])).values(),
+                );
+
+                if (uniqueAssets.length === 0) return null;
+
+                return (
+                  <div className="cover-board-picker">
+                    <span className="cover-picker-title">
+                      从画板镜头中选取（共 {uniqueAssets.length} 项）
+                    </span>
+                    <div className="cover-asset-grid">
+                      {uniqueAssets.map((asset) => (
+                        <button
+                          key={asset.assetId}
+                          type="button"
+                          className="cover-asset-card"
+                          disabled={coverUploading}
+                          onClick={() => {
+                            if (!onSetCover) return;
+                            setCoverUploading(true);
+                            setCoverError(null);
+                            void onSetCover(editingCover.key, { assetId: asset.assetId })
+                              .then(() => setEditingCover(null))
+                              .catch((err: unknown) =>
+                                setCoverError(err instanceof Error ? err.message : "设置封面失败"),
+                              )
+                              .finally(() => setCoverUploading(false));
+                          }}
+                        >
+                          <img
+                            src={projectApi.assetUrl(editingCover.key, asset.assetId, true)}
+                            alt={asset.label}
+                            loading="lazy"
+                          />
+                          <span className="cover-asset-card-label">{asset.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {coverError ? <p className="form-error">{coverError}</p> : null}
+
+            <div className="modal-actions cover-modal-actions">
+              {editingCover.hasCover ? (
+                <button
+                  type="button"
+                  className="cover-remove-btn"
+                  disabled={coverUploading}
+                  onClick={() => {
+                    if (!onDeleteCover) return;
+                    setCoverUploading(true);
+                    setCoverError(null);
+                    void onDeleteCover(editingCover.key)
+                      .then(() => setEditingCover(null))
+                      .catch((err: unknown) =>
+                        setCoverError(err instanceof Error ? err.message : "移除封面失败"),
+                      )
+                      .finally(() => setCoverUploading(false));
+                  }}
+                >
+                  移除封面（恢复画板预览）
+                </button>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                className="cover-cancel-btn"
+                disabled={coverUploading}
+                onClick={() => setEditingCover(null)}
+              >
+                取消
               </button>
             </div>
           </section>

@@ -880,7 +880,7 @@ export function registerGenerationRoutes(
           miniMaxImage ||
           ltxImage ||
           qwenImage ||
-          ["image_to_image", "image_to_video", "first_last_video"].includes(boundCapability ?? "");
+          ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(boundCapability ?? "");
         const inputAsset = requiresInputImage
           ? requestedAssetId
             ? current.snapshot.assets.find((asset) => asset.id === requestedAssetId)
@@ -888,7 +888,9 @@ export function registerGenerationRoutes(
           : null;
         if (requiresInputImage && inputAsset?.mediaType !== "image") {
           return await reply.code(409).send({
-            error: requestedAssetId ? "选择的首帧不是可用图片" : "请先上传一张首帧图片",
+            error: requestedAssetId
+              ? (boundCapability === "upscale_image" ? "选择的源图不是可用图片" : "选择的首帧不是可用图片")
+              : (boundCapability === "upscale_image" ? "请先上传或连接待放大的图片" : "请先上传一张首帧图片"),
           });
         }
 
@@ -958,10 +960,12 @@ export function registerGenerationRoutes(
           return await reply.code(409).send({ error: "参考素材不存在或类型与输入端口不匹配" });
         }
         if (
-          (miniMaxReference || boundCapability === "reference_video") &&
+          (miniMaxReference || ["reference_video", "upscale_video"].includes(boundCapability ?? "")) &&
           referenceImages.length + referenceVideos.length + referenceAudios.length === 0
         ) {
-          return await reply.code(409).send({ error: "参考生成工作流至少需要一个参考素材" });
+          return await reply.code(409).send({
+            error: boundCapability === "upscale_video" ? "视频放大工作流至少需要连接一个待放大视频素材" : "参考生成工作流至少需要一个参考素材",
+          });
         }
         if (
           miniMaxReference &&
@@ -1007,13 +1011,13 @@ export function registerGenerationRoutes(
             : Math.floor(Math.random() * 2_147_483_647);
         const fallbackSize = resolution(shot.aspectRatio);
         const width =
-          typeof body.width === "number" && body.width >= 256 && body.width <= 2048
+          typeof body.width === "number" && body.width >= 256 && body.width <= 4096
             ? boundWorkflow
               ? Math.round(body.width)
               : Math.round(body.width / 32) * 32
             : fallbackSize.width;
         const height =
-          typeof body.height === "number" && body.height >= 256 && body.height <= 2048
+          typeof body.height === "number" && body.height >= 256 && body.height <= 4096
             ? boundWorkflow
               ? Math.round(body.height)
               : Math.round(body.height / 32) * 32
@@ -1047,20 +1051,30 @@ export function registerGenerationRoutes(
               ? 4
               : Math.min(40, Math.max(8, requestedSteps ?? 20))
             : (requestedSteps ?? (miniMax ? 20 : qwen ? 50 : 20));
+        const isUpscaleImage = boundCapability === "upscale_image";
+        const isUpscaleVideo = boundCapability === "upscale_video";
+        const isUpscale = isUpscaleImage || isUpscaleVideo;
         const denoise =
-          typeof body.denoise === "number" && body.denoise >= 0.05 && body.denoise <= 1
+          typeof body.denoise === "number" && body.denoise >= 0.05 && body.denoise <= (isUpscale ? 16 : 1)
             ? body.denoise
-            : 0.65;
+            : isUpscaleImage
+              ? 2
+              : isUpscaleVideo
+                ? 1.0
+                : 0.65;
         const positivePrompt =
           typeof body.prompt === "string" && body.prompt.trim()
             ? body.prompt.trim().slice(0, 20_000)
-            : shot.intent;
+            : isUpscale
+              ? ""
+              : shot.intent;
         const negativePrompt =
           typeof body.negativePrompt === "string" && body.negativePrompt.trim()
             ? body.negativePrompt.trim().slice(0, 10_000)
             : undefined;
         const outputMediaType =
-          boundWorkflow?.binding.outputMediaType ?? (qwen ? "image" : "video");
+          boundWorkflow?.binding.outputMediaType ??
+          (qwen || boundCapability === "upscale_image" ? "image" : "video");
         const estimatedBytes = estimatedGenerationBytes({
           outputMediaType,
           width,
@@ -1696,14 +1710,21 @@ export function registerGenerationRoutes(
       const expectsImage =
         run.parameters.outputMediaType === "image" ||
         run.recipeVersion.startsWith("qwen-image-2512-");
-      const videoOutput = outputs.flatMap((item) => [
+      const allFiles = outputs.flatMap((item) => [
         ...(item.videos ?? []),
-        ...(item.gifs ?? []).filter((file) => /\.(?:mp4|webm)$/i.test(file.filename)),
-        ...(item.images ?? []).filter((file) => /\.(?:mp4|webm)$/i.test(file.filename)),
-      ])[0];
-      const imageOutput = outputs
-        .flatMap((item) => item.images ?? [])
-        .find((file) => /\.(?:png|jpe?g|webp)$/i.test(file.filename));
+        ...(item.gifs ?? []),
+        ...(item.images ?? []),
+      ]);
+      const candidateVideos = allFiles.filter((file) => /\.(?:mp4|webm)$/i.test(file.filename));
+      const candidateImages = allFiles.filter((file) => /\.(?:png|jpe?g|webp)$/i.test(file.filename));
+      const videoOutput =
+        candidateVideos.find((file) => file.type === "output") ??
+        candidateVideos.find((file) => file.type !== "input") ??
+        candidateVideos[0];
+      const imageOutput =
+        candidateImages.find((file) => file.type === "output") ??
+        candidateImages.find((file) => file.type !== "input") ??
+        candidateImages[0];
       const output = expectsImage ? imageOutput : videoOutput;
       if (!output) {
         if (!history.status?.completed) {

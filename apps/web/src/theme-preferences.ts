@@ -2,7 +2,7 @@ export type TakeBoardTheme = "noir" | "light" | "chroma";
 
 export const themeStorageKey = "takeboard.theme";
 export const themeCookieName = "takeboard_theme";
-export const defaultTheme: TakeBoardTheme = "chroma";
+export const defaultTheme: TakeBoardTheme = "noir";
 const themeChangeEvent = "takeboard:theme";
 let sessionTheme: TakeBoardTheme | null = null;
 

@@ -27,6 +27,8 @@ const groups: Array<{ id: "all" | WorkflowCapability; label: string }> = [
   { id: "image_to_video", label: "图生视频" },
   { id: "first_last_video", label: "首尾帧" },
   { id: "reference_video", label: "参考生成" },
+  { id: "upscale_image", label: "图片放大" },
+  { id: "upscale_video", label: "视频放大" },
 ];
 
 const capabilityIcon: Record<WorkflowCapability, string> = {
@@ -36,6 +38,8 @@ const capabilityIcon: Record<WorkflowCapability, string> = {
   image_to_video: "动",
   first_last_video: "首",
   reference_video: "参",
+  upscale_image: "大",
+  upscale_video: "放",
 };
 
 const parameterLabels: Record<WorkflowParameterKey, string> = {
@@ -102,7 +106,7 @@ export function RecipeStudio({
   onClose: () => void;
   onImport: (file: File) => Promise<WorkflowImport>;
   onRefresh: () => Promise<void>;
-  onSelect: (workflow: WorkflowSummary) => void;
+  onSelect?: ((workflow: WorkflowSummary) => void) | undefined;
   open: boolean;
   selectedPath: string;
   selectionLocked: boolean;
@@ -312,6 +316,26 @@ export function RecipeStudio({
     }
   };
 
+  const disableBinding = async (path: string) => {
+    if (bindingBusy || libraryBusy) return;
+    setBindingBusy(true);
+    setLibraryBusy(path);
+    setBindingError("");
+    try {
+      await workflowApi.disableBinding(path);
+      await onRefresh();
+      if (inspection?.path === path) {
+        setInspection(null);
+        setBindingDraft(null);
+      }
+    } catch (error) {
+      setBindingError(error instanceof Error ? error.message : "工作流禁用失败");
+    } finally {
+      setBindingBusy(false);
+      setLibraryBusy(null);
+    }
+  };
+
   const previewArchive = async (workflow: WorkflowSummary) => {
     setArchiveBusy(true);
     setArchiveError("");
@@ -408,7 +432,7 @@ export function RecipeStudio({
         ref={studioRef}
         role="dialog"
         aria-modal="true"
-        aria-label="选择工作流"
+        aria-label={onSelect ? "选择工作流" : "工作流管理"}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
@@ -444,7 +468,7 @@ export function RecipeStudio({
       >
         <header className="studio-header">
           <div>
-            <h2>选择工作流</h2>
+            <h2>{onSelect ? "选择工作流" : "工作流管理"}</h2>
             <p>
               {selectionLocked
                 ? "当前镜头的工作流已锁定"
@@ -531,7 +555,8 @@ export function RecipeStudio({
                   aria-pressed={selectedPath === workflow.path}
                   disabled={selectionLocked || !isLibraryWorkflow(workflow) || busy}
                   onClick={() => {
-                    if (!workflowAvailability(workflow).ready) void configureBinding(workflow);
+                    if (!onSelect || !workflowAvailability(workflow).ready)
+                      void configureBinding(workflow);
                     else onSelect(workflow);
                   }}
                 >
@@ -540,10 +565,52 @@ export function RecipeStudio({
                   </span>
                   <span className="recipe-copy">
                     <strong>
-                      {workflow.library?.favorite ? "★ " : ""}
+                      {workflow.library?.favorite ? (
+                        <svg
+                          viewBox="0 0 16 16"
+                          width="11"
+                          height="11"
+                          fill="currentColor"
+                          stroke="none"
+                          style={{
+                            verticalAlign: "-1px",
+                            marginRight: "4px",
+                            color: "var(--accent)",
+                          }}
+                          aria-label="收藏"
+                        >
+                          <polygon points="8 1.5 10 5.8 14.7 6.4 11.2 9.7 12.1 14.3 8 12 3.9 14.3 4.8 9.7 1.3 6.4 6 5.8 8 1.5" />
+                        </svg>
+                      ) : null}
                       {workflow.name}
                     </strong>
-                    <small>{workflow.capabilityLabel}</small>
+                    <small
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span>{workflow.capabilityLabel}</span>
+                      <span
+                        style={{
+                          padding: "1px 5px",
+                          borderRadius: "3px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          backgroundColor: workflow.trustSnapshot
+                            ? "rgba(46, 160, 67, 0.15)"
+                            : "rgba(110, 118, 129, 0.15)",
+                          color: workflow.trustSnapshot ? "#3fb950" : "var(--muted)",
+                          border: workflow.trustSnapshot
+                            ? "1px solid rgba(46, 160, 67, 0.4)"
+                            : "1px solid var(--line)",
+                        }}
+                      >
+                        {workflow.trustSnapshot ? "[Trust]" : "[ComfyUI内置]"}
+                      </span>
+                    </small>
                   </span>
                   <i className={workflowAvailability(workflow).ready ? "native" : "comfy"}>
                     {workflowAvailability(workflow).label}
@@ -555,6 +622,15 @@ export function RecipeStudio({
                   </button>
                   {canManageWorkflows ? (
                     <>
+                      {workflow.execution === "bound" ? (
+                        <button
+                          type="button"
+                          disabled={libraryBusy !== null || bindingBusy}
+                          onClick={() => void disableBinding(workflow.path)}
+                        >
+                          禁用
+                        </button>
+                      ) : null}
                       {!isLibraryWorkflow(workflow) ? (
                         <button
                           type="button"
@@ -691,7 +767,11 @@ export function RecipeStudio({
                 {bindingError}
               </p>
             ) : null}
-            {selectionLocked ? "当前镜头保留原工作流，确保结果可复现" : "选择后将绑定到当前镜头"}
+            {!onSelect
+              ? "管理工作流、检查节点依赖与参数映射"
+              : selectionLocked
+                ? "当前镜头保留原工作流，确保结果可复现"
+                : "选择后将绑定到当前镜头"}
             {warnings.length > 0 ? (
               <details>
                 <summary>部分模板未能读取</summary>
@@ -711,10 +791,62 @@ export function RecipeStudio({
               <header>
                 <div>
                   <h3>{inspection.status === "built_in" ? "工作流检查" : "工作流配置"}</h3>
-                  <p>
-                    {workflows.find((item) => item.path === inspection.path)?.name ??
-                      "导入的工作流"}
+                  <p
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      margin: "4px 0",
+                    }}
+                  >
+                    <span>
+                      {workflows.find((item) => item.path === inspection.path)?.name ??
+                        "导入的工作流"}
+                    </span>
+                    <span
+                      style={{
+                        padding: "1px 6px",
+                        borderRadius: "3px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        backgroundColor:
+                          (inspection.trustSnapshot ??
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                            ? "rgba(46, 160, 67, 0.15)"
+                            : "rgba(110, 118, 129, 0.15)",
+                        color:
+                          (inspection.trustSnapshot ??
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                            ? "#3fb950"
+                            : "var(--muted)",
+                        border:
+                          (inspection.trustSnapshot ??
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                            ? "1px solid rgba(46, 160, 67, 0.4)"
+                            : "1px solid var(--line)",
+                      }}
+                    >
+                      {(inspection.trustSnapshot ??
+                      workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                        ? "[Trust]"
+                        : "[ComfyUI内置]"}
+                    </span>
                   </p>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--muted)",
+                      fontFamily:
+                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                      margin: "2px 0 6px 0",
+                    }}
+                  >
+                    存储路径:{" "}
+                    {inspection.trustPath ??
+                      workflows.find((item) => item.path === inspection.path)?.trustPath ??
+                      `ComfyUI/workflows/${inspection.path}`}
+                  </div>
                   {inspection.path === packageNoticePath && packageNotice ? (
                     <div className="recipe-package-notice">{packageNotice}</div>
                   ) : null}
@@ -967,7 +1099,8 @@ export function RecipeStudio({
                     </details>
                   </div>
                 ) : null}
-                {inspection.diagnostic?.executable &&
+                {onSelect &&
+                inspection.diagnostic?.executable &&
                 !bindingBusy &&
                 !selectionLocked &&
                 workflows.some(
@@ -989,21 +1122,35 @@ export function RecipeStudio({
                 {inspection.status === "built_in" ? (
                   <span>内置工作流</span>
                 ) : canManageWorkflows ? (
-                  <button
-                    type="button"
-                    onClick={() => void saveBinding()}
-                    disabled={
-                      !bindingDraft ||
-                      bindingBusy ||
-                      Boolean(
-                        inspection.diagnostic?.checks.some(
-                          (item) => item.status === "blocked" && item.category !== "binding",
-                        ) ?? inspection.conversionIssues?.length,
-                      )
-                    }
-                  >
-                    {bindingBusy ? "正在验证…" : "信任此工作流并启用"}
-                  </button>
+                  <>
+                    {inspection.status === "ready" ||
+                    workflows.some(
+                      (item) => item.path === inspection.path && item.execution === "bound",
+                    ) ? (
+                      <button
+                        type="button"
+                        disabled={bindingBusy}
+                        onClick={() => void disableBinding(inspection.path)}
+                      >
+                        禁用此工作流
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void saveBinding()}
+                      disabled={
+                        !bindingDraft ||
+                        bindingBusy ||
+                        Boolean(
+                          inspection.diagnostic?.checks.some(
+                            (item) => item.status === "blocked" && item.category !== "binding",
+                          ) ?? inspection.conversionIssues?.length,
+                        )
+                      }
+                    >
+                      {bindingBusy ? "正在验证…" : "信任此工作流并启用"}
+                    </button>
+                  </>
                 ) : (
                   <span>只读诊断 · 请联系实例管理员修改映射</span>
                 )}
@@ -1043,7 +1190,20 @@ export function RecipeStudio({
                 </div>
               ) : (
                 <div className="workflow-archive-safe">
-                  <i>✓</i>
+                  <i aria-hidden="true">
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="3 8.5 6.5 12 13 4" />
+                    </svg>
+                  </i>
                   <div>
                     <strong>没有项目引用</strong>
                     <p>归档不会影响现有镜头或生成记录。</p>

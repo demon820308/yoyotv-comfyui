@@ -44,9 +44,9 @@ export function useGenerationSession(
   const [generationBusy, setGenerationBusy] = useState(false);
   const [generationCancelling, setGenerationCancelling] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
-  const [observed, setObserved] = useState<{ shotId: string; progress: GenerationProgress } | null>(
-    null,
-  );
+  const [observedProgressByShot, setObservedProgressByShot] = useState<
+    Record<string, GenerationProgress>
+  >({});
   const generationTokenRef = useRef(0);
   const cancellationScope = useRef(0);
   const stopping = useRef(false);
@@ -72,7 +72,7 @@ export function useGenerationSession(
     setGenerationBusy(false);
     setGenerationCancelling(false);
     setGenerationProgress(null);
-    setObserved(null);
+    setObservedProgressByShot({});
   }, []);
   useEffect(() => {
     attachedScope.current = viewScope;
@@ -419,27 +419,36 @@ export function useGenerationSession(
     runs: snapshot?.runs ?? [],
     onResult: (result, run) => {
       acceptPayload(result);
-      if (run.shotId === selectedShot?.id)
-        setObserved({
-          shotId: run.shotId,
-          progress: realGenerationProgress(result.progress, Date.parse(run.createdAt)),
+      if (result.progress) {
+        const progress = realGenerationProgress(result.progress, Date.parse(run.createdAt));
+        setObservedProgressByShot((current) => ({
+          ...current,
+          [run.shotId]: progress,
+        }));
+      } else if (result.status && ["completed", "failed", "cancelled"].includes(result.status)) {
+        setObservedProgressByShot((current) => {
+          if (!current[run.shotId]) return current;
+          const next = { ...current };
+          delete next[run.shotId];
+          return next;
         });
+      }
     },
     onPending: (run) => {
       if (!run) {
-        setObserved(null);
+        setObservedProgressByShot({});
         return;
       }
-      setObserved({
-        shotId: run.shotId,
-        progress: {
+      setObservedProgressByShot((current) => ({
+        ...current,
+        [run.shotId]: {
           phase: run.status === "collecting_outputs" ? "collecting" : "running",
           label: "已恢复后台生成任务",
           detail: "任务由服务端持续跟踪，关闭页面不影响结果回收",
           percent: null,
           elapsedSeconds: Math.max(0, Math.round((Date.now() - Date.parse(run.createdAt)) / 1000)),
         },
-      });
+      }));
     },
     onError: (cause) => setError(cause instanceof Error ? cause : "后台任务状态同步失败"),
   });
@@ -490,6 +499,13 @@ export function useGenerationSession(
     [snapshot?.runs, selectedShotId],
   );
   const operationShot = generationCancelling ? cancellationShot.current : submissionShot.current;
+  const progressByShot = useMemo(() => {
+    const merged = { ...observedProgressByShot };
+    if (operationShot && generationProgress) {
+      merged[operationShot] = generationProgress;
+    }
+    return merged;
+  }, [observedProgressByShot, operationShot, generationProgress]);
   return {
     canCancelGeneration:
       context.canEdit &&
@@ -497,13 +513,8 @@ export function useGenerationSession(
     generationBusy,
     generationCancelling,
     generationProgress:
-      generationProgress && operationShot === selectedShot?.id
-        ? generationProgress
-        : batchProgress
-          ? batchProgress
-          : observed && observed.shotId === selectedShot?.id
-            ? observed.progress
-            : null,
+      (selectedShotId ? progressByShot[selectedShotId] : null) ?? batchProgress ?? null,
+    progressByShot,
     activeRun,
     requestShotGeneration,
     retryGenerationRun,

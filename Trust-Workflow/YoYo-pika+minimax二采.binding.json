@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "workflowPath": "YoYo-pika+minimax二采.json",
+  "workflowHash": "4860a66651d49462e211cf1c8905d52381c724f34f43cbc081fad5303a75f443",
+  "capability": "reference_video",
+  "outputMediaType": "video",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "2",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "31",
+        "input": "noise_seed"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "75",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "75",
+        "input": "height"
+      }
+    ],
+    "duration": [
+      {
+        "nodeId": "17",
+        "input": "value"
+      }
+    ],
+    "fps": [
+      {
+        "nodeId": "83",
+        "input": "frame_rate"
+      }
+    ]
+  },
+  "media": {
+    "reference_image": [
+      {
+        "nodeId": "39",
+        "input": "image"
+      },
+      {
+        "nodeId": "40",
+        "input": "image"
+      },
+      {
+        "nodeId": "62",
+        "input": "image"
+      },
+      {
+        "nodeId": "63",
+        "input": "image"
+      },
+      {
+        "nodeId": "65",
+        "input": "image"
+      },
+      {
+        "nodeId": "64",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-08T09:08:00.000Z"
+}

@@ -11,12 +11,15 @@ import type { FastifyInstance } from "fastify";
 import { projectDirectory } from "./project-locations.js";
 import { ProjectStore } from "./storage/project-store.js";
 import {
+  disableTrustWorkflow,
+  disableWorkflowBinding,
   fetchComfyObjectInfo,
   inspectWorkflowDocument,
   inspectWorkflowForBinding,
   isWorkflowPath,
   parseWorkflowBinding,
   preflightPromptAgainstObjectInfo,
+  readTrustWorkflow,
   readWorkflowBinding,
   readWorkflowBindingProposal,
   suggestedBinding,
@@ -26,6 +29,7 @@ import {
   type WorkflowOutputMediaType,
   workflowBindingVersion,
   workflowHash,
+  writeTrustWorkflow,
   writeWorkflowBinding,
   writeWorkflowBindingProposal,
 } from "./workflow-bindings.js";
@@ -51,7 +55,7 @@ type WorkflowNode = {
   class_type?: string;
   title?: string;
   _meta?: { title?: string };
-  widgets_values?: unknown[];
+  widgets_values?: unknown[] | Record<string, unknown> | null;
   inputs?: Record<string, unknown>;
 };
 
@@ -70,6 +74,8 @@ const capabilityLabels = {
   image_to_video: "图生视频",
   first_last_video: "首尾帧视频",
   reference_video: "参考生成视频",
+  upscale_image: "图片放大",
+  upscale_video: "视频放大",
 } as const;
 
 type Capability = keyof typeof capabilityLabels;
@@ -99,6 +105,11 @@ function detectCapability(path: string, nodes: WorkflowNode[]): Capability {
   const native = nativeRecipeForPath(path);
   if (native) return native.capability;
   const normalizedPath = path.toLowerCase();
+  if (/upscale|realesrgan|super.*res|放大/.test(normalizedPath)) {
+    const isVideo = /video|vsr|relayvsr/.test(normalizedPath);
+    return isVideo ? "upscale_video" : "upscale_image";
+  }
+  if (/relayvsr|vsr/.test(normalizedPath)) return "upscale_video";
   if (/reference.*video|ref2v|r2v/.test(normalizedPath)) return "reference_video";
   if (/first.*last.*video|firstlast|flf2v|首尾帧/.test(normalizedPath)) {
     return "first_last_video";
@@ -112,6 +123,11 @@ function detectCapability(path: string, nodes: WorkflowNode[]): Capability {
     .map((node) => `${node.type ?? ""} ${node.title ?? ""}`)
     .join(" ")
     .toLowerCase();
+  if (/upscale|realesrgan|super.*res|放大/.test(haystack)) {
+    const isVideo = /video|vsr|relayvsr|createvideo|savevideo/.test(haystack);
+    return isVideo ? "upscale_video" : "upscale_image";
+  }
+  if (/relayvsr|vsr/.test(haystack)) return "upscale_video";
   if (/reference.*video|ref2v|r2v/.test(haystack)) return "reference_video";
   if (/first.*last.*video|firstlast|flf2v|首尾帧/.test(haystack)) return "first_last_video";
   if (/text.*to.*video|t2v|文生视频/.test(haystack)) return "text_to_video";
@@ -129,6 +145,14 @@ function detectInputs(capability: Capability, nodes: WorkflowNode[]) {
     .join(" ")
     .toLowerCase();
   const slots = new Set<string>(["prompt"]);
+  if (capability === "upscale_image") {
+    slots.delete("prompt");
+    slots.add("first_frame");
+  }
+  if (capability === "upscale_video") {
+    slots.delete("prompt");
+    slots.add("reference_videos");
+  }
   if (["image_to_image", "image_to_video", "first_last_video"].includes(capability)) {
     slots.add("first_frame");
   }
@@ -161,7 +185,12 @@ function detectInputs(capability: Capability, nodes: WorkflowNode[]) {
 function detectModels(nodes: WorkflowNode[]) {
   const models = new Set<string>();
   for (const node of nodes) {
-    for (const value of node.widgets_values ?? []) {
+    const values = Array.isArray(node.widgets_values)
+      ? node.widgets_values
+      : node.widgets_values && typeof node.widgets_values === "object"
+        ? Object.values(node.widgets_values)
+        : [];
+    for (const value of values) {
       if (typeof value === "string" && modelExtension.test(value)) {
         models.add(value);
       }
@@ -251,24 +280,35 @@ function workflowSummary(
   const nodes = allNodes(nativeRecipePrompt(path) ?? workflow);
   const hash = workflowHash(workflow);
   const native = isNativeWorkflow(path);
-  const activeBinding = binding?.workflowHash === hash ? binding : null;
-  const capability = activeBinding?.capability ?? detectCapability(path, nodes);
+  const trustSnapshot = native ? null : readTrustWorkflow(path);
+  const activeBinding = trustSnapshot
+    ? trustSnapshot.binding
+    : binding?.workflowHash === hash
+      ? binding
+      : null;
+  const effectiveBinding = activeBinding ?? binding;
+  const capability = effectiveBinding?.capability ?? detectCapability(path, nodes);
   const detectedInputs = detectInputs(capability, nodes);
-  const boundInputs = activeBinding
+  const boundInputs = effectiveBinding
     ? [
-        ...Object.entries(activeBinding.parameters)
+        ...Object.entries(effectiveBinding.parameters)
           .filter(([, targets]) => (targets?.length ?? 0) > 0)
           .map(([key]) => key),
-        ...(activeBinding.media.first_frame?.length ? ["first_frame"] : []),
-        ...(activeBinding.media.last_frame?.length ? ["last_frame"] : []),
-        ...(activeBinding.media.reference_image?.length ? ["reference_images"] : []),
-        ...(activeBinding.media.reference_video?.length ? ["reference_videos"] : []),
-        ...(activeBinding.media.reference_audio?.length ? ["reference_audio"] : []),
+        ...(effectiveBinding.media.first_frame?.length ? ["first_frame"] : []),
+        ...(effectiveBinding.media.last_frame?.length ? ["last_frame"] : []),
+        ...(effectiveBinding.media.reference_image?.length ? ["reference_images"] : []),
+        ...(effectiveBinding.media.reference_video?.length ? ["reference_videos"] : []),
+        ...(effectiveBinding.media.reference_audio?.length ? ["reference_audio"] : []),
       ]
     : detectedInputs;
-  if (activeBinding && (boundInputs.includes("width") || boundInputs.includes("height")))
+  const isUpscaleCapability = ["upscale_image", "upscale_video"].includes(capability);
+  if (effectiveBinding && !isUpscaleCapability && (boundInputs.includes("width") || boundInputs.includes("height")))
     boundInputs.push("resolution");
   const inputs = [...new Set(boundInputs)].filter((slot) => {
+    if (isUpscaleCapability) {
+      if (capability === "upscale_image") return slot === "first_frame" || slot === "denoise";
+      if (capability === "upscale_video") return slot === "reference_videos" || slot === "denoise";
+    }
     if (!native) return true;
     if (slot === "cfg") return false;
     if (slot === "steps" && path.toLowerCase().includes("preview")) {
@@ -288,21 +328,27 @@ function workflowSummary(
   const mediaInputs = {
     first_frame: inputs.includes("first_frame") ? 1 : 0,
     last_frame: inputs.includes("last_frame") ? 1 : 0,
-    reference: activeBinding
-      ? (activeBinding.media.reference_image?.length ?? 0)
-      : inputs.includes("reference_images")
-        ? 9
-        : 0,
-    reference_video: activeBinding
-      ? (activeBinding.media.reference_video?.length ?? 0)
-      : inputs.includes("reference_videos")
-        ? 3
-        : 0,
-    reference_audio: activeBinding
-      ? (activeBinding.media.reference_audio?.length ?? 0)
-      : inputs.includes("reference_audio")
-        ? 3
-        : 0,
+    reference: isUpscaleCapability
+      ? 0
+      : activeBinding
+        ? (activeBinding.media.reference_image?.length ?? 0)
+        : inputs.includes("reference_images")
+          ? 9
+          : 0,
+    reference_video: isUpscaleCapability
+      ? (capability === "upscale_video" ? (activeBinding?.media.reference_video?.length || 1) : 0)
+      : activeBinding
+        ? (activeBinding.media.reference_video?.length ?? 0)
+        : inputs.includes("reference_videos")
+          ? 3
+          : 0,
+    reference_audio: isUpscaleCapability
+      ? 0
+      : activeBinding
+        ? (activeBinding.media.reference_audio?.length ?? 0)
+        : inputs.includes("reference_audio")
+          ? 3
+          : 0,
   };
   const missingModels = inventory
     ? models.filter((model) => {
@@ -337,17 +383,19 @@ function workflowSummary(
         : ("comfy_only" as const),
     bindingStatus: native
       ? ("built_in" as const)
-      : binding
-        ? activeBinding
-          ? ("ready" as const)
-          : ("stale" as const)
-        : ("needs_binding" as const),
+      : activeBinding
+        ? ("ready" as const)
+        : binding
+          ? ("stale" as const)
+          : ("needs_binding" as const),
     workflowHash: hash,
     origin: path.startsWith("Kino/")
       ? ("built_in" as const)
       : path.startsWith("TakeBoard/")
         ? ("imported" as const)
         : ("comfyui" as const),
+    trustSnapshot: Boolean(trustSnapshot),
+    trustPath: trustSnapshot ? trustSnapshot.wfPath : null,
   };
 }
 
@@ -368,9 +416,9 @@ function detectedOutputMediaType(
   binding?: WorkflowBinding | null,
 ): WorkflowOutputMediaType {
   if (binding?.outputMediaType) return binding.outputMediaType;
-  if (["text_to_image", "image_to_image"].includes(capability)) return "image";
+  if (["text_to_image", "image_to_image", "upscale_image"].includes(capability)) return "image";
   if (
-    ["text_to_video", "image_to_video", "first_last_video", "reference_video"].includes(capability)
+    ["text_to_video", "image_to_video", "first_last_video", "reference_video", "upscale_video"].includes(capability)
   ) {
     return "video";
   }
@@ -512,7 +560,7 @@ export function registerWorkflowRoutes(
       objectInfo,
       workflowHash: summary.workflowHash,
       capability: summary.capability,
-      outputMediaType: ["text_to_image", "image_to_image"].includes(summary.capability)
+      outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability)
         ? "image"
         : "video",
       bindingStatus: "built_in",
@@ -552,12 +600,15 @@ export function registerWorkflowRoutes(
     const inventory = installedModels(objectInfo);
     const summary = workflowSummary(path, workflow, editorUrl, inventory, current);
     const nativePrompt = nativeRecipePrompt(path);
+    const trustSnapshot = readTrustWorkflow(path);
+    const effectiveBinding = trustSnapshot?.binding ?? current;
+    const effectiveWorkflow = trustSnapshot ? trustSnapshot.workflow : (nativePrompt ?? workflow);
     const inspected = inspectWorkflowDocument(
-      nativePrompt ?? workflow,
+      effectiveWorkflow,
       objectInfo,
-      summary.workflowHash,
+      trustSnapshot ? trustSnapshot.binding.workflowHash : summary.workflowHash,
     );
-    const outputMediaType = detectedOutputMediaType(summary.capability, inspected.prompt, current);
+    const outputMediaType = detectedOutputMediaType(summary.capability, inspected.prompt, effectiveBinding);
     const activeProposal = proposal?.workflowHash === inspected.workflowHash ? proposal : null;
     const suggested = suggestedBinding(
       path,
@@ -576,7 +627,7 @@ export function registerWorkflowRoutes(
       capability: summary.capability,
       outputMediaType,
       bindingStatus: summary.bindingStatus,
-      binding: current,
+      binding: effectiveBinding,
       models: summary.models,
       inventory,
     });
@@ -584,12 +635,12 @@ export function registerWorkflowRoutes(
       ...summary,
       status: summary.bindingStatus,
       parameterDefaults:
-        summary.execution === "bound" && current
-          ? workflowDefaults(inspected.prompt, current)
+        summary.execution === "bound" && effectiveBinding
+          ? workflowDefaults(inspected.prompt, effectiveBinding)
           : undefined,
       diagnostic,
       candidates: inspected.candidates,
-      binding: current ?? activeProposal ?? suggested,
+      binding: effectiveBinding ?? activeProposal ?? suggested,
       suggested,
       bindingProposal: activeProposal ? "recipe_package" : null,
       conversionIssues: preflightPromptAgainstObjectInfo(inspected.prompt, objectInfo),
@@ -634,12 +685,15 @@ export function registerWorkflowRoutes(
             library: { included: rawSummary.origin !== "built_in", favorite: false, ...library },
           };
           if (!objectInfo) return summary;
+          const trustSnapshot = readTrustWorkflow(path);
+          const effectiveBinding = trustSnapshot?.binding ?? binding;
+          const effectiveWorkflow = trustSnapshot ? trustSnapshot.workflow : (nativeRecipePrompt(path) ?? workflow);
           let inspected: ReturnType<typeof inspectWorkflowDocument>;
           try {
             inspected = inspectWorkflowDocument(
-              nativeRecipePrompt(path) ?? workflow,
+              effectiveWorkflow,
               objectInfo,
-              summary.workflowHash,
+              trustSnapshot ? trustSnapshot.binding.workflowHash : summary.workflowHash,
             );
           } catch (error) {
             return {
@@ -651,7 +705,7 @@ export function registerWorkflowRoutes(
                 executable: false,
                 nodeCount: summary.nodeCount,
                 capability: summary.capability,
-                outputMediaType: ["text_to_image", "image_to_image"].includes(summary.capability)
+                outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability)
                   ? ("image" as const)
                   : ("video" as const),
                 bindingStatus: summary.bindingStatus,
@@ -677,13 +731,13 @@ export function registerWorkflowRoutes(
           const outputMediaType = detectedOutputMediaType(
             summary.capability,
             inspected.prompt,
-            binding,
+            effectiveBinding,
           );
           return {
             ...summary,
             parameterDefaults:
-              summary.execution === "bound" && binding
-                ? workflowDefaults(inspected.prompt, binding)
+              summary.execution === "bound" && effectiveBinding
+                ? workflowDefaults(inspected.prompt, effectiveBinding)
                 : undefined,
             diagnostic: buildWorkflowDiagnostic({
               executionSource: nativeRecipePrompt(path) ? "native_prompt" : "source_workflow",
@@ -695,7 +749,7 @@ export function registerWorkflowRoutes(
               capability: summary.capability,
               outputMediaType,
               bindingStatus: summary.bindingStatus,
-              binding,
+              binding: effectiveBinding,
               models: summary.models,
               inventory,
             }),
@@ -970,6 +1024,7 @@ export function registerWorkflowRoutes(
           );
       }
       await writeWorkflowBinding(getComfyUrl(), path, binding);
+      writeTrustWorkflow(path, inspected.workflow, binding);
       return { status: "ready", binding };
     } catch (error) {
       return await reply.code(422).send({
@@ -977,6 +1032,35 @@ export function registerWorkflowRoutes(
       });
     }
   });
+
+  app.delete<{ Querystring: { path?: string } }>(
+    "/api/workflows/binding",
+    async (request, reply) => {
+      const path = request.query.path;
+      if (!isWorkflowPath(path)) return await reply.code(400).send({ error: "工作流路径无效" });
+      if (isNativeWorkflow(path))
+        return reply
+          .code(409)
+          .send(
+            new WorkflowExecutionError(
+              "WORKFLOW_TEMPLATE_CHANGED",
+              "内置模板使用固定执行配置。",
+              path,
+            ).response(),
+          );
+      try {
+        const endpoint = getComfyUrl();
+        await fetchWorkflow(endpoint, path);
+        await disableWorkflowBinding(endpoint, path);
+        disableTrustWorkflow(path);
+        return { status: "needs_binding", path };
+      } catch (error) {
+        return await reply.code(502).send({
+          error: error instanceof Error ? error.message : "无法禁用工作流绑定",
+        });
+      }
+    },
+  );
 
   app.get<{ Querystring: { path?: string } }>(
     "/api/workflows/recipe-package",
@@ -994,7 +1078,7 @@ export function registerWorkflowRoutes(
         const nodes = allNodes(workflow);
         const outputMediaType =
           activeBinding?.outputMediaType ??
-          (["text_to_image", "image_to_image"].includes(summary.capability) ? "image" : "video");
+          (["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability) ? "image" : "video");
         const stream = createWorkflowRecipeArchive({
           name: summary.name,
           sourcePath: path,

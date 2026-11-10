@@ -4,6 +4,8 @@ import { completionFor, hasUnfinishedWork } from "./background-completion.js";
 import { acquireInstanceLease } from "./instance-lease.js";
 import { assertSafeBindHost } from "./request-security.js";
 
+process.env.TAKEBOARD_AUTH_MODE ??= "off";
+
 const host = process.env.TAKEBOARD_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.TAKEBOARD_PORT ?? "48120", 10);
 assertSafeBindHost(

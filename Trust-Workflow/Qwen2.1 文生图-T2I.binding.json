@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "workflowPath": "Qwen2.1 文生图-T2I.json",
+  "workflowHash": "772579a0f76ce5bb13a3b7303e9a6473a5fe81324f495ce965ca1ed9dce3c024",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "486",
+        "input": "prompt"
+      }
+    ],
+    "negative_prompt": [
+      {
+        "nodeId": "486",
+        "input": "negative_prompt"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "500",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "500",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "500",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "480",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "480",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-08T14:41:46.348Z"
+}

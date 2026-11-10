@@ -6,10 +6,12 @@ import type { BoardNode } from "./board-nodes";
 import {
   findWorkflow,
   generationPromptPlaceholder,
+  type GenerationProgress,
   type PromptMention,
   runWorkflowPath,
   type ShotCanvasControls,
 } from "./generation-model";
+import { batchGenerationProgress } from "./generation-session";
 import { modelProfile, workflowInputSlots } from "./model-profiles";
 import { generationResolutionPolicy, resolutionPresets } from "./resolution-presets";
 
@@ -38,6 +40,7 @@ export function boardNodes(
   selectedWorkflow: WorkflowSummary | null,
   selectedShotId: string | null,
   controls: ShotCanvasControls | null,
+  progressByShot?: Record<string, GenerationProgress | null | undefined>,
 ): BoardNode[] {
   // Rebuild indexes from the current immutable document; never retain stale media across projects.
   const assets = new Map(snapshot.assets.map((asset) => [asset.id, asset]));
@@ -69,7 +72,16 @@ export function boardNodes(
       position: { x: item.x, y: item.y },
       // Old free-form sizes remain in storage for compatibility, not in presentation.
       // Media owns its aspect ratio; controls and text own their natural height.
-      style: { width: item.sizeMode === "manual" ? 320 : item.width },
+      style: {
+        width:
+          item.refType === "shot"
+            ? Math.max(350, item.sizeMode === "manual" ? 350 : item.width)
+            : item.refType === "asset" && item.sizeMode === "manual"
+              ? Math.min(Math.max(180, item.width), 4000)
+              : item.sizeMode === "manual"
+                ? 320
+                : item.width,
+      },
       type: item.refType,
       selected: selectedCanvasItemId === item.id,
     };
@@ -201,6 +213,11 @@ export function boardNodes(
             : "纯文字输入",
           profile.outputLabel,
         ],
+        progress:
+          (item.refId === selectedShotId ? controls?.progress : null) ??
+          progressByShot?.[item.refId] ??
+          batchGenerationProgress(snapshot.runs, item.refId) ??
+          null,
         inputSlots: profile.slots.map(({ id, label, maxCount, required, mediaType }) => ({
           id,
           label,
@@ -229,17 +246,48 @@ export function boardNodes(
                 width: controls.settings.width,
                 height: controls.settings.height,
                 durationSeconds: controls.settings.durationSeconds,
+                fps: controls.settings.fps,
                 seed: controls.settings.seed,
                 outputLabel: profile.outputLabel,
                 minDurationSeconds: profile.family === "minimax_h3" ? 4 : 1,
-                supportsDuration: workflow?.inputs.includes("duration") ?? false,
-                supportsResolution: workflow?.inputs.includes("resolution") ?? false,
-                supportsSeed: workflow?.inputs.includes("seed") ?? false,
-                resolutionOptions: workflow?.inputs.includes("resolution")
+                supportsDuration:
+                  !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  profile.outputLabel === "视频" &&
+                  (workflow?.inputs.includes("duration") ?? false),
+                supportsFps:
+                  !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  profile.outputLabel === "视频" &&
+                  (workflow?.inputs.includes("fps") ?? false) &&
+                  profile.family !== "minimax_h3",
+                supportsResolution:
+                  !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  (workflow?.inputs.includes("resolution") ?? false),
+                resolutionPolicy: generationResolutionPolicy(workflow?.execution === "native", profile.family),
+                supportsSeed:
+                  !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  (workflow?.inputs.includes("seed") ?? false),
+                supportsDenoise:
+                  ["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  (workflow?.inputs.includes("denoise") ?? false),
+                denoiseLabel: workflow?.capability === "upscale_image" ? "放大倍数" : "细节程度",
+                denoiseMin: workflow?.capability === "upscale_image" ? 1 : 0.05,
+                denoiseMax: workflow?.capability === "upscale_image" ? 8 : 2.0,
+                denoiseStep: workflow?.capability === "upscale_image" ? 0.5 : 0.05,
+                denoise:
+                  typeof controls.settings.denoise === "number" &&
+                  controls.settings.denoise >= (workflow?.capability === "upscale_image" ? 1 : 0.05) &&
+                  controls.settings.denoise <= (workflow?.capability === "upscale_image" ? 8 : 2.0)
+                    ? controls.settings.denoise
+                    : workflow?.capability === "upscale_image"
+                      ? 2
+                      : 1.0,
+                resolutionOptions:
+                  !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
+                  (workflow?.inputs.includes("resolution") ?? false)
                   ? resolutionPresets(
-                      profile.defaults.width,
-                      profile.defaults.height,
-                      generationResolutionPolicy(workflow.execution === "native", profile.family),
+                      controls.settings.width,
+                      controls.settings.height,
+                      generationResolutionPolicy(workflow?.execution === "native", profile.family),
                     )
                   : [],
                 mentionAliases: controls.mentionAliases,
@@ -449,9 +497,17 @@ export function connectedAssetId(
   const targetItem = snapshot.canvasItems.find(
     (item) => item.refType === "shot" && item.refId === targetShotId,
   );
-  const edge = snapshot.canvasEdges.find(
+  let edge = snapshot.canvasEdges.find(
     (candidate) => candidate.targetItemId === targetItem?.id && candidate.targetSlot === slot,
   );
+  if (!edge && (slot === "first_frame" || slot === "reference_video")) {
+    const mediaType = slot === "reference_video" ? "video" : "image";
+    edge = snapshot.canvasEdges.find((candidate) => {
+      if (candidate.targetItemId !== targetItem?.id) return false;
+      const src = snapshot.canvasItems.find((item) => item.id === candidate.sourceItemId);
+      return Boolean(sourceAssetId(snapshot, src, mediaType));
+    });
+  }
   const source = snapshot.canvasItems.find((item) => item.id === edge?.sourceItemId);
   return sourceAssetId(
     snapshot,

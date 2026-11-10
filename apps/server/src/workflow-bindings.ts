@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import {
   type ComfyObjectInfo,
   type ComfyPrompt,
@@ -16,7 +18,9 @@ export type WorkflowCapability =
   | "text_to_video"
   | "image_to_video"
   | "first_last_video"
-  | "reference_video";
+  | "reference_video"
+  | "upscale_image"
+  | "upscale_video";
 
 export type WorkflowOutputMediaType = "image" | "video";
 export type WorkflowParameterKey =
@@ -104,6 +108,94 @@ const bindingPath = (path: string) =>
 const bindingProposalPath = (path: string) =>
   `takeboard/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
 
+export function findTrustWorkflowDir(startDir: string = process.cwd()): string | null {
+  if (process.env.TAKEBOARD_TRUST_WORKFLOW_DIR) {
+    return resolve(process.env.TAKEBOARD_TRUST_WORKFLOW_DIR);
+  }
+  if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+    return null;
+  }
+  let current = resolve(startDir);
+  for (let i = 0; i < 8; i++) {
+    const candidate = join(current, "Trust-Workflow");
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  if (process.env.TAKEBOARD_DATA_ROOT) {
+    const dataRoot = resolve(process.env.TAKEBOARD_DATA_ROOT);
+    const base = basename(dataRoot).toLowerCase() === "projects" ? dirname(dataRoot) : dataRoot;
+    return join(base, "Trust-Workflow");
+  }
+  return join(resolve(startDir, ".."), "Trust-Workflow");
+}
+
+export function resolveTrustWorkflowPaths(path: string, trustDir = findTrustWorkflowDir()) {
+  if (!trustDir) return null;
+  const safeBase = basename(path);
+  const directWf = join(trustDir, path);
+  const directBinding = join(trustDir, path.replace(/\.json$/, ".binding.json"));
+  if (existsSync(directWf) && existsSync(directBinding)) {
+    return { wfPath: directWf, bindingPath: directBinding };
+  }
+  const baseWf = join(trustDir, safeBase);
+  const baseBinding = join(trustDir, safeBase.replace(/\.json$/, ".binding.json"));
+  if (existsSync(baseWf) && existsSync(baseBinding)) {
+    return { wfPath: baseWf, bindingPath: baseBinding };
+  }
+  return null;
+}
+
+export function readTrustWorkflow(path: string, trustDir = findTrustWorkflowDir()) {
+  try {
+    if (!trustDir) return null;
+    const resolved = resolveTrustWorkflowPaths(path, trustDir);
+    if (!resolved) return null;
+    const workflow = JSON.parse(readFileSync(resolved.wfPath, "utf8")) as WorkflowDocument;
+    const rawBinding = JSON.parse(readFileSync(resolved.bindingPath, "utf8"));
+    const binding =
+      parseWorkflowBinding(rawBinding, rawBinding?.workflowPath) ??
+      parseWorkflowBinding(rawBinding, path) ??
+      parseWorkflowBinding(rawBinding);
+    if (!binding) return null;
+    return { workflow, binding, wfPath: resolved.wfPath, bindingPath: resolved.bindingPath };
+  } catch {
+    return null;
+  }
+}
+
+export function writeTrustWorkflow(
+  path: string,
+  workflow: unknown,
+  binding: WorkflowBinding,
+  trustDir = findTrustWorkflowDir(),
+) {
+  try {
+    if (!trustDir) return;
+    if (!existsSync(trustDir)) mkdirSync(trustDir, { recursive: true });
+    const safeBase = basename(path);
+    const destWf = join(trustDir, safeBase);
+    const destBinding = join(trustDir, safeBase.replace(/\.json$/, ".binding.json"));
+    writeFileSync(destWf, JSON.stringify(workflow, null, 2), "utf8");
+    writeFileSync(destBinding, JSON.stringify(binding, null, 2), "utf8");
+  } catch {
+    // Non-fatal snapshot error
+  }
+}
+
+export function disableTrustWorkflow(path: string, trustDir = findTrustWorkflowDir()) {
+  try {
+    if (!trustDir) return;
+    const resolved = resolveTrustWorkflowPaths(path, trustDir);
+    if (resolved && existsSync(resolved.bindingPath)) {
+      unlinkSync(resolved.bindingPath);
+    }
+  } catch {
+    // Non-fatal
+  }
+}
+
 async function fetchJson(comfyUrl: string, path: string, timeout = 5_000) {
   const response = await fetch(`${comfyUrl}/api/userdata/${encodeURIComponent(path)}`, {
     signal: AbortSignal.timeout(timeout),
@@ -164,6 +256,8 @@ export function parseWorkflowBinding(value: unknown, expectedPath?: string) {
       "image_to_video",
       "first_last_video",
       "reference_video",
+      "upscale_image",
+      "upscale_video",
     ].includes(String(binding.capability)) ||
     !["image", "video"].includes(String(binding.outputMediaType)) ||
     !targetGroupValid(binding.parameters) ||
@@ -224,6 +318,25 @@ export async function writeWorkflowBindingProposal(
   if (!response.ok) throw new Error(`ComfyUI 保存 Recipe 映射草案失败：${response.status}`);
 }
 
+export async function disableWorkflowBinding(comfyUrl: string, path: string) {
+  const current = await readWorkflowBinding(comfyUrl, path);
+  if (current) await writeWorkflowBindingProposal(comfyUrl, path, current);
+  const response = await fetch(
+    `${comfyUrl}/api/userdata/${encodeURIComponent(bindingPath(path))}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        version: workflowBindingVersion,
+        workflowPath: path,
+        trusted: false,
+      }),
+      signal: AbortSignal.timeout(5_000),
+    },
+  );
+  if (!response.ok) throw new Error(`ComfyUI 禁用参数绑定失败：${response.status}`);
+}
+
 const parameterKeys: WorkflowParameterKey[] = [
   "prompt",
   "negative_prompt",
@@ -275,14 +388,15 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
   for (const [nodeId, node] of Object.entries(prompt)) {
     const title = node._meta?.title ?? node.class_type;
     for (const [input, value] of Object.entries(node.inputs)) {
-      if (Array.isArray(value)) continue;
+      const isLinked = Array.isArray(value);
+      if (isLinked && input !== "width" && input !== "height") continue;
       const haystack = `${title} ${node.class_type} ${input}`.toLowerCase();
       const candidate: WorkflowBindingCandidate = {
         nodeId,
         input,
         label: `${title} · ${input}`,
         classType: node.class_type,
-        valueType: classifyValue(value),
+        valueType: isLinked ? "number" : classifyValue(value),
       };
       if (typeof value === "string") {
         const inputName = input.toLowerCase();
@@ -293,14 +407,21 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
         const promptInput = /^(?:text|prompt|positive|positive_prompt|caption|description)$/.test(
           inputName,
         );
-        const promptNode = /prompt|positive|提示词|文本/.test(nodeHaystack);
+        const promptNode =
+          /prompt|positive|提示词|文本|multiline/.test(nodeHaystack) ||
+          /primitive.*string/i.test(node.class_type);
         if (/negative|反向|负向|负面/.test(haystack))
           candidates.parameters.negative_prompt.push(candidate);
-        else if (!loaderLike && (promptInput || (promptNode && /text|prompt/.test(inputName)))) {
+        else if (
+          !loaderLike &&
+          (promptInput ||
+            (promptNode && /^(?:text|prompt|value|string)$/.test(inputName)) ||
+            (promptNode && /text|prompt/.test(inputName)))
+        ) {
           candidates.parameters.prompt.push(candidate);
         }
       }
-      if (typeof value === "number") {
+      if (typeof value === "number" || (isLinked && (input === "width" || input === "height"))) {
         const inputName = input.toLowerCase();
         const genericNumericInput = /^(?:value|number|integer|int|float)$/.test(inputName);
         const titleHaystack = `${title} ${node.class_type}`.toLowerCase();
@@ -316,9 +437,14 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
           candidates.parameters.steps.push(candidate);
         if (
           /(?:^|_)denois(?:e|ing)(?:$|_)/.test(inputName) ||
-          (genericNumericInput && /denoise|denoising|重绘强度|降噪/.test(titleHaystack))
+          (genericNumericInput && /denoise|denoising|重绘强度|降噪/.test(titleHaystack)) ||
+          (inputName === "detail" && /vsr|decode|upscale/.test(titleHaystack)) ||
+          ((inputName === "rescale_factor" || /scale_factor|upscale_by|放大倍数|缩放系数/.test(inputName)) && /upscale|rescale|放大/.test(titleHaystack))
         )
-          candidates.parameters.denoise.push(candidate);
+          candidates.parameters.denoise.push({
+            ...candidate,
+            label: `${title} · ${inputName === "detail" ? "细节程度 (detail)" : inputName === "rescale_factor" ? "放大倍数 (rescale_factor)" : input}`,
+          });
         if (
           /(?:^|_)width(?:$|_)/.test(inputName) ||
           (genericNumericInput && /\bwidth\b|宽度/.test(titleHaystack))
@@ -344,14 +470,14 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
           });
         } else if (
           /duration|seconds?/.test(inputName) ||
-          (genericNumericInput && /duration|seconds?|时长/.test(titleHaystack))
+          (genericNumericInput && /duration|seconds?|时长|primitivefloat/.test(titleHaystack))
         ) {
           candidates.parameters.duration.push(candidate);
         }
         if (frameRateInput) candidates.parameters.fps.push(candidate);
       }
       if (typeof value !== "string") continue;
-      if (/loadimage|load image|加载图/.test(haystack)) {
+      if (/loadimage|load image|加载图/.test(haystack) && input === "image") {
         candidates.media.first_frame.push(candidate);
         candidates.media.last_frame.push(candidate);
         candidates.media.reference_image.push(candidate);
@@ -364,6 +490,24 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
       }
     }
   }
+  const refIndexMap = new Map<string, number>();
+  for (const node of Object.values(prompt)) {
+    for (const [inputKey, inputValue] of Object.entries(node.inputs)) {
+      if (Array.isArray(inputValue) && inputValue.length >= 2) {
+        const sourceNodeId = String(inputValue[0]);
+        const match = /(?:ref_image(?:s)?\.ref_image_|reference_?image_?)(\d+)/i.exec(inputKey);
+        if (match && match[1]) {
+          refIndexMap.set(sourceNodeId, parseInt(match[1], 10));
+        }
+      }
+    }
+  }
+  candidates.media.reference_image.sort((a, b) => {
+    const idxA = refIndexMap.get(a.nodeId) ?? Number.MAX_SAFE_INTEGER;
+    const idxB = refIndexMap.get(b.nodeId) ?? Number.MAX_SAFE_INTEGER;
+    if (idxA !== idxB) return idxA - idxB;
+    return a.nodeId.localeCompare(b.nodeId, undefined, { numeric: true });
+  });
   return candidates;
 }
 
@@ -382,6 +526,22 @@ export function suggestedBinding(
   const one = (items: WorkflowBindingCandidate[]) => (items[0] ? [target(items[0])] : undefined);
   const all = (items: WorkflowBindingCandidate[]) =>
     items.length > 0 ? items.map(target) : undefined;
+  const isReferenceVideo = capability === "reference_video";
+  const isUpscaleVideo = capability === "upscale_video";
+  const isUpscaleImage = capability === "upscale_image";
+  const isUpscale = isUpscaleImage || isUpscaleVideo;
+  const detailCandidate = candidates.parameters.denoise.find(
+    (c) => c.input === "detail" || /detail|细节/i.test(c.label),
+  );
+  const scaleCandidate = candidates.parameters.denoise.find(
+    (c) => c.input === "rescale_factor" || /scale|倍数|系数/i.test(c.label),
+  );
+  const firstFrameCandidate = isReferenceVideo || isUpscaleVideo ? undefined : candidates.media.first_frame[0];
+  const refImageCandidates = isReferenceVideo || isUpscale
+    ? candidates.media.reference_image
+    : candidates.media.reference_image.filter(
+        (c) => c.nodeId !== firstFrameCandidate?.nodeId,
+      );
   return {
     version: workflowBindingVersion,
     workflowPath: path,
@@ -389,22 +549,38 @@ export function suggestedBinding(
     capability,
     outputMediaType,
     parameters: {
-      prompt: one(candidates.parameters.prompt),
-      negative_prompt: one(candidates.parameters.negative_prompt),
-      seed: all(candidates.parameters.seed),
-      steps: all(candidates.parameters.steps),
-      denoise: all(candidates.parameters.denoise),
-      width: all(candidates.parameters.width),
-      height: all(candidates.parameters.height),
-      duration: all(candidates.parameters.duration),
-      fps: all(candidates.parameters.fps),
+      prompt: isUpscale ? undefined : one(candidates.parameters.prompt),
+      negative_prompt: isUpscale ? undefined : one(candidates.parameters.negative_prompt),
+      seed: isUpscale ? undefined : all(candidates.parameters.seed),
+      steps: isUpscale ? undefined : all(candidates.parameters.steps),
+      denoise: isUpscaleVideo
+        ? (detailCandidate ? [target(detailCandidate)] : undefined)
+        : isUpscaleImage
+          ? (scaleCandidate ? [target(scaleCandidate)] : undefined)
+          : all(candidates.parameters.denoise),
+      width: isUpscale ? undefined : all(candidates.parameters.width),
+      height: isUpscale ? undefined : all(candidates.parameters.height),
+      duration: isUpscale ? undefined : all(candidates.parameters.duration),
+      fps: isUpscale ? undefined : all(candidates.parameters.fps),
     },
     media: {
-      first_frame: one(candidates.media.first_frame),
+      first_frame: isReferenceVideo || isUpscaleVideo ? undefined : one(candidates.media.first_frame),
       last_frame: undefined,
-      reference_image: undefined,
-      reference_video: one(candidates.media.reference_video),
-      reference_audio: one(candidates.media.reference_audio),
+      reference_image: isReferenceVideo
+        ? (candidates.media.reference_image.length > 0
+            ? candidates.media.reference_image.map(target)
+            : undefined)
+        : isUpscale
+          ? undefined
+          : one(
+              refImageCandidates.length > 0 ? refImageCandidates : candidates.media.reference_image,
+            ),
+      reference_video: isUpscaleVideo
+        ? one(candidates.media.reference_video)
+        : isUpscale
+          ? undefined
+          : one(candidates.media.reference_video),
+      reference_audio: isUpscale ? undefined : one(candidates.media.reference_audio),
     },
   };
 }
@@ -438,9 +614,10 @@ export function validateWorkflowBinding(prompt: ComfyPrompt, binding: WorkflowBi
       if (target.transform) issues.push(`${key}：素材输入不能使用数值换算`);
     }
   }
-  if (!(binding.parameters.prompt?.length ?? 0)) issues.push("缺少提示词绑定");
+  const requiresPrompt = !["upscale_image", "upscale_video"].includes(binding.capability);
+  if (requiresPrompt && !(binding.parameters.prompt?.length ?? 0)) issues.push("缺少提示词绑定");
   if (
-    ["image_to_image", "image_to_video", "first_last_video"].includes(binding.capability) &&
+    ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(binding.capability) &&
     !(binding.media.first_frame?.length ?? 0)
   ) {
     issues.push("该能力缺少起始图片绑定");
@@ -449,10 +626,17 @@ export function validateWorkflowBinding(prompt: ComfyPrompt, binding: WorkflowBi
     issues.push("首尾帧能力缺少结束图片绑定");
   }
   if (
+    binding.capability === "upscale_video" &&
+    !(binding.media.reference_video?.length ?? 0)
+  ) {
+    issues.push("视频放大能力缺少待放大视频绑定");
+  }
+  if (
     binding.capability === "reference_video" &&
     (binding.media.reference_image?.length ?? 0) +
       (binding.media.reference_video?.length ?? 0) +
-      (binding.media.reference_audio?.length ?? 0) ===
+      (binding.media.reference_audio?.length ?? 0) +
+      (binding.media.first_frame?.length ?? 0) ===
       0
   ) {
     issues.push("参考生成能力至少需要一个参考素材绑定");
@@ -496,6 +680,25 @@ export function preflightPromptAgainstObjectInfo(prompt: ComfyPrompt, objectInfo
 }
 
 export async function loadExecutableWorkflow(comfyUrl: string, path: string) {
+  const trustSnapshot = readTrustWorkflow(path);
+  if (trustSnapshot) {
+    const objectInfo = await fetchComfyObjectInfo(comfyUrl);
+    const inspected = inspectWorkflowDocument(
+      trustSnapshot.workflow,
+      objectInfo,
+      trustSnapshot.binding.workflowHash,
+    );
+    const issues = validateWorkflowBinding(inspected.prompt, trustSnapshot.binding);
+    if (issues.length > 0)
+      throw new WorkflowExecutionError(
+        "WORKFLOW_BINDING_INVALID",
+        "受信任工作流的输入配置无效，请重新检查输入设置。",
+        path,
+        issues,
+      );
+    return { ...inspected, binding: trustSnapshot.binding };
+  }
+
   const binding = await readWorkflowBinding(comfyUrl, path);
   if (!binding)
     throw new WorkflowExecutionError(
@@ -575,8 +778,32 @@ export function applyWorkflowBinding(
   ];
   for (const [targets, files] of mediaValues) {
     (targets ?? []).forEach((target, index) => {
-      applyTargets(prompt, [target], files?.[index]);
+      const file = files?.[index];
+      if (file !== undefined) {
+        applyTargets(prompt, [target], file);
+      } else {
+        delete prompt[target.nodeId];
+        for (const node of Object.values(prompt)) {
+          for (const [inputKey, inputValue] of Object.entries(node.inputs)) {
+            if (Array.isArray(inputValue) && String(inputValue[0]) === String(target.nodeId)) {
+              delete node.inputs[inputKey];
+            }
+          }
+        }
+      }
     });
+  }
+  for (const [nodeId, node] of Object.entries(prompt)) {
+    if (/loadimage/i.test(node.class_type) && typeof node.inputs.image === "string" && !node.inputs.image.trim()) {
+      delete prompt[nodeId];
+      for (const peer of Object.values(prompt)) {
+        for (const [inputKey, inputValue] of Object.entries(peer.inputs)) {
+          if (Array.isArray(inputValue) && String(inputValue[0]) === String(nodeId)) {
+            delete peer.inputs[inputKey];
+          }
+        }
+      }
+    }
   }
   for (const node of Object.values(prompt)) {
     if (!/save|output|combine|createvideo/i.test(node.class_type)) continue;

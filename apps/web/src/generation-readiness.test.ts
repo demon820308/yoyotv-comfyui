@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import type { ProjectSnapshot } from "@takeboard/contracts";
 import type { WorkflowSummary } from "./api";
 import { defaultGenerationSettings } from "./generation-model";
 import { generationProblem } from "./generation-readiness";
@@ -48,4 +49,30 @@ it("keeps preview sampling fixed and does not apply native constraints to custom
     max: 100,
     fixed: false,
   });
+});
+
+it("allows prompt to be empty for upscale workflows if source asset is available", () => {
+  const upscaleWorkflow = {
+    ...workflow,
+    capability: "upscale_image" as const,
+    inputs: ["first_frame"],
+  };
+  const problem = generationProblem({
+    projectMode: "project",
+    selectedWorkflow: upscaleWorkflow,
+    generationSettings: {
+      ...defaultGenerationSettings,
+      prompt: "",
+      firstFrameAssetId: "asset-1",
+    },
+    selectedModelProfile: modelProfile(upscaleWorkflow, "16:9"),
+    selectedInputCounts: { reference: 0, reference_video: 0, reference_audio: 0 },
+    assets: [
+      {
+        id: "asset-1",
+        mediaType: "image",
+      } as ProjectSnapshot["assets"][number],
+    ],
+  });
+  expect(problem).toBeNull();
 });

@@ -647,6 +647,13 @@
   background: rgb(24 23 40 / 85%);
   font-size: calc(10px * var(--ui-scale));
 }
+.asset-card-media img,
+.asset-card-media video {
+  pointer-events: none;
+}
+.asset-detail-preview-wrap {
+  cursor: grab;
+}
 .app-shell .topbar {
   gap: 16px;
 }

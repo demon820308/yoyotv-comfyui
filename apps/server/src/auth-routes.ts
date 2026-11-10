@@ -154,6 +154,7 @@ function adminOnly(route: string, method: string) {
 function minimumProjectRole(route: string, method: string): ProjectRole {
   if (route.includes("/members")) return "owner";
   if (route === "/api/projects/:key/export") return "owner";
+  if (route.startsWith("/api/projects/:key/export/")) return "viewer";
   if (route === "/api/projects/:key" && method === "DELETE") return "owner";
   return method === "GET" || method === "HEAD" ? "viewer" : "editor";
 }

@@ -29,11 +29,15 @@ export function generationProblem({
   if (!selectedWorkflow) return "请先选择可用模型";
   const availability = workflowAvailability(selectedWorkflow);
   if (!availability.ready) return `工作流${availability.label}：${availability.reason}`;
-  if (!generationSettings.prompt.trim()) return "请先输入镜头提示词";
+  const isUpscale = ["upscale_image", "upscale_video"].includes(selectedWorkflow.capability);
+  if (!isUpscale && !generationSettings.prompt.trim()) return "请先输入镜头提示词";
   if (selectedWorkflow.inputs.includes("first_frame") && !firstFrameAvailable) {
-    return selectedWorkflow.capability === "image_to_image"
+    return ["image_to_image", "upscale_image"].includes(selectedWorkflow.capability)
       ? "请连接一张源图"
       : "请从资产库选择一张起始帧";
+  }
+  if (selectedWorkflow.capability === "upscale_video" && selectedInputCounts.reference_video === 0) {
+    return "视频放大需要连接一段源视频";
   }
   if (selectedWorkflow.capability === "first_last_video" && !lastFrameAvailable) {
     return "首尾帧模式还需要一张结束帧";
@@ -47,13 +51,12 @@ export function generationProblem({
   ) {
     return "Ref2VA 至少需要一张参考图、一段参考视频或参考音频";
   }
-  const imageWorkflow = ["text_to_image", "image_to_image"].includes(selectedWorkflow.capability);
+  const imageWorkflow = ["text_to_image", "image_to_image", "upscale_image"].includes(selectedWorkflow.capability);
   const invalidVideoParameters =
     !imageWorkflow &&
     ((selectedWorkflow.inputs.includes("duration") &&
       (!Number.isFinite(generationSettings.durationSeconds) ||
-        generationSettings.durationSeconds <
-          (selectedModelProfile.family === "minimax_h3" ? 4 : 1) ||
+        generationSettings.durationSeconds < 1 ||
         generationSettings.durationSeconds > 15)) ||
       (selectedWorkflow.inputs.includes("fps") &&
         (!Number.isFinite(generationSettings.fps) ||
@@ -63,16 +66,16 @@ export function generationProblem({
     selectedWorkflow.inputs.includes("denoise") &&
     (!Number.isFinite(generationSettings.denoise) ||
       generationSettings.denoise < 0.05 ||
-      generationSettings.denoise > 1);
+      generationSettings.denoise > (isUpscale ? 16 : 1));
   const stepPolicy = generationStepPolicy(selectedWorkflow);
   const invalidResolution =
     selectedWorkflow.inputs.includes("resolution") &&
     (!Number.isFinite(generationSettings.width) ||
       generationSettings.width < 256 ||
-      generationSettings.width > 2048 ||
+      generationSettings.width > 4096 ||
       !Number.isFinite(generationSettings.height) ||
       generationSettings.height < 256 ||
-      generationSettings.height > 2048);
+      generationSettings.height > 4096);
   const invalidSeed =
     selectedWorkflow.inputs.includes("seed") &&
     (!Number.isSafeInteger(generationSettings.seed) || generationSettings.seed < 0);

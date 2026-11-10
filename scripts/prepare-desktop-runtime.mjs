@@ -123,6 +123,15 @@ async function main() {
   ]);
   if (process.platform !== "win32") await chmod(sidecar, 0o755);
   await copyNodeLicense();
+  const trustWorkflowSource = join(repositoryRoot, "Trust-Workflow");
+  const trustWorkflowDest = join(tauriRoot, "resources", "Trust-Workflow");
+  await mkdir(trustWorkflowDest, { recursive: true });
+  try {
+    await access(trustWorkflowSource, constants.R_OK);
+    await cp(trustWorkflowSource, trustWorkflowDest, { recursive: true });
+  } catch {
+    await writeFile(join(trustWorkflowDest, ".gitkeep"), "", "utf8");
+  }
   await Promise.all([
     access(join(serverRoot, "dist", "index.js"), constants.R_OK),
     access(join(resourceRoot, "web", "index.html"), constants.R_OK),

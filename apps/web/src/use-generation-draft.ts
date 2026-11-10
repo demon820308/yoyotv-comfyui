@@ -65,21 +65,33 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
   );
   const raw =
     drafts.projectId === snapshot?.project.id ? (drafts.values.get(scope) ?? initial) : initial;
+  const selectedModelProfile = useMemo(
+    () => modelProfile(selectedWorkflow, selectedShot?.aspectRatio ?? "16:9"),
+    [selectedShot?.aspectRatio, selectedWorkflow],
+  );
   const generationSettings = useMemo(
     () => ({
       ...raw,
       firstFrameAssetId:
-        snapshot && selectedShotId
+        snapshot &&
+        selectedShotId &&
+        selectedModelProfile.slots.some((slot) => slot.id === "first_frame")
           ? connectedAssetId(snapshot, selectedShotId, "first_frame")
           : null,
       lastFrameAssetId:
-        snapshot && selectedShotId
+        snapshot &&
+        selectedShotId &&
+        selectedModelProfile.slots.some((slot) => slot.id === "last_frame")
           ? connectedAssetId(snapshot, selectedShotId, "last_frame")
           : null,
       referenceAssetId:
-        snapshot && selectedShotId ? connectedAssetId(snapshot, selectedShotId, "reference") : null,
+        snapshot &&
+        selectedShotId &&
+        selectedModelProfile.slots.some((slot) => slot.id === "reference")
+          ? connectedAssetId(snapshot, selectedShotId, "reference")
+          : null,
     }),
-    [raw, snapshot, selectedShotId],
+    [raw, snapshot, selectedShotId, selectedModelProfile.slots],
   );
   const editSettings = useCallback(
     (update: SetStateAction<GenerationSettings>) => {
@@ -115,10 +127,6 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
   }, [edited, preferenceScope, projectMode]);
   const [candidateCount, setCandidateCount] = useState(1);
   const [bindingBusy, setBindingBusy] = useState(false);
-  const selectedModelProfile = useMemo(
-    () => modelProfile(selectedWorkflow, selectedShot?.aspectRatio ?? "16:9"),
-    [selectedShot?.aspectRatio, selectedWorkflow],
-  );
 
   const selectedShotItem = snapshot?.canvasItems.find(
     (item) => item.refType === "shot" && item.refId === selectedShotId,
@@ -127,7 +135,14 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
     () =>
       snapshot && selectedShotItem
         ? snapshot.canvasEdges
-            .filter((edge) => edge.targetItemId === selectedShotItem.id && edge.targetSlot)
+            .filter(
+              (edge) =>
+                edge.targetItemId === selectedShotItem.id &&
+                edge.targetSlot &&
+                selectedModelProfile.slots.some(
+                  (slot) => slot.id === edge.targetSlot && edge.targetSlotIndex < slot.maxCount,
+                ),
+            )
             .sort((a, b) => {
               const order = {
                 first_frame: 0,
@@ -142,7 +157,7 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
               );
             })
         : [],
-    [selectedShotItem, snapshot],
+    [selectedModelProfile.slots, selectedShotItem, snapshot],
   );
   const promptMentions = useMemo<PromptMention[]>(() => {
     if (!snapshot) return [];
@@ -193,13 +208,15 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
         canonicalToken,
         role:
           edge.targetSlot === "first_frame"
-            ? selectedWorkflow?.capability === "image_to_image"
+            ? ["image_to_image", "upscale_image"].includes(selectedWorkflow?.capability ?? "")
               ? "源图"
               : "首帧"
             : edge.targetSlot === "last_frame"
               ? "尾帧"
               : edge.targetSlot === "reference_video"
-                ? `参考视频 ${edge.targetSlotIndex + 1}`
+                ? selectedWorkflow?.capability === "upscale_video"
+                  ? "源视频"
+                  : `参考视频 ${edge.targetSlotIndex + 1}`
                 : edge.targetSlot === "reference_audio"
                   ? `参考音频 ${edge.targetSlotIndex + 1}`
                   : `参考图 ${edge.targetSlotIndex + 1}`,

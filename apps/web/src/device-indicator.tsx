@@ -101,7 +101,7 @@ export function DeviceIndicator({ projectKey }: { projectKey?: string | undefine
           device?.name ||
           "当前设备";
   const address =
-    connection?.kind === "local" ? "本机 TakeBoard" : connection?.address || window.location.host;
+    connection?.kind === "local" ? "本机 YoYo" : connection?.address || window.location.host;
   return (
     <details
       className="device-indicator"

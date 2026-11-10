@@ -1,9 +1,14 @@
 import { resolveGenerationResolution } from "@takeboard/contracts";
 import { describe, expect, it } from "vitest";
-import { closestAspectRatio, resolutionPresets } from "./resolution-presets";
+import {
+  closestAspectRatio,
+  megapixelsFromResolution,
+  resolutionPresets,
+  scaleResolutionToMegapixels,
+} from "./resolution-presets";
 
 describe("generation aspect presets", () => {
-  it.each(["exact", "multiple_32", "qwen_image_2512", "minimax_h3"] as const)(
+  it.each(["exact", "multiple_32"] as const)(
     "keeps %s presets inside executable bounds",
     (policy) => {
       for (const preset of resolutionPresets(1344, 768, policy)) {
@@ -21,6 +26,23 @@ describe("generation aspect presets", () => {
   );
   it("does not relabel arbitrary user dimensions as a standard aspect", () => {
     expect(closestAspectRatio(1000, 600)).toBe("custom");
-    expect(closestAspectRatio(720, 1280)).toBe("9:16");
+    expect(closestAspectRatio(736, 416)).toBe("16:9 (Widescreen)");
+  });
+  it("builds all 8 ComfyUI ResolutionSelector aspect ratios for image and video workflows", () => {
+    const presets = resolutionPresets(1248, 1664, "exact");
+    expect(presets.map((p) => p.label)).toEqual([
+      "1:1 (Square)",
+      "2:3 (Portrait Photo)",
+      "3:2 (Photo)",
+      "3:4 (Portrait Standard)",
+      "4:3 (Standard)",
+      "9:16 (Portrait Widescreen)",
+      "16:9 (Widescreen)",
+      "21:9 (Ultrawide)",
+    ]);
+    expect(closestAspectRatio(1248, 1664, presets)).toBe("3:4 (Portrait Standard)");
+    expect(megapixelsFromResolution(1376, 768)).toBe(1);
+    expect(scaleResolutionToMegapixels(1376, 768, 2)).toEqual({ width: 1920, height: 1088 });
+    expect(scaleResolutionToMegapixels(736, 416, 0.4)).toEqual({ width: 864, height: 480 });
   });
 });

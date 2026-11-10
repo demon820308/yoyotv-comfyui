@@ -166,6 +166,7 @@ export function AssetLibrary({
   initialAssetId,
   onActivateAsset,
   onClose,
+  onDropToCanvas,
   onInspectMetadata,
   onPickFrame,
   onUpdateAsset,
@@ -191,6 +192,7 @@ export function AssetLibrary({
   initialAssetId?: string | undefined;
   onActivateAsset: (assetId: string) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
+  onDropToCanvas?: (assetId: string, position: { x: number; y: number }) => void;
   onInspectMetadata: () => Promise<{
     ok: boolean;
     error?: string;
@@ -501,6 +503,18 @@ export function AssetLibrary({
       className="asset-backdrop"
       onClose={onClose}
       locked={uploadStatus.state === "uploading"}
+      onBackdropDragOver={(event) => {
+        if (event.dataTransfer.types.includes("application/x-takeboard-asset")) {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }
+      }}
+      onBackdropDrop={(event) => {
+        const assetId = event.dataTransfer.getData("application/x-takeboard-asset");
+        if (!assetId || !onDropToCanvas) return;
+        event.preventDefault();
+        onDropToCanvas(assetId, { x: event.clientX, y: event.clientY });
+      }}
     >
       <aside
         className="asset-library"
@@ -814,6 +828,11 @@ export function AssetLibrary({
                     type="button"
                     key={asset.id}
                     className={`asset-vault-card ${asset.id === selectedAssetId ? "selected" : ""}`}
+                    draggable={!readOnly}
+                    onDragStart={(event) => {
+                      event.dataTransfer.setData("application/x-takeboard-asset", asset.id);
+                      event.dataTransfer.effectAllowed = "copy";
+                    }}
                     onClick={() => setSelectedAssetId(asset.id)}
                     onDoubleClick={() => {
                       if (busy || (readOnly && !locations.get(asset.id))) return;
@@ -841,7 +860,11 @@ export function AssetLibrary({
                           <VaultIcon name="audio" />
                         </span>
                       ) : (
-                        <img src={projectApi.assetUrl(projectKey, asset.id, true)} alt="" />
+                        <img
+                          src={projectApi.assetUrl(projectKey, asset.id, true)}
+                          alt=""
+                          draggable={false}
+                        />
                       )}
                       {canvasAssetIds.has(asset.id) ? (
                         <span className="asset-canvas-state">
@@ -915,11 +938,21 @@ export function AssetLibrary({
           <section className="asset-detail-panel" aria-label="素材详情">
             {selectedAsset ? (
               <div className="asset-detail-scroll">
-                <DetailMedia
-                  src={projectApi.assetUrl(projectKey, selectedAsset.id)}
-                  kind={selectedAsset.mediaType}
-                  label={displayNames.get(selectedAsset.id) ?? selectedAsset.originalName}
-                />
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: Drag surface for dropping preview onto canvas. */}
+                <div
+                  className="asset-detail-preview-wrap"
+                  draggable={!readOnly}
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData("application/x-takeboard-asset", selectedAsset.id);
+                    event.dataTransfer.effectAllowed = "copy";
+                  }}
+                >
+                  <DetailMedia
+                    src={projectApi.assetUrl(projectKey, selectedAsset.id)}
+                    kind={selectedAsset.mediaType}
+                    label={displayNames.get(selectedAsset.id) ?? selectedAsset.originalName}
+                  />
+                </div>
                 <form
                   className="asset-rename"
                   onSubmit={(event) => {

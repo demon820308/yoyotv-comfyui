@@ -31,6 +31,8 @@ export const workflowDiagnosticSchema = z.object({
     "image_to_video",
     "first_last_video",
     "reference_video",
+    "upscale_image",
+    "upscale_video",
   ]),
   outputMediaType: z.enum(["image", "video"]),
   bindingStatus: z.enum(["built_in", "ready", "stale", "needs_binding"]),

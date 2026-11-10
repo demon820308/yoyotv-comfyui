@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "workflowPath": "RelayVSR_Workflow.json",
+  "workflowHash": "5dd6eb18930f7eca27caa19f0430ed83db1647cd4474aabd46da8efc3a69e489",
+  "capability": "upscale_video",
+  "outputMediaType": "video",
+  "parameters": {
+    "denoise": [
+      {
+        "nodeId": "114",
+        "input": "detail"
+      }
+    ]
+  },
+  "media": {
+    "reference_video": [
+      {
+        "nodeId": "107",
+        "input": "file"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-09T05:00:00.000Z"
+}

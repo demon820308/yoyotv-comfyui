@@ -1,15 +1,19 @@
-import type { ReactNode } from "react";
+import type { DragEvent, ReactNode } from "react";
 
 export function LayerBackdrop({
   children,
   className = "",
   onClose,
   locked = false,
+  onBackdropDragOver,
+  onBackdropDrop,
 }: {
   children: ReactNode;
   className?: string;
   onClose: () => void;
   locked?: boolean;
+  onBackdropDragOver?: (event: DragEvent<HTMLElement>) => void;
+  onBackdropDrop?: (event: DragEvent<HTMLElement>) => void;
 }) {
   return (
     <div className={`studio-backdrop ${className}`}>
@@ -20,6 +24,8 @@ export function LayerBackdrop({
         aria-label="关闭当前面板"
         disabled={locked}
         onClick={onClose}
+        onDragOver={onBackdropDragOver}
+        onDrop={onBackdropDrop}
       />
       {children}
     </div>

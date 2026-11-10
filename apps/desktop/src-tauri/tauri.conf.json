@@ -44,7 +44,10 @@
     "copyright": "Copyright © TakeBoard contributors",
     "shortDescription": "Local-first AI filmmaking workspace",
     "longDescription": "Organize assets, shots, ComfyUI workflows, generation runs and approved takes in one local-first workspace.",
-    "resources": { "resources/TakeBoard/": "TakeBoard/" },
+    "resources": {
+      "resources/TakeBoard/": "TakeBoard/",
+      "resources/Trust-Workflow/": "Trust-Workflow/"
+    },
     "externalBin": ["binaries/takeboard-node"]
   }
 }

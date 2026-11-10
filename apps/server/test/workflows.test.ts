@@ -137,6 +137,28 @@ describe("ComfyUI workflow detection", () => {
     });
     expect(trusted.statusCode, trusted.body).toBe(200);
     expect(documents.has(activeBindingPath)).toBe(true);
+
+    const disabled = await app.inject({
+      method: "DELETE",
+      url: `/api/workflows/binding?path=${encodeURIComponent(destination)}`,
+    });
+    expect(disabled.statusCode, disabled.body).toBe(200);
+    expect(disabled.json()).toEqual({ status: "needs_binding", path: destination });
+
+    const rechecked = await app.inject({
+      method: "GET",
+      url: `/api/workflows/inspect?path=${encodeURIComponent(destination)}`,
+    });
+    expect(rechecked.statusCode, rechecked.body).toBe(200);
+    expect(rechecked.json()).toMatchObject({
+      execution: "comfy_only",
+      bindingStatus: "needs_binding",
+      diagnostic: { executable: false },
+      binding: {
+        capability: "text_to_image",
+        parameters: { prompt: [{ nodeId: "1", input: "text" }] },
+      },
+    });
   });
 
   it("imports plain JSON into diagnosis without granting execution or binding it implicitly", async () => {
@@ -733,5 +755,43 @@ describe("ComfyUI workflow detection", () => {
       workflows: [expect.objectContaining({ path: "Kino/healthy_I2V.json" })],
       warnings: [expect.stringContaining("broken_T2V.json")],
     });
+  });
+
+  it("detects and validates upscale workflows without requiring prompt", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = decodeURIComponent(String(input));
+        if (url.includes("/userdata?dir=workflows")) {
+          return Response.json(["RealEsRGAN.json", "RelayVSR_Workflow.json"]);
+        }
+        if (url.includes("RealEsRGAN.json")) {
+          return Response.json({
+            nodes: [
+              { type: "LoadImage", widgets_values: ["test.png"] },
+              { type: "CR Upscale Image", widgets_values: ["RealESRGAN_x4.pth", "rescale", 2] },
+              { type: "SaveImage", widgets_values: ["RealESRGAN"] },
+            ],
+          });
+        }
+        return Response.json({
+          nodes: [
+            { type: "LoadVideo", widgets_values: ["1.mp4"] },
+            { type: "RelayVSRConditioning", widgets_values: [] },
+            { type: "SaveVideo", widgets_values: ["ComfyUI"] },
+          ],
+        });
+      }),
+    );
+    const app = buildApp({ comfyUrl: "http://comfy.test", webRoot: null });
+    apps.push(app);
+
+    const response = await app.inject({ method: "GET", url: "/api/workflows" });
+    expect(response.statusCode).toBe(200);
+    const data = response.json() as { workflows: Array<{ path: string; capability: string }> };
+    const realesrgan = data.workflows.find((w) => w.path === "RealEsRGAN.json");
+    const relayvsr = data.workflows.find((w) => w.path === "RelayVSR_Workflow.json");
+    expect(realesrgan?.capability).toBe("upscale_image");
+    expect(relayvsr?.capability).toBe("upscale_video");
   });
 });

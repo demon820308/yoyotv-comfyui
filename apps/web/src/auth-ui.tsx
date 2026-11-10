@@ -47,9 +47,9 @@ export function useAuth() {
 function AuthMark() {
   return (
     <div className="auth-brand">
-      <span className="brand-mark">T</span>
+      <span className="brand-mark">YoYo</span>
       <div>
-        <strong>TakeBoard</strong>
+        <strong>YoYo</strong>
         <span>PRIVATE FILMMAKING WORKSPACE</span>
       </div>
     </div>
@@ -130,7 +130,7 @@ function AuthScreen({
         : await authApi.bootstrap({ name, email, password, remember });
       onAuthenticated(result.user, result.csrfToken);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "无法登录 TakeBoard");
+      setError(cause instanceof Error ? cause.message : "无法登录 YoYo");
     } finally {
       setBusy(false);
     }
@@ -167,7 +167,7 @@ function AuthScreen({
           <AuthMark />
           <div className="auth-card-copy">
             <span className="auth-eyebrow">PRIVATE INVITATION</span>
-            <h1 id="auth-title">加入 TakeBoard 工作室</h1>
+            <h1 id="auth-title">加入 YoYo 工作室</h1>
             <p>
               {invitationState === "loading"
                 ? "正在安全验证这份邀请…"
@@ -252,7 +252,7 @@ function AuthScreen({
         <AuthMark />
         <div className="auth-card-copy">
           <span className="auth-eyebrow">{configured ? "WELCOME BACK" : "FIRST RUN"}</span>
-          <h1 id="auth-title">{configured ? "回到你的创作空间" : "创建 TakeBoard 账号"}</h1>
+          <h1 id="auth-title">{configured ? "回到你的创作空间" : "创建 YoYo 账号"}</h1>
           <p>
             {configured
               ? "项目、素材与生成任务会按照你的权限安全呈现。"
@@ -327,7 +327,7 @@ function AuthScreen({
             </p>
           ) : null}
           <button className="auth-primary" disabled={busy} type="submit">
-            {busy ? "正在验证…" : configured ? "进入 TakeBoard" : "创建账号"}
+            {busy ? "正在验证…" : configured ? "进入 YoYo" : "创建账号"}
           </button>
           {onLocal ? (
             <button className="auth-text-action" type="button" disabled={busy} onClick={onLocal}>
@@ -672,7 +672,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return result;
     } catch (cause) {
       if (generation !== loadGeneration.current) return;
-      setError(cause instanceof Error ? cause.message : "无法连接 TakeBoard 服务");
+      setError(cause instanceof Error ? cause.message : "无法连接 YoYo 服务");
       setStatus("error");
     } finally {
       if (generation === loadGeneration.current) loading.current = false;
@@ -755,7 +755,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <main className="auth-loading">
         <AuthMark />
-        <span>正在连接 TakeBoard…</span>
+        <span>正在连接 YoYo…</span>
       </main>
     );
   if (!identity && status === "error")

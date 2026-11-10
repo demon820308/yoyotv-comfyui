@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "workflowPath": "image_z_image_turbo.json",
+  "workflowHash": "0cd8f485a9d2abe471302da0107c2a749ccd163576a879106ac19317896dc31b",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "64",
+        "input": "text"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "67",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "67",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "67",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "72",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "72",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-08T15:37:35.760Z"
+}

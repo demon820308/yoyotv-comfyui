@@ -1,0 +1,336 @@
+{
+  "id": "6fcb8b56-8232-4290-9b42-676373092edf",
+  "revision": 0,
+  "last_node_id": 16,
+  "last_link_id": 23,
+  "nodes": [
+    {
+      "id": 13,
+      "type": "LoadImage",
+      "pos": [
+        604.8700905906984,
+        252.023993742117
+      ],
+      "size": [
+        270,
+        314.00000000000006
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图像",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "选择文件上传",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            23
+          ]
+        },
+        {
+          "localized_name": "遮罩",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.44.2",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "version": "8.0.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "title_regex": null,
+          "input_regex": null,
+          "group_regex": null,
+          "title_regex_invert": false,
+          "input_regex_invert": false,
+          "group_regex_invert": false,
+          "apply_to_unrepeated": 0,
+          "send_to_any": 0,
+          "string_to_combo": 0,
+          "repeated_type_rule": 0,
+          "group_restricted": 0,
+          "color_restricted": 0
+        },
+        "guhaiImageValue": "00000_0000118_.png"
+      },
+      "widgets_values": [
+        "00000_0000118_.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "00000_0000118_.png",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 15,
+      "type": "SaveImage",
+      "pos": [
+        1231.421436801436,
+        245.41835651431091
+      ],
+      "size": [
+        570,
+        620
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "图片",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 21
+        },
+        {
+          "localized_name": "文件名前缀",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        },
+        "cnr_id": "comfy-core",
+        "ver": "0.41.1",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "RealESRGAN"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "RealESRGAN"
+      }
+    },
+    {
+      "id": 16,
+      "type": "CR Upscale Image",
+      "pos": [
+        908.122508667045,
+        260.46597932671847
+      ],
+      "size": [
+        275.45703125,
+        222
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "localized_name": "图像",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 23
+        },
+        {
+          "label": "放大模型",
+          "localized_name": "放大模型",
+          "name": "upscale_model",
+          "type": "COMBO",
+          "widget": {
+            "name": "upscale_model"
+          },
+          "link": null
+        },
+        {
+          "label": "模式",
+          "localized_name": "模式",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "label": "缩放系数",
+          "localized_name": "缩放系数",
+          "name": "rescale_factor",
+          "type": "FLOAT",
+          "widget": {
+            "name": "rescale_factor"
+          },
+          "link": null
+        },
+        {
+          "label": "拉伸宽度",
+          "localized_name": "拉伸宽度",
+          "name": "resize_width",
+          "type": "INT",
+          "widget": {
+            "name": "resize_width"
+          },
+          "link": null
+        },
+        {
+          "label": "重采样方法",
+          "localized_name": "重采样方法",
+          "name": "resampling_method",
+          "type": "COMBO",
+          "widget": {
+            "name": "resampling_method"
+          },
+          "link": null
+        },
+        {
+          "label": "超采样",
+          "localized_name": "超采样",
+          "name": "supersample",
+          "type": "COMBO",
+          "widget": {
+            "name": "supersample"
+          },
+          "link": null
+        },
+        {
+          "label": "舍入到倍数",
+          "localized_name": "舍入到倍数",
+          "name": "rounding_modulus",
+          "type": "INT",
+          "widget": {
+            "name": "rounding_modulus"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "图像",
+          "localized_name": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            21
+          ]
+        },
+        {
+          "localized_name": "show_help",
+          "name": "show_help",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "放大图像",
+      "properties": {
+        "ue_properties": {
+          "version": "8.0.1",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "title_regex": null,
+          "input_regex": null,
+          "group_regex": null,
+          "title_regex_invert": false,
+          "input_regex_invert": false,
+          "group_regex_invert": false,
+          "apply_to_unrepeated": 0,
+          "send_to_any": 0,
+          "string_to_combo": 0,
+          "repeated_type_rule": 0,
+          "group_restricted": 0,
+          "color_restricted": 0
+        },
+        "cnr_id": "ComfyUI_Comfyroll_CustomNodes",
+        "ver": "d78b780ae43fcf8c6b7c6505e6ffb4584281ceca",
+        "Node name for S&R": "CR Upscale Image"
+      },
+      "widgets_values": [
+        "RealESRGAN_x4.pth",
+        "rescale",
+        2,
+        1024,
+        "lanczos",
+        "true",
+        8
+      ],
+      "widgets_values_named": {
+        "upscale_model": "RealESRGAN_x4.pth",
+        "mode": "rescale",
+        "rescale_factor": 2,
+        "resize_width": 1024,
+        "resampling_method": "lanczos",
+        "supersample": "true",
+        "rounding_modulus": 8
+      }
+    }
+  ],
+  "links": [
+    [
+      21,
+      16,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      23,
+      13,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.127435294117648,
+      "offset": [
+        -503.58010631505897,
+        -13.806193675658323
+      ]
+    },
+    "frontendVersion": "1.37.11",
+    "workflowRendererVersion": "LG",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true,
+    "ue_links": [],
+    "links_added_by_ue": []
+  },
+  "version": 0.4
+}

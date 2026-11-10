@@ -83,6 +83,9 @@ const RecipeStudio = lazy(() =>
 const Storyboard = lazy(() =>
   import("./storyboard").then((module) => ({ default: module.Storyboard })),
 );
+const ExportManager = lazy(() =>
+  import("./export-manager").then((module) => ({ default: module.ExportManager })),
+);
 const ExtensionLibrary = lazy(() =>
   import("./extension-library").then((module) => ({ default: module.ExtensionLibrary })),
 );
@@ -184,6 +187,7 @@ export function App() {
     null,
   );
   const [storyboardOpen, setStoryboardOpen] = useState(false);
+  const [exportManagerOpen, setExportManagerOpen] = useState(false);
   const [extensionLibraryOpen, setExtensionLibraryOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"current" | "updated" | "pending" | "offline">(
     "current",
@@ -251,6 +255,7 @@ export function App() {
     generationCancelling,
     canCancelGeneration,
     generationProgress,
+    progressByShot,
     requestShotGeneration,
     retryGenerationRun,
     cancelGeneration,
@@ -761,8 +766,7 @@ export function App() {
         setDeletingShotPreview(null);
         setDeletingShotItemId(item.id);
         const shot = snapshot?.shots.find((candidate) => candidate.id === item.refId);
-        const hasRuns = snapshot?.runs.some((run) => run.shotId === shot?.id);
-        if (projectKey && projectMode === "project" && shot && !hasRuns) {
+        if (projectKey && projectMode === "project" && shot) {
           void projectApi
             .previewCommand(projectKey, { type: "shot.delete", shotId: shot.id })
             .then(({ preview }) => setDeletingShotPreview(preview))
@@ -1032,7 +1036,7 @@ export function App() {
         (target.closest("dialog[open], .settings-panel") ||
           (target.closest('[role="dialog"], .studio-backdrop') &&
             (event.key !== "Escape" ||
-              !(recipeOpen || assetLibraryOpen || storyboardOpen || renameOpen || nodeEditDraft))))
+              !(recipeOpen || assetLibraryOpen || storyboardOpen || exportManagerOpen || renameOpen || nodeEditDraft))))
       )
         return;
       if (event.key === "Escape") {
@@ -1048,6 +1052,7 @@ export function App() {
             recipeOpen ||
             assetLibraryOpen ||
             storyboardOpen ||
+            exportManagerOpen ||
             renameOpen,
         );
         selection.dismissMenu();
@@ -1061,6 +1066,7 @@ export function App() {
         setRecipeOpen(false);
         setAssetLibraryOpen(false);
         setStoryboardOpen(false);
+        setExportManagerOpen(false);
         setRenameOpen(false);
         if (!overlayOpen) {
           selection.canvas();
@@ -1304,21 +1310,34 @@ export function App() {
         setNotice("功能示例中的连线不会写入项目");
         return;
       }
-      const slot = connection.targetHandle;
-      if (
-        slot !== "first_frame" &&
-        slot !== "last_frame" &&
-        slot !== "reference" &&
-        slot !== "reference_video" &&
-        slot !== "reference_audio"
-      ) {
-        setError("请连接到镜头的图片、视频或音频输入端口");
-        return;
+      let slot:
+        | "first_frame"
+        | "last_frame"
+        | "reference"
+        | "reference_video"
+        | "reference_audio"
+        | null =
+        connection.targetHandle === "first_frame" ||
+        connection.targetHandle === "last_frame" ||
+        connection.targetHandle === "reference" ||
+        connection.targetHandle === "reference_video" ||
+        connection.targetHandle === "reference_audio"
+          ? connection.targetHandle
+          : null;
+      if (!slot) {
+        // Drop on a shot node without hitting the exact handle auto-connects when the slot is unambiguous.
+        const targetNode = nodes.find((node) => node.id === connection.target);
+        const slots = targetNode?.data?.inputSlots;
+        if (slots && slots.length === 1 && slots[0]) {
+          slot = slots[0].id;
+        } else {
+          return;
+        }
       }
       setError(null);
       void connectCanvasItems(connection.source, connection.target, slot);
     },
-    [canEditProject, projectKey, projectMode, connectCanvasItems, setError],
+    [canEditProject, projectKey, projectMode, connectCanvasItems, nodes, setError],
   );
 
   const connectAssetFromLibrary = useCallback(
@@ -1755,6 +1774,53 @@ export function App() {
     [setError],
   );
 
+  const setProjectCover = useCallback(
+    async (key: string, input: File | { assetId: string }) => {
+      const catalogRequestId = ++projectCatalogRequestRef.current;
+      setBusy(true);
+      setError(null);
+      try {
+        const result = await projectApi.setCover(key, input);
+        const catalog = await projectApi.list();
+        const freshTimestamp = result.coverUpdatedAt ?? Date.now();
+        const updatedProjects = catalog.projects.map((p) =>
+          p.key === key ? { ...p, hasCover: true, coverUpdatedAt: freshTimestamp } : p,
+        );
+        if (projectCatalogRequestRef.current === catalogRequestId) setProjects(updatedProjects);
+        setNotice("项目封面已更新");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "设置封面失败");
+        throw cause;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [setError],
+  );
+
+  const deleteProjectCover = useCallback(
+    async (key: string) => {
+      const catalogRequestId = ++projectCatalogRequestRef.current;
+      setBusy(true);
+      setError(null);
+      try {
+        await projectApi.deleteCover(key);
+        const catalog = await projectApi.list();
+        const updatedProjects = catalog.projects.map((p) =>
+          p.key === key ? { ...p, hasCover: false, coverUpdatedAt: null } : p,
+        );
+        if (projectCatalogRequestRef.current === catalogRequestId) setProjects(updatedProjects);
+        setNotice("项目封面已移除");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "移除封面失败");
+        throw cause;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [setError],
+  );
+
   const openDemo = useCallback(async () => {
     const navigationTicket = beginNavigation();
     detachGeneration();
@@ -1913,6 +1979,41 @@ export function App() {
     [acceptPayload, setError],
   );
 
+  const handleResizeCanvasItem = useCallback(
+    (itemId: string, params: { x: number; y: number; width: number; height: number }) => {
+      const x = Math.round(params.x);
+      const y = Math.round(params.y);
+      const width = Math.round(params.width);
+      const height = Math.round(params.height);
+
+      setNodes((current) =>
+        current.map((candidate) =>
+          candidate.id === itemId
+            ? {
+                ...candidate,
+                position: { x, y },
+                style: { ...candidate.style, width },
+                width,
+                height,
+              }
+            : candidate,
+        ),
+      );
+
+      if (projectMode === "project" && projectKey) {
+        void projectApi
+          .resize(projectKey, itemId, x, y, width, height)
+          .then((payload) => {
+            acceptPayload(payload);
+          })
+          .catch((cause: unknown) => {
+            setError(cause instanceof Error ? cause.message : "尺寸保存失败");
+          });
+      }
+    },
+    [acceptPayload, projectKey, projectMode],
+  );
+
   useEffect(() => {
     if (!snapshot) return;
     const availableWorkflows = workflows.filter(
@@ -1965,6 +2066,7 @@ export function App() {
               }),
           }
         : null,
+      progressByShot,
     );
     const interactiveNodes = projectedNodes.map((node) => ({
       ...node,
@@ -1972,6 +2074,10 @@ export function App() {
       data: {
         ...node.data,
         selected: selectedCanvasItemIds.includes(node.id),
+        onResizeItem: canEditProject
+          ? (params: { x: number; y: number; width: number; height: number }) =>
+              handleResizeCanvasItem(node.id, params)
+          : undefined,
       },
     }));
     setNodes((previous) => retainNodeMeasurements(previous, interactiveNodes));
@@ -1981,6 +2087,7 @@ export function App() {
     canEditProject,
     generationBusy,
     generationProgress,
+    progressByShot,
     generationSettings,
     projectKey,
     projectMode,
@@ -2001,11 +2108,12 @@ export function App() {
     bindWorkflow,
     inspectorVisible,
     focusMode,
+    handleResizeCanvasItem,
   ]);
 
   if (showHub) {
     return (
-      <Suspense fallback={<main className="loading-screen">正在打开 TakeBoard…</main>}>
+      <Suspense fallback={<main className="loading-screen">正在打开 YoYo…</main>}>
         <ProjectHub
           busy={busy}
           error={error}
@@ -2016,6 +2124,8 @@ export function App() {
           onOpen={openProject}
           onRename={renameProject}
           onRestore={restoreProject}
+          onSetCover={setProjectCover}
+          onDeleteCover={deleteProjectCover}
           projects={projects}
           trashedProjects={trashedProjects}
           worker={worker}
@@ -2028,8 +2138,8 @@ export function App() {
   if (!snapshot) {
     return (
       <main className="loading-screen">
-        <div className="loading-mark">T</div>
-        <strong>正在打开 TakeBoard Demo</strong>
+        <div className="loading-mark">YoYo</div>
+        <strong>正在打开 YoYo Demo</strong>
         <span>{error ?? "读取本地项目与开放快照…"}</span>
       </main>
     );
@@ -2054,7 +2164,7 @@ export function App() {
               setShowHub(true);
             }}
           >
-            T
+            YoYo
           </button>
           <DeviceIndicator
             projectKey={projectMode === "project" ? (projectKey ?? undefined) : undefined}
@@ -2075,7 +2185,20 @@ export function App() {
             <strong>{snapshot.project.title}</strong>
           </div>
           {projectMode === "project" && canEditProject ? (
-            <span className="project-heading-edit">✎</span>
+            <span className="project-heading-edit" aria-hidden="true">
+              <svg
+                viewBox="0 0 16 16"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3z" />
+              </svg>
+            </span>
           ) : null}
         </button>
         <div className="top-actions">
@@ -2087,18 +2210,52 @@ export function App() {
               onClick={applyPendingSync}
               title="当前编辑完成后，点击载入其他设备的更新"
             >
-              ↻ 有新版本 · 当前 r{revision}
+              <svg
+                viewBox="0 0 16 16"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2.5 8a5.5 5.5 0 0 1 9.35-3.9M13.5 8a5.5 5.5 0 0 1-9.35 3.9" />
+                <polyline points="13.5 3.5 13.5 7.5 9.5 7.5" />
+                <polyline points="2.5 12.5 2.5 8.5 6.5 8.5" />
+              </svg>
+              <span>有新版本 · 当前 r{revision}</span>
             </button>
           ) : (
             <span
               className="save-status"
               title={syncStatus === "offline" ? "暂时无法检查其他设备的更新" : "项目已保存"}
             >
-              {syncStatus === "offline"
-                ? `○ 同步待重连 · r${revision}`
-                : syncStatus === "updated"
-                  ? `✓ 已同步 · r${revision}`
-                  : `✓ 已保存 · r${revision}`}
+              <svg
+                viewBox="0 0 16 16"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={syncStatus === "offline" ? "1.5" : "2"}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                {syncStatus === "offline" ? (
+                  <circle cx="8" cy="8" r="4.5" />
+                ) : (
+                  <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" />
+                )}
+              </svg>
+              <span>
+                {syncStatus === "offline"
+                  ? `同步待重连 · r${revision}`
+                  : syncStatus === "updated"
+                    ? `已同步 · r${revision}`
+                    : `已保存 · r${revision}`}
+              </span>
             </span>
           )}
           <Suspense fallback={null}>
@@ -2110,8 +2267,67 @@ export function App() {
             onClick={() => setExtensionLibraryOpen(true)}
             title="打开扩展库与项目质检"
           >
-            <span aria-hidden="true">◇</span>
+            <svg
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="2" width="5" height="5" rx="1" />
+              <rect x="9" y="2" width="5" height="5" rx="1" />
+              <rect x="2" y="9" width="5" height="5" rx="1" />
+              <path d="M11.5 9v5M9 11.5h5" />
+            </svg>
             扩展
+          </button>
+          <button
+            className="density-button"
+            type="button"
+            onClick={() => setRecipeOpen(true)}
+            title="打开工作流管理"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2" y="2" width="5" height="4" rx="1" />
+              <rect x="9" y="10" width="5" height="4" rx="1" />
+              <path d="M4.5 6v5a1 1 0 0 0 1 1H9" />
+            </svg>
+            工作流
+          </button>
+          <button
+            className="density-button"
+            type="button"
+            onClick={() => setExportManagerOpen(true)}
+            title="打开交付与导出管理"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M8 2v9m-3.5-3.5L8 11l3.5-3.5M3 14h10" />
+            </svg>
+            导出
           </button>
           <SettingsButton />
           <AccountButton
@@ -2269,7 +2485,21 @@ export function App() {
                     <b>{String(shot.order + 1).padStart(2, "0")}</b>
                   )}
                   {previewUrl && shot.status === "approved" ? (
-                    <i className="shot-thumb-approved">✓</i>
+                    <i className="shot-thumb-approved" aria-label="已定剪">
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="10"
+                        height="10"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="3 8.5 6.5 12 13 4" />
+                      </svg>
+                    </i>
                   ) : null}
                 </span>
                 <span className="shot-list-copy">
@@ -2313,6 +2543,13 @@ export function App() {
             >
               ◇ 打开资产库
             </button>
+            <button
+              type="button"
+              className="vault-button"
+              onClick={() => setExportManagerOpen(true)}
+            >
+              ⇪ 导出管理
+            </button>
             <small>
               {
                 snapshot.assets.filter((asset) => ["image", "video"].includes(asset.mediaType))
@@ -2326,7 +2563,7 @@ export function App() {
 
       <section
         className="canvas-wrap"
-        aria-label="TakeBoard 创作画布"
+        aria-label="YoYo 创作画布"
         onDragOver={(event) => {
           if (event.dataTransfer.types.includes("application/x-takeboard-asset"))
             event.preventDefault();
@@ -2607,7 +2844,7 @@ export function App() {
               );
           }}
           minZoom={0.35}
-          maxZoom={1.5}
+          maxZoom={4}
           onlyRenderVisibleElements
           snapToGrid
           snapGrid={canvasSnapGrid}
@@ -2669,7 +2906,22 @@ export function App() {
                   selection.dismissMenu();
                 }}
               >
-                <span>↘</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="4" y1="4" x2="12" y2="12" />
+                    <polyline points="7 12 12 12 12 7" />
+                  </svg>
+                </span>
                 <strong>定位输入节点</strong>
               </button>
               <div className="context-menu-separator" />
@@ -2680,7 +2932,21 @@ export function App() {
                 disabled={!canEditProject || contextEdge.immutable}
                 onClick={() => void deleteCanvasEdge(contextEdge.id, contextEdge)}
               >
-                <span>⌫</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 4h10M6 4V2.5h4V4M4.5 4l.8 9.5a1 1 0 0 0 1 .9h3.4a1 1 0 0 0 1-.9L11.5 4" />
+                  </svg>
+                </span>
                 <strong>{contextEdge.immutable ? "生成溯源不可删除" : "断开连接"}</strong>
                 <kbd>Delete</kbd>
               </button>
@@ -2697,7 +2963,21 @@ export function App() {
                     selection.dismissMenu();
                   }}
                 >
-                  <span>✎</span>
+                  <span>
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3z" />
+                    </svg>
+                  </span>
                   <strong>编辑节点</strong>
                 </button>
               ) : null}
@@ -2706,7 +2986,22 @@ export function App() {
                 role="menuitem"
                 onClick={() => copyCanvasItem(canvasContextMenu.itemId as string, "copy")}
               >
-                <span>□</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="5" y="5" width="8.5" height="8.5" rx="1.5" />
+                    <path d="M11 2.5H3.5A1.5 1.5 0 0 0 2 4v7" />
+                  </svg>
+                </span>
                 <strong>复制</strong>
                 <kbd>{modifierKey} C</kbd>
               </button>
@@ -2715,7 +3010,23 @@ export function App() {
                 role="menuitem"
                 onClick={() => copyCanvasItem(canvasContextMenu.itemId as string, "cut")}
               >
-                <span>✂</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="4.5" cy="4.5" r="2" />
+                    <circle cx="4.5" cy="11.5" r="2" />
+                    <path d="M6 6l7.5 7.5M6 10l7.5-7.5" />
+                  </svg>
+                </span>
                 <strong>剪切</strong>
                 <kbd>{modifierKey} X</kbd>
               </button>
@@ -2729,7 +3040,21 @@ export function App() {
                   })
                 }
               >
-                <span>＋</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
+                </span>
                 <strong>创建副本</strong>
                 <kbd>{modifierKey} D</kbd>
               </button>
@@ -2740,7 +3065,21 @@ export function App() {
                 className="danger"
                 onClick={() => deleteCanvasItem(canvasContextMenu.itemId as string)}
               >
-                <span>⌫</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 4h10M6 4V2.5h4V4M4.5 4l.8 9.5a1 1 0 0 0 1 .9h3.4a1 1 0 0 0 1-.9L11.5 4" />
+                  </svg>
+                </span>
                 <strong>
                   {selectedCanvasItemIds.length > 1
                     ? "移除选中节点"
@@ -2762,7 +3101,21 @@ export function App() {
                   selection.dismissMenu();
                 }}
               >
-                <span>＋</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 3v10M3 8h10" />
+                  </svg>
+                </span>
                 <strong>添加生成镜头</strong>
               </button>
               <button
@@ -2772,7 +3125,21 @@ export function App() {
                   void createTextNode({ x: canvasContextMenu.flowX, y: canvasContextMenu.flowY })
                 }
               >
-                <span>文</span>
+                <span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 4h10M8 4v9" />
+                  </svg>
+                </span>
                 <strong>添加文字笔记</strong>
               </button>
               <button
@@ -2998,11 +3365,15 @@ export function App() {
             onClose={() => setRecipeOpen(false)}
             onImport={importWorkflow}
             onRefresh={refreshWorkflows}
-            onSelect={async (workflow) => {
-              if (await bindWorkflow(workflow)) setRecipeOpen(false);
-            }}
+            onSelect={
+              selectedShot
+                ? async (workflow) => {
+                    if (await bindWorkflow(workflow)) setRecipeOpen(false);
+                  }
+                : undefined
+            }
             open
-            selectedPath={generationSettings.recipePath}
+            selectedPath={selectedShot ? generationSettings.recipePath : ""}
             selectionLocked={workflowLocked}
             warnings={workflowWarnings}
             workflows={workflows}
@@ -3037,6 +3408,12 @@ export function App() {
               return addAssetToCanvasFromLibrary(assetId);
             }}
             onClose={() => setAssetLibraryOpen(false)}
+            onDropToCanvas={(assetId, position) => {
+              void addAssetToCanvasFromLibrary(
+                assetId,
+                flowInstance?.screenToFlowPosition(position),
+              );
+            }}
             onPickFrame={(assetId, slot) => void connectAssetFromLibrary(assetId, slot)}
             onInspectMetadata={inspectHistoricalAssetMetadata}
             onUpdateAsset={updateAssetMetadata}
@@ -3064,6 +3441,13 @@ export function App() {
                 (slot) => slot.id === "reference_audio",
               ),
             }}
+          />
+        ) : null}
+        {projectKey && exportManagerOpen ? (
+          <ExportManager
+            projectKey={projectKey}
+            snapshot={snapshot}
+            onClose={() => setExportManagerOpen(false)}
           />
         ) : null}
       </Suspense>
@@ -3192,31 +3576,33 @@ export function App() {
           >
             <span className="section-kicker">SHOT MANAGEMENT</span>
             <h2 id="shot-delete-title">删除“{deletingShot.label}”？</h2>
-            {deletingShotRunCount > 0 ? (
-              <p>
-                这个镜头已有 {deletingShotRunCount}
-                条生成记录。为了保留成片、参数和工作流溯源，目前不能直接删除。
-              </p>
-            ) : (
-              <>
-                <p>镜头会同时从画布和左侧镜头列表删除；项目里的原始素材不会受到影响。</p>
-                {deletingShotPreview ? (
-                  <div className="shot-delete-preview">
-                    <span>本次操作</span>
-                    <ul>
-                      {deletingShotPreview.effects.map((item) => (
-                        <li key={`${item.action}:${item.entityId ?? item.label}`}>
-                          {item.label}
-                          {item.detail ? <small>{item.detail}</small> : null}
-                        </li>
-                      ))}
-                    </ul>
-                    <small>删除后可在“记录”中撤销；若已有后续修改，系统会停止并提示冲突。</small>
-                  </div>
+            <p>
+              {deletingShotRunCount > 0
+                ? `这个镜头已有 ${deletingShotRunCount} 条生成记录。彻底删除将同时清理其关联的生成成片与参数历史。`
+                : "镜头会同时从画布和左侧镜头列表删除；项目里的原始素材不会受到影响。"}
+            </p>
+            {deletingShotPreview ? (
+              <div className="shot-delete-preview">
+                <span>本次操作</span>
+                <ul>
+                  {deletingShotPreview.effects.map((item) => (
+                    <li key={`${item.action}:${item.entityId ?? item.label}`}>
+                      {item.label}
+                      {item.detail ? <small>{item.detail}</small> : null}
+                    </li>
+                  ))}
+                </ul>
+                {deletingShotPreview.warnings.map((warning) => (
+                  <small key={warning}>{warning}</small>
+                ))}
+                {deletingShotPreview.undoable ? (
+                  <small>删除后可在“记录”中撤销；若已有后续修改，系统会停止并提示冲突。</small>
                 ) : (
-                  <div className="shot-delete-preview loading">正在核对删除范围…</div>
+                  <small>该镜头已有生成记录，彻底删除后无法在“记录”中撤销。</small>
                 )}
-              </>
+              </div>
+            ) : (
+              <div className="shot-delete-preview loading">正在核对删除范围…</div>
             )}
             {error ? <p className="form-error">{error}</p> : null}
             <div className="shot-delete-actions">
@@ -3228,18 +3614,52 @@ export function App() {
                   setDeletingShotPreview(null);
                 }}
               >
-                {deletingShotRunCount > 0 ? "知道了" : "取消"}
+                取消
               </button>
-              {deletingShotRunCount === 0 ? (
+              {deletingShotRunCount > 0 ? (
                 <button
-                  className="confirm-shot-delete"
                   type="button"
-                  disabled={busy || !deletingShotPreview}
-                  onClick={() => void confirmDeleteShot()}
+                  disabled={busy}
+                  onClick={() => {
+                    if (projectKey && deletingShotItem) {
+                      setBusy(true);
+                      void projectApi
+                        .previewCommand(projectKey, {
+                          type: "canvas.remove_item",
+                          itemId: deletingShotItem.id,
+                        })
+                        .then(({ preview }) =>
+                          projectApi.executeCommand(
+                            projectKey,
+                            { type: "canvas.remove_item", itemId: deletingShotItem.id },
+                            preview,
+                          ),
+                        )
+                        .then((payload) => {
+                          acceptPayload(payload as any);
+                          setDeletingShotItemId(null);
+                          setDeletingShotPreview(null);
+                          selection.canvas();
+                          setNotice(`镜头“${deletingShot.label}”已从画布移除；成片与记录仍保留`);
+                        })
+                        .catch((cause: unknown) =>
+                          setError(cause instanceof Error ? cause.message : "移除失败"),
+                        )
+                        .finally(() => setBusy(false));
+                    }
+                  }}
                 >
-                  {busy ? "正在删除…" : "删除镜头"}
+                  仅从画布移除
                 </button>
               ) : null}
+              <button
+                className="confirm-shot-delete"
+                type="button"
+                disabled={busy || !deletingShotPreview}
+                onClick={() => void confirmDeleteShot()}
+              >
+                {busy ? "正在删除…" : deletingShotRunCount > 0 ? "彻底删除镜头" : "删除镜头"}
+              </button>
             </div>
           </section>
         </div>
@@ -3355,7 +3775,24 @@ export function App() {
         </div>
       ) : null}
 
-      {notice ? <div className="toast success">✓ {notice}</div> : null}
+      {notice ? (
+        <div className="toast success">
+          <svg
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" />
+          </svg>
+          <span>{notice}</span>
+        </div>
+      ) : null}
       {error ? (
         <RecoveryNotice
           message={error}

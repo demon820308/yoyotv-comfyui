@@ -80,10 +80,10 @@ export function RecommendedTemplates({
       (!onlyReady || item.confirmationToken),
   );
   return (
-    <section className="recommended-templates" aria-label="TakeBoard 推荐模板">
+    <section className="recommended-templates" aria-label="YoYo 推荐模板">
       <header>
         <div>
-          <h3>TakeBoard 推荐</h3>
+          <h3>YoYo 推荐</h3>
           <p>添加到当前生成设备 · 仅模板文件，不下载模型</p>
         </div>
         <button

@@ -859,16 +859,18 @@ describe("TakeBoard project API", () => {
     await store.save(current.snapshot, { type: "test.completed_run", payload: {} });
     store.close();
 
-    const historyProtected = await executeTestCommand(
+    const deletedWithRun = await executeTestCommand(
       app,
       key,
       { type: "shot.delete", shotId: secondShotId },
       { confirm: true },
     );
-    expect(historyProtected.statusCode).toBe(409);
-    expect(historyProtected.json().error).toContain("生成记录");
+    expect(deletedWithRun.statusCode, deletedWithRun.body).toBe(200);
+    expect(deletedWithRun.json().snapshot.shots).toHaveLength(0);
+    expect(deletedWithRun.json().snapshot.runs).toHaveLength(0);
     const reopened = await app.inject({ method: "GET", url: `/api/projects/${key}` });
-    expect(reopened.json().snapshot.shots).toEqual([expect.objectContaining({ id: secondShotId })]);
+    expect(reopened.json().snapshot.shots).toHaveLength(0);
+    expect(reopened.json().snapshot.runs).toHaveLength(0);
   });
 
   it("does not create a project directory while returning 404", async () => {
@@ -1000,5 +1002,56 @@ describe("TakeBoard project API", () => {
       duplicateKey: reimportedSource.json().key,
       projectId: created.json().snapshot.project.id,
     });
+  });
+
+  it("sets, serves, reports, and deletes a project cover", async () => {
+    const root = await mkdtemp(join(tmpdir(), "takeboard-cover-"));
+    cleanup.push(() => rm(root, { recursive: true, force: true }));
+    const app = buildApp({
+      projectsRoot: root,
+      webRoot: null,
+    });
+    cleanup.push(() => app.close());
+
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/projects",
+      payload: { title: "封面测试项目" },
+    });
+    const key = created.json().key as string;
+
+    const initialList = await app.inject({ method: "GET", url: "/api/projects" });
+    expect(initialList.json().projects[0]).toMatchObject({
+      title: "封面测试项目",
+      hasCover: false,
+    });
+
+    const noCover = await app.inject({ method: "GET", url: `/api/projects/${key}/cover` });
+    expect(noCover.statusCode).toBe(404);
+
+    const setCover = await app.inject({
+      method: "POST",
+      url: `/api/projects/${key}/cover`,
+      ...imageUpload(),
+    });
+    expect(setCover.statusCode).toBe(200);
+    expect(setCover.json()).toMatchObject({ ok: true, hasCover: true });
+
+    const updatedList = await app.inject({ method: "GET", url: "/api/projects" });
+    expect(updatedList.json().projects[0]).toMatchObject({
+      title: "封面测试项目",
+      hasCover: true,
+    });
+
+    const getCover = await app.inject({ method: "GET", url: `/api/projects/${key}/cover` });
+    expect(getCover.statusCode).toBe(200);
+    expect(getCover.headers["content-type"]).toBe("image/png");
+
+    const deleteCover = await app.inject({ method: "DELETE", url: `/api/projects/${key}/cover` });
+    expect(deleteCover.statusCode).toBe(200);
+    expect(deleteCover.json()).toEqual({ ok: true, hasCover: false });
+
+    const finalCover = await app.inject({ method: "GET", url: `/api/projects/${key}/cover` });
+    expect(finalCover.statusCode).toBe(404);
   });
 });

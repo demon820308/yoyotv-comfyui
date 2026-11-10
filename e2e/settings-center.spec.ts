@@ -38,9 +38,9 @@ test("default project location is explicit, survives reopening and fits narrow s
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
     expect(bounds.height).toBeLessThanOrEqual(620);
     await dialog.getByRole("button", { name: "关于与更新" }).click();
-    await expect(dialog.getByRole("link", { name: /下载桌面 App/ })).toBeAttached();
-    await dialog.getByRole("link", { name: /下载桌面 App/ }).scrollIntoViewIfNeeded();
-    await expect(dialog.getByRole("link", { name: /下载桌面 App/ })).toBeInViewport();
+    await expect(dialog.getByRole("heading", { name: "YoYo" })).toBeAttached();
+    await dialog.getByRole("heading", { name: "YoYo" }).scrollIntoViewIfNeeded();
+    await expect(dialog.getByRole("heading", { name: "YoYo" })).toBeInViewport();
     const axe = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
