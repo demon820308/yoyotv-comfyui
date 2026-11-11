@@ -1,4 +1,4 @@
-# TakeBoard 推广入口
+# YoYoTV 推广入口
 
 更新时间：2026-11-11。当前公开安装版为全平台 [v1.0.0-beta.1](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1)。
 

@@ -1,10 +1,10 @@
 {
-  "name": "TakeBoard",
+  "name": "YoYoTV",
   "category": "Open-source AI creation canvas built on ComfyUI",
   "primaryInterfaceLanguage": "zh-CN",
-  "repository": "https://github.com/Fourques/Takeboard",
+  "repository": "https://github.com/demon820308/yoyotv-comfyui",
   "website": "https://fourques.github.io/Takeboard/",
-  "publicVersion": "0.2.0-beta.21",
+  "publicVersion": "1.0.0-beta.1",
   "reviewedAt": "2026-10-16",
   "license": "Apache-2.0",
   "platforms": ["macOS", "Windows", "Debian/Ubuntu"],
@@ -20,37 +20,37 @@
       "platform": "macOS",
       "architecture": "ARM64",
       "label": "Mac · Apple silicon",
-      "file": "TakeBoard_0.2.0-beta.21_aarch64.dmg"
+      "file": "YoYoTV_1.0.0-beta.1_aarch64.dmg"
     },
     {
       "platform": "macOS",
       "architecture": "x64",
       "label": "Mac · Intel",
-      "file": "TakeBoard_0.2.0-beta.21_x64.dmg"
+      "file": "YoYoTV_1.0.0-beta.1_x64.dmg"
     },
     {
       "platform": "Windows",
       "architecture": "x64",
       "label": "Windows · Intel / AMD",
-      "file": "TakeBoard_0.2.0-beta.21_x64-setup.exe"
+      "file": "YoYoTV_1.0.0-beta.1_x64-setup.exe"
     },
     {
       "platform": "Windows",
       "architecture": "ARM64",
       "label": "Windows · ARM64",
-      "file": "TakeBoard_0.2.0-beta.21_arm64-setup.exe"
+      "file": "YoYoTV_1.0.0-beta.1_arm64-setup.exe"
     },
     {
       "platform": "Debian/Ubuntu",
       "architecture": "x64",
       "label": "Debian / Ubuntu · x64",
-      "file": "TakeBoard_0.2.0-beta.21_amd64.deb"
+      "file": "YoYoTV_1.0.0-beta.1_amd64.deb"
     },
     {
       "platform": "Debian/Ubuntu",
       "architecture": "ARM64",
       "label": "Debian / Ubuntu · ARM64",
-      "file": "TakeBoard_0.2.0-beta.21_arm64.deb"
+      "file": "YoYoTV_1.0.0-beta.1_arm64.deb"
     }
   ],
   "arbitraryWorkflowCompatibilityGuaranteed": false,
@@ -58,7 +58,7 @@
   "legacyDemo": { "realGpu": false, "sourceCommit": "b58fd273aa84fce409d581abc140f80948b0872d" },
   "evidence": {
     "release": "https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1",
-    "compatibility": "https://github.com/Fourques/Takeboard/blob/main/docs/compatibility-matrix.md",
-    "demo": "https://github.com/Fourques/Takeboard/blob/main/docs/demo-guide.md"
+    "compatibility": "https://github.com/demon820308/yoyotv-comfyui/blob/main/docs/compatibility-matrix.md",
+    "demo": "https://github.com/demon820308/yoyotv-comfyui/blob/main/docs/demo-guide.md"
   }
 }

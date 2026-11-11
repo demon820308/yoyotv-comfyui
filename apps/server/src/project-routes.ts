@@ -234,7 +234,7 @@ async function cleanupDeletedProjectRun(
     ...inputFiles.flatMap((file) => {
       const target =
         options.comfyInputRoot &&
-        file.startsWith(`takeboard_${run.id}_`) &&
+        (file.startsWith(`takeboard_${run.id}_`) || file.startsWith(`yoyotv_${run.id}_`)) &&
         !file.includes("/") &&
         !file.includes("\\")
           ? safeChild(options.comfyInputRoot, file)
@@ -242,7 +242,8 @@ async function cleanupDeletedProjectRun(
       return target ? [unlink(target)] : [];
     }),
     ...(options.comfyOutputRoot &&
-    outputDirectory === `takeboard/${projectId}/${run.shotId}/${run.id}`
+    (outputDirectory === `takeboard/${projectId}/${run.shotId}/${run.id}` ||
+      outputDirectory === `yoyotv/${projectId}/${run.shotId}/${run.id}`)
       ? (() => {
           const target = safeChild(options.comfyOutputRoot, outputDirectory);
           return target ? [rm(target, { recursive: true, force: true })] : [];

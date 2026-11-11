@@ -258,7 +258,7 @@ function displayName(path: string) {
   return (
     filename
       ?.replace(/\.json$/i, "")
-      .replace(/^Kino_/i, "")
+      .replace(/^(?:Kino|Trust-Workflow|YoYo)_/i, "")
       .replaceAll("_", " ") ?? path
   );
 }
@@ -389,9 +389,9 @@ function workflowSummary(
           ? ("stale" as const)
           : ("needs_binding" as const),
     workflowHash: hash,
-    origin: path.startsWith("Kino/")
+    origin: path.startsWith("Kino/") || path.startsWith("Trust-Workflow/") || path.startsWith("YoYo/")
       ? ("built_in" as const)
-      : path.startsWith("TakeBoard/")
+      : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
         ? ("imported" as const)
         : ("comfyui" as const),
     trustSnapshot: Boolean(trustSnapshot),

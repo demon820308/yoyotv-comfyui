@@ -106,7 +106,7 @@ async function dataRootWritable() {
 }
 
 const messages = {
-  title: "TakeBoard 简易启动器",
+  title: "YoYoTV 简易启动器",
   noPnpm: "没有找到 pnpm/Corepack。请先安装 Node.js 22 LTS，然后重新运行。",
 };
 
@@ -290,7 +290,7 @@ async function setup(lockHeld = false) {
   }
   console.log("1/3 正在安装项目依赖…");
   run(manager.command, [...manager.prefix, "install", "--frozen-lockfile"]);
-  console.log("2/3 正在检查并构建 TakeBoard…");
+  console.log("2/3 正在检查并构建 YoYoTV…");
   run(manager.command, [...manager.prefix, "verify"]);
   console.log("3/3 安装完成。正在启动…");
   await (lockHeld ? startUnlocked() : start());
@@ -313,7 +313,7 @@ async function startUnlocked() {
   );
   if (existing && processAlive(existing.pid) && !ownedInstanceRunning) {
     throw new Error(
-      `启动记录中的进程 ${existing.pid} 仍存在，但无法确认它属于 TakeBoard。请先运行 npm run easy:doctor，避免覆盖进程所有权记录。`,
+      `启动记录中的进程 ${existing.pid} 仍存在，但无法确认它属于 YoYoTV。请先运行 npm run easy:doctor，避免覆盖进程所有权记录。`,
     );
   }
   if (ownedInstanceRunning && existing?.instanceId !== instanceId) {
@@ -333,7 +333,7 @@ async function startUnlocked() {
     !needsBuild
   ) {
     const url = `http://127.0.0.1:${existing.port}`;
-    console.log(`TakeBoard 已在运行：${url}`);
+    console.log(`YoYoTV 已在运行：${url}`);
     openBrowser(url);
     return;
   }
@@ -383,11 +383,11 @@ async function startUnlocked() {
     if (running?.service === "takeboard-server" && running?.instanceId === instanceId) {
       if (running.version !== applicationVersion) {
         throw new Error(
-          `同一项目目录已有 TakeBoard ${running.version ?? "未知版本"} 在 ${candidate} 端口运行；请先从原启动方式停止，再启动 ${applicationVersion}`,
+          `同一项目目录已有 YoYoTV ${running.version ?? "未知版本"} 在 ${candidate} 端口运行；请先从原启动方式停止，再启动 ${applicationVersion}`,
         );
       }
       const url = `http://127.0.0.1:${candidate}`;
-      console.log(`TakeBoard 已在运行：${url}`);
+      console.log(`YoYoTV 已在运行：${url}`);
       openBrowser(url);
       return;
     }
@@ -428,7 +428,7 @@ async function startUnlocked() {
   closeSync(log);
   child.unref();
   const buildStamp = currentBuildStamp();
-  if (!buildStamp) throw new Error("TakeBoard 构建产物不存在，请重新运行 npm run easy");
+  if (!buildStamp) throw new Error("YoYoTV 构建产物不存在，请重新运行 npm run easy");
   writeFileSync(
     stateFile,
     JSON.stringify(
@@ -452,7 +452,7 @@ async function startUnlocked() {
     process.exit(1);
   }
   const url = `http://127.0.0.1:${port}`;
-  console.log(`TakeBoard 已启动：${url}`);
+  console.log(`YoYoTV 已启动：${url}`);
   console.log(`项目数据：${dataRoot()}`);
   openBrowser(url);
 }
@@ -475,7 +475,7 @@ async function start() {
       const stale = ownerPid
         ? !processAlive(ownerPid)
         : existsSync(launchLockFile) && Date.now() - statSync(launchLockFile).mtimeMs > 30 * 60_000;
-      if (!stale) throw new Error("另一个 TakeBoard 启动过程正在运行，请稍候再试");
+      if (!stale) throw new Error("另一个 YoYoTV 启动过程正在运行，请稍候再试");
       rmSync(launchLockFile, { force: true });
       lock = openSync(launchLockFile, "wx", 0o600);
       writeFileSync(lock, String(process.pid));
@@ -493,20 +493,20 @@ async function stop() {
   const state = readState();
   if (!state?.instanceId || !processAlive(state.pid)) {
     rmSync(stateFile, { force: true });
-    console.log("TakeBoard 简易服务当前没有运行。");
+    console.log("YoYoTV 简易服务当前没有运行。");
     return;
   }
   if (!(await health(state.port, 1_500, state.instanceId))) {
     throw new Error(
-      `记录中的进程 ${state.pid} 仍存在，但无法验证它是否属于 TakeBoard。状态文件已保留，请先运行 npm run easy:doctor，避免误停其他程序。`,
+      `记录中的进程 ${state.pid} 仍存在，但无法验证它是否属于 YoYoTV。状态文件已保留，请先运行 npm run easy:doctor，避免误停其他程序。`,
     );
   }
   process.kill(state.pid, "SIGTERM");
   if (!(await waitForStop(state.port, state.pid))) {
-    throw new Error(`TakeBoard 进程 ${state.pid} 没有在预期时间内停止，请查看日志：${logFile}`);
+    throw new Error(`YoYoTV 进程 ${state.pid} 没有在预期时间内停止，请查看日志：${logFile}`);
   }
   rmSync(stateFile, { force: true });
-  console.log("TakeBoard 已停止。项目数据不会删除。");
+  console.log("YoYoTV 已停止。项目数据不会删除。");
 }
 
 async function doctor() {
@@ -517,7 +517,7 @@ async function doctor() {
   checks.push([Boolean(packageManager()), "pnpm / Corepack", "运行 corepack enable"]);
   checks.push([
     !buildOutdated(),
-    "TakeBoard 构建与当前代码一致",
+    "YoYoTV 构建与当前代码一致",
     "运行 npm run easy，启动器会自动重新构建",
   ]);
   checks.push([
@@ -539,13 +539,13 @@ async function doctor() {
           processAlive(state.pid) &&
           (await health(state.port, 1_500, state.instanceId))),
     ),
-    discoveredPort ? `TakeBoard 服务（端口 ${discoveredPort}）` : "TakeBoard 服务",
+    discoveredPort ? `YoYoTV 服务（端口 ${discoveredPort}）` : "YoYoTV 服务",
     "运行 npm run easy",
   ]);
   checks.push([
     await comfyHealth(),
     "ComfyUI 连接（可选）",
-    "先启动 ComfyUI，或在 TakeBoard 首页使用安全启动",
+    "先启动 ComfyUI，或在 YoYoTV 首页使用安全启动",
   ]);
   for (const [ok, label, action] of checks) {
     console.log(`${ok ? "[正常]" : "[需要处理]"} ${label}${ok ? "" : ` → ${action}`}`);
@@ -579,7 +579,7 @@ async function remote(host) {
   for (const signal of signals) process.once(signal, disconnect);
   let connection;
   try {
-    console.log(`正在连接 ${target}，自动检查 TakeBoard 服务…`);
+    console.log(`正在连接 ${target}，自动检查 YoYoTV 服务…`);
     console.log("首次连接请核实 SSH 指纹；需要时在此输入服务器密码。按 Ctrl-C 可取消。");
     connection = await connectRemote({
       host: target,
@@ -602,7 +602,7 @@ async function remote(host) {
     });
     if (previous?.instanceId && previous.instanceId !== connection.instanceId) {
       throw new Error(
-        "这个地址对应的 TakeBoard 实例已变化。为避免打开错误的项目，已断开连接。确认服务器后，请移除连接记录再连接：" +
+        "这个地址对应的 YoYoTV 实例已变化。为避免打开错误的项目，已断开连接。确认服务器后，请移除连接记录再连接：" +
           profileFile,
       );
     }
@@ -627,11 +627,11 @@ async function remote(host) {
     } catch {
       console.warn("连接成功，但无法保存连接记录。下次仍可输入 SSH 主机连接。");
     }
-    console.log(`远程 TakeBoard 已连接：${connection.url}`);
+    console.log(`远程 YoYoTV 已连接：${connection.url}`);
     console.log(`已验证实例：${connection.instanceId}（服务端口 ${connection.remotePort}）`);
     if (connection.comfyUrl)
       console.log(
-        `ComfyUI 编辑器转发地址：${connection.comfyUrl}（是否在线请在 TakeBoard 中检查）`,
+        `ComfyUI 编辑器转发地址：${connection.comfyUrl}（是否在线请在 YoYoTV 中检查）`,
       );
     console.log("下次可直接运行 npm run easy:remote，或在双击入口留空以连接上次服务器。");
     console.log("关闭此窗口或按 Ctrl-C 即可断开；不会停止服务器上的生成任务。");
@@ -663,7 +663,7 @@ async function restore(archive, confirmation) {
     processAlive(state.pid) &&
     (await health(state.port, 1_500, state.instanceId))
   ) {
-    throw new Error("TakeBoard 仍在运行。请先执行 npm run easy:stop，再进行离线恢复");
+    throw new Error("YoYoTV 仍在运行。请先执行 npm run easy:stop，再进行离线恢复");
   }
   const configuredPort = Number(runtimeEnvironment.TAKEBOARD_PORT);
   const candidatePorts = Number.isSafeInteger(configuredPort)
@@ -672,7 +672,7 @@ async function restore(archive, confirmation) {
   const detectedPort = await findTakeBoard(candidatePorts);
   if (detectedPort !== null) {
     throw new Error(
-      `端口 ${detectedPort} 仍有 TakeBoard 服务运行。请先停止 systemd、开发服务或其他启动方式，再进行离线恢复。`,
+      `端口 ${detectedPort} 仍有 YoYoTV 服务运行。请先停止 systemd、开发服务或其他启动方式，再进行离线恢复。`,
     );
   }
   if (buildOutdated()) {
@@ -695,7 +695,7 @@ async function restore(archive, confirmation) {
   const receipt = await module.restoreInstanceOffline(dataRoot(), source, authDatabase);
   console.log(`恢复完成：${receipt.projects} 个项目、${receipt.users} 个账号。`);
   console.log(`恢复前数据保留在：${receipt.previousData}`);
-  console.log("现在可以运行 npm run easy 启动 TakeBoard。");
+  console.log("现在可以运行 npm run easy 启动 YoYoTV。");
 }
 
 function help() {
@@ -706,7 +706,7 @@ function help() {
   start          后台启动并打开浏览器
   stop           停止简易后台服务
   doctor         用中文检查常见问题并给出下一步
-  remote <主机>  通过标准 SSH 连接远端 TakeBoard
+  remote <主机>  通过标准 SSH 连接远端 YoYoTV
   restore <文件> --confirm
                  停止服务后完整恢复实例备份，并保留恢复前数据
   help           显示帮助`);

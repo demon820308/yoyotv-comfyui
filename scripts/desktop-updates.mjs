@@ -66,7 +66,9 @@ export function selectRelease(releases, { currentVersion, channel, platform, arc
           : "x64"
         : "unsupported";
   const tauri = `TakeBoard_${tag.replace(/^v/, "")}_${cpu}${platform === "win32" ? "-setup" : ""}.${ext}`;
-  const names = [standard, tauri];
+  const yoyoStandard = `YoYoTV-v${tag.replace(/^v/, "")}-${os}-${arch}.${ext}`;
+  const yoyoTauri = `YoYoTV_${tag.replace(/^v/, "")}_${cpu}${platform === "win32" ? "-setup" : ""}.${ext}`;
+  const names = [yoyoStandard, yoyoTauri, standard, tauri];
   const asset =
     os &&
     ["arm64", "x64"].includes(arch) &&

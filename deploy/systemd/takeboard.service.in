@@ -1,5 +1,5 @@
 [Unit]
-Description=TakeBoard local-first filmmaking canvas
+Description=YoYoTV local-first filmmaking canvas
 Wants=network-online.target
 After=network-online.target
 

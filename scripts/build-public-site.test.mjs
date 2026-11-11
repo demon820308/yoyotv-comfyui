@@ -144,7 +144,7 @@ test("public site is static, bilingual, evidence-linked and limited to public as
     const schema = JSON.parse(
       html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1],
     );
-    assert.equal(schema.name, "TakeBoard");
+    assert.equal(schema.name, product.name);
     assert.equal(schema.url, url);
     assert.equal(schema.inLanguage, lang);
     assert.ok(!html.includes("undefined"));
@@ -176,8 +176,8 @@ test("public site is static, bilingual, evidence-linked and limited to public as
     }
   }
   const kit = await readFile(join(output, "media/README.md"), "utf8");
-  assert.ok(kit.includes("https://github.com/Fourques/Takeboard/blob/main/docs/downloads.md"));
-  assert.ok(kit.includes("https://github.com/Fourques/Takeboard/blob/main/LICENSE"));
+  assert.ok(kit.includes(`${product.repository}/blob/main/docs/downloads.md`));
+  assert.ok(kit.includes(`${product.repository}/blob/main/LICENSE`));
   assert.ok(kit.includes("SIMULATED OUTPUTS"));
   assert.equal(product.demo.realGpu, true);
   assert.equal(product.legacyDemo.realGpu, false);

@@ -2,9 +2,16 @@
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-service_name=${TAKEBOARD_SERVICE_NAME:-takeboard.service}
-app_port=${TAKEBOARD_PORT:-48120}
-dev_port=${TAKEBOARD_DEV_PORT:-48110}
+service_name=${YOYOTV_SERVICE_NAME:-${TAKEBOARD_SERVICE_NAME:-}}
+if [[ -z $service_name ]]; then
+  if command -v systemctl >/dev/null 2>&1 && systemctl --user cat yoyotv.service >/dev/null 2>&1; then
+    service_name="yoyotv.service"
+  else
+    service_name="takeboard.service"
+  fi
+fi
+app_port=${YOYOTV_PORT:-${TAKEBOARD_PORT:-48120}}
+dev_port=${YOYOTV_DEV_PORT:-${TAKEBOARD_DEV_PORT:-48110}}
 health_url="http://127.0.0.1:${app_port}/api/health"
 
 if command -v pnpm >/dev/null 2>&1; then
@@ -17,18 +24,18 @@ fi
 
 usage() {
   cat <<'EOF'
-TakeBoard local service manager
+YoYoTV local service manager
 
 Usage: ./scripts/takeboard <command>
 
 Commands:
-  install   Build TakeBoard and install the user-level systemd service
+  install   Build YoYoTV and install the user-level systemd service
   start     Start the installed production service
   stop      Stop the production service
   restart   Restart the production service and wait for health
   status    Show service and health status
   logs      Follow production logs
-  open      Start if needed, then open TakeBoard in the local browser
+  open      Start if needed, then open YoYoTV in the local browser
   dev       Run API + Web development servers; restore production on exit
   doctor    Check runtime, ports, service, API, and optional ComfyUI
 EOF

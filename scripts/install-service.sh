@@ -3,10 +3,13 @@ set -euo pipefail
 umask 077
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-unit_template="$repo_dir/deploy/systemd/takeboard.service.in"
-config_dir=${TAKEBOARD_CONFIG_DIR:-$HOME/.config/takeboard}
+unit_template="$repo_dir/deploy/systemd/yoyotv.service.in"
+if [[ ! -f "$unit_template" ]]; then
+  unit_template="$repo_dir/deploy/systemd/takeboard.service.in"
+fi
+config_dir=${YOYOTV_CONFIG_DIR:-${TAKEBOARD_CONFIG_DIR:-$HOME/.config/yoyotv}}
 unit_dir=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user
-data_root=${TAKEBOARD_DATA_ROOT:-$HOME/TakeBoardData}
+data_root=${YOYOTV_DATA_ROOT:-${TAKEBOARD_DATA_ROOT:-$HOME/YoYoTVData}}
 node_bin=$(command -v node || true)
 skip_build=0
 
@@ -19,12 +22,12 @@ fi
 
 if [[ $(uname -s) != Linux ]] || ! command -v systemctl >/dev/null 2>&1; then
   echo "The stable service installer requires Linux with systemd." >&2
-  echo "On macOS or Windows, use the development command or install TakeBoard with your native service manager." >&2
+  echo "On macOS or Windows, use the development command or install YoYoTV with your native service manager." >&2
   exit 1
 fi
 if ! systemctl --user show-environment >/dev/null 2>&1; then
   echo "A working systemd user session is required." >&2
-  echo "Log in normally, or enable user lingering before installing TakeBoard." >&2
+  echo "Log in normally, or enable user lingering before installing YoYoTV." >&2
   exit 1
 fi
 
@@ -140,23 +143,31 @@ sed \
   -e "s|@DATA_ROOT@|$data_unit_value|g" \
   -e "s|@CONFIG_DIR@|$config_unit_value|g" \
   -e "s|@INSTANCE_ID@|$instance_unit_value|g" \
-  "$unit_template" > "$unit_dir/takeboard.service"
+  "$unit_template" > "$unit_dir/yoyotv.service"
+
+# Gracefully migrate from legacy takeboard.service if present
+if systemctl --user is-active --quiet takeboard.service 2>/dev/null; then
+  echo "Stopping and disabling legacy takeboard.service..."
+  systemctl --user stop takeboard.service || true
+  systemctl --user disable takeboard.service || true
+fi
+ln -sf "$unit_dir/yoyotv.service" "$unit_dir/takeboard.service" 2>/dev/null || cp "$unit_dir/yoyotv.service" "$unit_dir/takeboard.service"
 
 systemctl --user daemon-reload
-systemctl --user enable takeboard.service
-systemctl --user restart takeboard.service
+systemctl --user enable yoyotv.service
+systemctl --user restart yoyotv.service
 
 attempt=0
 until curl --fail --silent --max-time 3 http://127.0.0.1:48120/api/health >/dev/null; do
   attempt=$((attempt + 1))
   if ((attempt >= 30)); then
-    systemctl --user --no-pager --full status takeboard.service || true
-    echo "TakeBoard did not become healthy within 30 seconds." >&2
+    systemctl --user --no-pager --full status yoyotv.service || true
+    echo "YoYoTV did not become healthy within 30 seconds." >&2
     exit 1
   fi
   sleep 1
 done
 
-echo "TakeBoard service installed and healthy."
+echo "YoYoTV service installed and healthy."
 echo "Local URL: http://127.0.0.1:48120"
 echo "Configuration: ${config_dir}/env"

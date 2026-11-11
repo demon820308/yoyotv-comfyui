@@ -4,10 +4,11 @@ import { WorkflowExecutionError } from "./workflow-errors.js";
 
 /** Maintained, content-addressed artifacts must never silently run a different graph.
  * Legacy Kino source canvases remain adapter-backed; editing them requires an editable copy.
+ * shortcut: legacy Kino/TakeBoard/ path integrity check is deprecated and will be removed in v2.0.0
  */
 export function assertNativeWorkflowIntegrity(path: string, source: unknown) {
-  if (!path.startsWith("Kino/TakeBoard/")) return;
-  const address = /^Kino\/TakeBoard\/([a-f0-9]{16})\//.exec(path)?.[1];
+  if (!path.startsWith("Kino/TakeBoard/") && !path.startsWith("Trust-Workflow/")) return;
+  const address = /^(?:Kino\/TakeBoard\/|Trust-Workflow\/)([a-f0-9]{16})\//.exec(path)?.[1];
   const maintained = nativeRecipePrompt(path);
   const sourceHash = workflowHash(source);
   if (

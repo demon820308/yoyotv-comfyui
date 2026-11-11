@@ -128,15 +128,22 @@ async function cleanupComfyRunFiles(
     const entries = await readdir(inputRoot, { withFileTypes: true }).catch(() => []);
     await Promise.all(
       entries
-        .filter((entry) => entry.isFile() && entry.name.startsWith(`takeboard_${runId}_`))
+        .filter(
+          (entry) =>
+            entry.isFile() &&
+            (entry.name.startsWith(`takeboard_${runId}_`) ||
+              entry.name.startsWith(`yoyotv_${runId}_`)),
+        )
         .map((entry) => unlink(join(inputRoot, entry.name)).catch(() => undefined)),
     );
   }
   if (storage.outputRoot) {
     const outputRoot = resolve(storage.outputRoot);
-    const runDirectory = resolve(outputRoot, "takeboard", projectId, shotId, runId);
-    if (runDirectory.startsWith(`${outputRoot}${sep}`)) {
-      await rm(runDirectory, { recursive: true, force: true }).catch(() => undefined);
+    for (const prefix of ["yoyotv", "takeboard"]) {
+      const runDirectory = resolve(outputRoot, prefix, projectId, shotId, runId);
+      if (runDirectory.startsWith(`${outputRoot}${sep}`)) {
+        await rm(runDirectory, { recursive: true, force: true }).catch(() => undefined);
+      }
     }
   }
 }
@@ -836,7 +843,10 @@ export function registerGenerationRoutes(
           return await reply.code(409).send({ error: "这个镜头已有运行记录，工作流不能直接更换" });
         }
         shot.workflowPath = recipePath;
-        const nativeNamespace = recipePath.startsWith("Kino/");
+        const nativeNamespace =
+          recipePath.startsWith("Kino/") ||
+          recipePath.startsWith("Trust-Workflow/") ||
+          recipePath.startsWith("YoYo/");
         const wanFirstLast =
           nativeNamespace && /Kino_Wan22_FLF2V(?:_Preview)?\.json$/.test(recipePath);
         const wanImage = nativeNamespace && /Kino_Wan22_I2V(?:_Preview)?\.json$/.test(recipePath);
@@ -1149,7 +1159,7 @@ export function registerGenerationRoutes(
         comfy = workerPool.client(selection.worker.id, process.env.NODE_ENV !== "test");
         selectedWorkerId = selection.worker.id;
         const selectedComfy = comfy;
-        if (nativeWorkflow && /^Kino\/TakeBoard\//.test(recipePath))
+        if (nativeWorkflow && /^(?:Kino\/TakeBoard\/|Trust-Workflow\/)/.test(recipePath))
           assertNativeWorkflowIntegrity(recipePath, await comfy.workflow(recipePath));
         if (boundWorkflow && selection.worker.id !== workerPool.defaultWorkerId) {
           boundWorkflow = await loadExecutableWorkflow(selection.worker.endpoint, recipePath);
@@ -1199,7 +1209,7 @@ export function registerGenerationRoutes(
                 Promise.all(referenceAudios.map(uploadReference)),
               ])
             : [[], [], []];
-        const filenamePrefix = `takeboard/${current.snapshot.project.id}/${shot.id}/${runId}/result`;
+        const filenamePrefix = `yoyotv/${current.snapshot.project.id}/${shot.id}/${runId}/result`;
         const comfyClientId = comfy.createClientId();
         const recipeInput = {
           positivePrompt,
@@ -1436,7 +1446,7 @@ export function registerGenerationRoutes(
               ...comfyReferenceVideos,
               ...comfyReferenceAudios,
             ].filter((value): value is string => Boolean(value)),
-            comfyOutputDirectory: `takeboard/${current.snapshot.project.id}/${shot.id}/${runId}`,
+            comfyOutputDirectory: `yoyotv/${current.snapshot.project.id}/${shot.id}/${runId}`,
             outputAssetId,
             outputTakeId,
             outputMediaType,

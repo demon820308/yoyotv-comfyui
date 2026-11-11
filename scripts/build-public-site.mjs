@@ -62,10 +62,11 @@ export function validatePublicFilm(manifest) {
 
 export function installerUrl(product, file) {
   if (
-    !/^TakeBoard_[0-9A-Za-z.-]+_(?:aarch64|x64|arm64|amd64)(?:-setup)?\.(?:dmg|exe|deb)$/.test(
+    !/^(?:TakeBoard|YoYoTV)_[0-9A-Za-z.-]+_(?:aarch64|x64|arm64|amd64)(?:-setup)?\.(?:dmg|exe|deb)$/.test(
       file,
     ) ||
-    !file.startsWith(`TakeBoard_${product.publicVersion}_`)
+    (!file.startsWith(`TakeBoard_${product.publicVersion}_`) &&
+      !file.startsWith(`YoYoTV_${product.publicVersion}_`))
   )
     throw new Error("Installer must belong to the documented public release");
   return `${product.repository}/releases/download/v${product.publicVersion}/${file}`;

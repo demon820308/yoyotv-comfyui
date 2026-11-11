@@ -1,5 +1,5 @@
 [Unit]
-Description=TakeBoard ComfyUI worker
+Description=YoYoTV ComfyUI worker
 After=network.target
 
 [Service]

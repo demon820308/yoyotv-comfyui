@@ -1,10 +1,10 @@
-# TakeBoard · 媒体素材
+# YoYoTV · 媒体素材
 
 更新：2026-10-16。由项目维护者提供。
 
 ## 一句话介绍
 
-**TakeBoard：基于 ComfyUI 的开源 AI 创作画布。**
+**YoYoTV：基于 ComfyUI 的开源 AI 创作画布。**
 
 把 AI 图片与视频创作，放进同一张画布。选择模型、连接参考素材、写下提示词，生成之后，用结果继续下一步。保留不同方向，让想法逐渐成为画面。
 
@@ -12,7 +12,7 @@
 
 ## English introduction
 
-**TakeBoard is an open-source AI creation canvas built on ComfyUI.**
+**YoYoTV is an open-source AI creation canvas built on ComfyUI.**
 
 Bring models, reference media and prompts into one workspace. Generate images and videos, explore different directions side by side, then use a result to build the next scene.
 

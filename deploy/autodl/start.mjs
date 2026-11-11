@@ -35,7 +35,7 @@ export function cloudEnvironment(config, inherited = process.env) {
   if (!["tunnel", "https"].includes(mode)) throw new Error("mode 必须是 tunnel 或 https");
   const port = config.port ?? (mode === "https" ? 6006 : 48120);
   if (!Number.isInteger(port) || port < 1024 || port > 65535 || port === 8188)
-    throw new Error("TakeBoard 端口无效，且不能占用 ComfyUI 的 8188 端口");
+    throw new Error("YoYoTV 端口无效，且不能占用 ComfyUI 的 8188 端口");
   let publicUrl = null;
   if (mode === "https") {
     try {

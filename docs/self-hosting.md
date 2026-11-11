@@ -29,9 +29,9 @@ pnpm install --frozen-lockfile
 
 安装脚本会完成完整验证、生产构建、用户服务模板渲染、开机启用和健康检查。生成的文件包括：
 
-- `~/.config/systemd/user/takeboard.service`：当前仓库路径对应的服务单元；
-- `~/.config/takeboard/env`：权限为 `0600` 的运行配置；
-- `~/TakeBoardData`：默认项目数据目录。
+- `~/.config/systemd/user/yoyotv.service`：当前仓库路径对应的服务单元（兼容软链 `takeboard.service`）；
+- `~/.config/yoyotv/env`：权限为 `0600` 的运行配置；
+- `~/YoYoTVData`：默认项目数据目录。
 
 服务固定监听 `127.0.0.1:48120`。安装不会把仓库路径写死在版本库中，因此其他用户和不同安装位置可以复用同一套流程。
 

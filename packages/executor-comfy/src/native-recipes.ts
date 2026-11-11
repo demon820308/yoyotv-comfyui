@@ -67,8 +67,11 @@ export const nativeRecipes = [
   },
 ] as const;
 
+// shortcut: legacy Kino/ prefix is deprecated and will be removed in v2.0.0
 export function nativeRecipeForPath(path: string) {
-  return path.startsWith("Kino/")
+  return path.startsWith("Kino/") ||
+    path.startsWith("Trust-Workflow/") ||
+    path.startsWith("YoYo/")
     ? nativeRecipes.find((recipe) => path.endsWith(`/${recipe.filename}`))
     : undefined;
 }

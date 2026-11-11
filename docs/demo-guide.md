@@ -1,8 +1,8 @@
-# TakeBoard · 产品短片
+# YoYoTV · 产品短片
 
 [观看中文版 · 42 秒](https://fourques.github.io/Takeboard/zh/#demo) · [下载 MP4](https://fourques.github.io/Takeboard/media/takeboard-film.zh.mp4) · [媒体素材](media-kit.md)
 
-从喜欢的一帧，到下一幕的开始。这支短片展示一个真实 TakeBoard 项目：参考素材与备选方向放在画布上，连接输入，提交生成，选择满意的结果，再把它连接到下一镜头。
+从喜欢的一帧，到下一幕的开始。这支短片展示一个真实 YoYoTV 项目：参考素材与备选方向放在画布上，连接输入，提交生成，选择满意的结果，再把它连接到下一镜头。
 
 画面来自实际应用操作，生成等待已剪去。项目中同时存在导入素材、已生成结果与尚未生成的创作分支；不表示整支故事已经自动生成。空间运镜、配乐与音效为宣传片后期制作，不代表应用提供 3D 画布或自动剪辑。
 
@@ -12,7 +12,7 @@
 
 [Watch the English film · 42 sec](https://fourques.github.io/Takeboard/#demo) · [Download MP4](https://fourques.github.io/Takeboard/media/takeboard-film.en.mp4) · [Media kit](media-kit.md)
 
-A reference becomes a result, and that result becomes the starting point for the next scene. The film follows a real TakeBoard project, with connected media, alternative directions and actual product interaction.
+A reference becomes a result, and that result becomes the starting point for the next scene. The film follows a real YoYoTV project, with connected media, alternative directions and actual product interaction.
 
 Generation wait is omitted. The canvas includes imported media, a generated result and unfinished branches—not an automatically completed film. Spatial motion, music and sound design are added in editing, not features of the app. The English edition has independently written English titles; the app capture is Chinese.
 
