@@ -5,11 +5,12 @@ import {
   rememberTheme,
   subscribeToTheme,
   type TakeBoardTheme,
+  type YoYoTVTheme,
 } from "./theme-preferences";
 
-export type { TakeBoardTheme } from "./theme-preferences";
+export type { TakeBoardTheme, YoYoTVTheme } from "./theme-preferences";
 
-const themes: Array<{ id: TakeBoardTheme; label: string; color: string }> = [
+const themes: Array<{ id: YoYoTVTheme; label: string; color: string }> = [
   { id: "noir", label: "黑曜", color: "#111714" },
   { id: "light", label: "明亮", color: "#ebe7de" },
   { id: "chroma", label: "柔彩", color: "#8275d7" },

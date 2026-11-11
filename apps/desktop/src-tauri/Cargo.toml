@@ -1,6 +1,6 @@
 [package]
 name = "takeboard-desktop"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 description = "Native desktop host for the YoYoTV local-first filmmaking workspace"
 authors = ["YoYoTV contributors", "TakeBoard contributors"]
 edition = "2021"

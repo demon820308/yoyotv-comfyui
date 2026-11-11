@@ -4,7 +4,7 @@
 
 ## Download YoYoTV
 
-**v1.0.0-beta.1** is the current preview for all six platform/architecture combinations. Choose your computer and download
+**v1.0.0-beta.2** is the current preview for all six platform/architecture combinations. Choose your computer and download
 one file. The app runtime is included; no separate Node.js, pnpm or Rust installation is needed.
 ComfyUI, models and custom nodes must be installed separately.
 
@@ -12,16 +12,16 @@ The app interface is currently primarily Chinese; the website and getting-starte
 
 | Your computer | Download |
 | --- | --- |
-| Mac · Apple silicon | [DMG](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_aarch64.dmg) |
-| Mac · Intel | [DMG](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_x64.dmg) |
-| Windows · Intel / AMD | [EXE](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_x64-setup.exe) |
-| Windows · ARM64 | [EXE](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_arm64-setup.exe) |
-| Debian / Ubuntu · Intel / AMD | [DEB](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_amd64.deb) |
-| Debian / Ubuntu · ARM64 | [DEB](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.1/YoYoTV_1.0.0-beta.1_arm64.deb) |
+| Mac · Apple silicon | [DMG](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_aarch64.dmg) |
+| Mac · Intel | [DMG](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_x64.dmg) |
+| Windows · Intel / AMD | [EXE](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_x64-setup.exe) |
+| Windows · ARM64 | [EXE](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_arm64-setup.exe) |
+| Debian / Ubuntu · Intel / AMD | [DEB](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_amd64.deb) |
+| Debian / Ubuntu · ARM64 | [DEB](https://github.com/demon820308/yoyotv-comfyui/releases/download/v1.0.0-beta.2/YoYoTV_1.0.0-beta.2_arm64.deb) |
 
 Check **About This Mac** or Windows **Settings → System → About** for your processor.
 DEB packages target Debian/Ubuntu, not every Linux distribution. Other environments can use
-[source setup](../CONTRIBUTING.md). See the [release page](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1) for details.
+[source setup](../CONTRIBUTING.md). See the [release page](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.2) for details.
 **Source code** at the bottom is for developers, not an installer.
 
 ## Install and open
@@ -29,7 +29,7 @@ DEB packages target Debian/Ubuntu, not every Linux distribution. Other environme
 - **Mac:** open the DMG, drag YoYoTV into Applications, then launch it from Applications.
 - **Windows:** run the EXE setup wizard, then launch YoYoTV from Start.
 - **Debian / Ubuntu:** open the DEB with your software installer and launch from the applications menu.
-  Without a graphical installer, run `sudo apt install ./YoYoTV_1.0.0-beta.1_amd64.deb`
+  Without a graphical installer, run `sudo apt install ./YoYoTV_1.0.0-beta.2_amd64.deb`
   in the download directory; use the ARM64 filename on ARM devices.
 
 The app starts its local service automatically. Local use needs no registration; login is optional,

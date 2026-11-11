@@ -3,6 +3,28 @@
 YoYoTV follows [Semantic Versioning](https://semver.org/).
 YoYoTV is forked from Fourques/Takeboard at commit `45dd727` (upstream `v0.2.0-beta.21`).
 
+## 1.0.0-beta.2 — 2026-11-11
+
+- **P1 Remediations**:
+  - Systemd units renamed to `yoyotv` and `yoyotv-comfy`, with non-destructive runtime migration of legacy units.
+  - Generated output prefix updated to `yoyotv/` while retaining recognition for legacy prefixes during cleanup.
+  - Extended Kino namespace recognition to `Trust-Workflow/` and `YoYo/`, deprecating legacy prefix `Kino/`.
+  - Comprehensive documentation remediation: purged broken external links, archived legacy historical docs into `docs/archive/`, established `scripts/yoyotv` entry point with backward-compatible forwarding shims.
+- **P2 Data & Protocol Migration**:
+  - Primary data files updated to `yoyotv.db`, `project.yoyotv.json`, `.yoyotv-data`, `.yoyotv-instance.tgz`, and `.yoyotv-comfy.pid`.
+  - Userdata bindings and library paths established under `yoyotv/bindings` and `yoyotv/library`.
+  - Workflow recipe export package switched to `.yoyotv-recipe.tgz` with dual-read import fallback.
+  - New ComfyUI integration bridge deployed as `comfyui-yoyotv-bridge` (`YoYoTV.WorkflowBridge`), keeping legacy bridge directory as fallback.
+  - Browser cookie updated to `yoyotv_` prefix, CustomEvents migrated to `yoyotv:*`, and CSRF header upgraded to `x-yoyotv-csrf` (with fallback read support).
+- **P3 Internal Packages & Environments**:
+  - Monorepo package namespaces migrated from `@takeboard/*` to `@yoyotv/*`.
+  - Centralized environment variable resolution prioritizing `YOYOTV_*` with fallback to `TAKEBOARD_*`.
+  - Exported canonical `YoYoTVApiError` and `YoYoTVTheme` types while maintaining backward-compatible type aliases.
+- **UI & Feature Improvements**:
+  - Added dedicated VRAM cleanup action to Operations Center device management view.
+  - Added canvas mask editor, reference image inpainting support, and prompt inspector.
+  - Enhanced shot inline mentions with thumbnails, roles, and cursor insertion.
+
 ## 1.0.0-beta.1 — 2026-11-11
 
 - Forked from TakeBoard 0.2.0-beta.21 and established YoYoTV independent version line.

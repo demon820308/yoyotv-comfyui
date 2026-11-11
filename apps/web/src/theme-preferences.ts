@@ -1,19 +1,21 @@
-export type TakeBoardTheme = "noir" | "light" | "chroma";
+export type YoYoTVTheme = "noir" | "light" | "chroma";
+// shortcut: TakeBoardTheme alias for backward compatibility, remove in v2.0.0
+export type TakeBoardTheme = YoYoTVTheme;
 
 // shortcut: legacy takeboard.theme / takeboard_theme read fallback for pre-rebrand browser storage, remove in v2.0.0
 export const themeStorageKey = "yoyotv.theme";
 const legacyThemeStorageKey = "takeboard.theme";
 export const themeCookieName = "yoyotv_theme";
 const legacyThemeCookieName = "takeboard_theme";
-export const defaultTheme: TakeBoardTheme = "noir";
+export const defaultTheme: YoYoTVTheme = "noir";
 const themeChangeEvent = "yoyotv:theme";
-let sessionTheme: TakeBoardTheme | null = null;
+let sessionTheme: YoYoTVTheme | null = null;
 
-export function parseTheme(value: string | null | undefined): TakeBoardTheme | null {
+export function parseTheme(value: string | null | undefined): YoYoTVTheme | null {
   return value === "noir" || value === "light" || value === "chroma" ? value : null;
 }
 
-export function themeFromCookie(cookie: string): TakeBoardTheme | null {
+export function themeFromCookie(cookie: string): YoYoTVTheme | null {
   const entries = cookie.split(";").map((entry) => entry.trim());
   const current = entries
     .find((entry) => entry.startsWith(`${themeCookieName}=`))
@@ -25,7 +27,7 @@ export function themeFromCookie(cookie: string): TakeBoardTheme | null {
   return parseTheme(legacy);
 }
 
-export function readThemePreference(): TakeBoardTheme {
+export function readThemePreference(): YoYoTVTheme {
   if (sessionTheme) return sessionTheme;
   // Desktop service ports may change on restart. Host-only cookies survive that
   // change, unlike origin-scoped localStorage. This contains only a theme enum,
@@ -48,7 +50,7 @@ export function readThemePreference(): TakeBoardTheme {
   }
 }
 
-export function rememberTheme(theme: TakeBoardTheme) {
+export function rememberTheme(theme: YoYoTVTheme) {
   sessionTheme = theme;
   document.documentElement.dataset.theme = theme;
   try {

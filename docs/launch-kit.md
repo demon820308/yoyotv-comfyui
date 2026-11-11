@@ -1,6 +1,6 @@
 # YoYoTV 推广入口
 
-更新时间：2026-11-11。当前公开安装版为全平台 [v1.0.0-beta.1](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1)。
+更新时间：2026-11-11。当前公开安装版为全平台 [v1.0.0-beta.2](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.2)。
 
 - [产品短片](demo-guide.md) · [English film](demo-guide.md#english)：42 秒真实项目中的创作流程。
 - [渠道文案](archive/outreach-2026-09.md)：定位、中英文社区帖、短帖与渠道规则。

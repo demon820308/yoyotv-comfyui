@@ -32,7 +32,9 @@ import { registerWorkflowRoutes } from "./workflow-routes.js";
 
 syncProcessEnv();
 
-export const takeBoardVersion = "1.0.0-beta.1";
+export const takeBoardVersion = "1.0.0-beta.2";
+// shortcut: yoyotvVersion alias for future unification, remove takeBoardVersion in v2.0.0
+export const yoyotvVersion = takeBoardVersion;
 
 export type AppOptions = {
   gpuPool?: { config: GpuPoolConfig; runtime?: GpuRuntime };
