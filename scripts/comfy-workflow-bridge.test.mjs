@@ -65,10 +65,6 @@ test("ComfyUI bridge opens maintained API templates through the API loader, not 
   assert.deepEqual(calls[1], ["prompt", prompt]);
   const workflow = { nodes: [], links: [] };
   assert.deepEqual((await open(workflow))[1], ["graph", workflow]);
-  assert.deepEqual((await open(workflow, "YoYoTV/legacy.json", true, "takeboard_workflow"))[1], [
-    "graph",
-    workflow,
-  ]);
 });
 
 test("ComfyUI bridge refuses traversal and reports unsupported API loaders without pretending success", async () => {

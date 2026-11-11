@@ -4,9 +4,6 @@ umask 077
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 unit_template="$repo_dir/deploy/systemd/yoyotv.service.in"
-if [[ ! -f "$unit_template" ]]; then
-  unit_template="$repo_dir/deploy/systemd/takeboard.service.in"
-fi
 config_dir=${YOYOTV_CONFIG_DIR:-${TAKEBOARD_CONFIG_DIR:-$HOME/.config/yoyotv}}
 unit_dir=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user
 data_root=${YOYOTV_DATA_ROOT:-${TAKEBOARD_DATA_ROOT:-$HOME/YoYoTVData}}
@@ -144,14 +141,6 @@ sed \
   -e "s|@CONFIG_DIR@|$config_unit_value|g" \
   -e "s|@INSTANCE_ID@|$instance_unit_value|g" \
   "$unit_template" > "$unit_dir/yoyotv.service"
-
-# Gracefully migrate from legacy takeboard.service if present
-if systemctl --user is-active --quiet takeboard.service 2>/dev/null; then
-  echo "Stopping and disabling legacy takeboard.service..."
-  systemctl --user stop takeboard.service || true
-  systemctl --user disable takeboard.service || true
-fi
-ln -sf "$unit_dir/yoyotv.service" "$unit_dir/takeboard.service" 2>/dev/null || cp "$unit_dir/yoyotv.service" "$unit_dir/takeboard.service"
 
 systemctl --user daemon-reload
 systemctl --user enable yoyotv.service

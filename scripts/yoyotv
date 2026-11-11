@@ -2,14 +2,7 @@
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-service_name=${YOYOTV_SERVICE_NAME:-${TAKEBOARD_SERVICE_NAME:-}}
-if [[ -z $service_name ]]; then
-  if command -v systemctl >/dev/null 2>&1 && systemctl --user cat yoyotv.service >/dev/null 2>&1; then
-    service_name="yoyotv.service"
-  else
-    service_name="takeboard.service"
-  fi
-fi
+service_name=${YOYOTV_SERVICE_NAME:-yoyotv.service}
 app_port=${YOYOTV_PORT:-${TAKEBOARD_PORT:-48120}}
 dev_port=${YOYOTV_DEV_PORT:-${TAKEBOARD_DEV_PORT:-48110}}
 health_url="http://127.0.0.1:${app_port}/api/health"

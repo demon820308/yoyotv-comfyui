@@ -52,7 +52,7 @@ pnpm dev
 ```
 
 打开 <http://127.0.0.1:48110>。开发 API 默认使用 `48120`，请勿与同端口的稳定服务同时启动。
-Linux 已安装 systemd 稳定服务时，可以用 `./scripts/yoyotv dev`（兼容别名 `./scripts/takeboard dev`）代替 `pnpm dev`；
+Linux 已安装 systemd 稳定服务时，可以用 `./scripts/yoyotv dev` 代替 `pnpm dev`；
 该脚本会协调稳定服务，并在结束开发进程后恢复先前运行的稳定服务。
 
 ## 日常运行

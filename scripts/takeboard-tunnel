@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# shortcut: legacy ./scripts/takeboard-tunnel entry point is deprecated and will be removed in v2.0.0
-set -euo pipefail
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-exec "$script_dir/yoyotv-tunnel" "$@"

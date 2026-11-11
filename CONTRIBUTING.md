@@ -29,7 +29,7 @@ pnpm verify
 ```
 
 For cross-platform development, run `pnpm dev` and open `http://127.0.0.1:48110`.
-Linux operators using the managed systemd service can use `./scripts/takeboard dev` to coordinate it
+Linux operators using the managed systemd service can use `./scripts/yoyotv dev` to coordinate it
 with their stable instance. See [source configuration](docs/source-guide.md) for desktop builds,
 ComfyUI settings and service management.
 

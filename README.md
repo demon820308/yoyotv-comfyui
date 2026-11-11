@@ -102,7 +102,7 @@ pnpm lint
 pnpm format
 
 # 远程算力服务器快速连接
-node scripts/takeboard-easy.mjs remote <host>
+node scripts/yoyotv-easy.mjs remote <host>
 ```
 
 ---

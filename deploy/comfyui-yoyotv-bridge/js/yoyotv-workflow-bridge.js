@@ -2,8 +2,6 @@ import { api } from "../../scripts/api.js";
 import { app } from "../../scripts/app.js";
 
 const parameterName = "yoyotv_workflow";
-// shortcut: legacy takeboard_workflow URL parameter support, remove in v2.0.0
-const legacyParameterName = "takeboard_workflow";
 
 function validWorkflowPath(path) {
   return (
@@ -21,11 +19,9 @@ app.registerExtension({
   name: "YoYoTV.WorkflowBridge",
   async setup() {
     const url = new URL(window.location.href);
-    const workflowPath =
-      url.searchParams.get(parameterName) ?? url.searchParams.get(legacyParameterName);
+    const workflowPath = url.searchParams.get(parameterName);
     if (!workflowPath) return;
     url.searchParams.delete(parameterName);
-    url.searchParams.delete(legacyParameterName);
     window.history.replaceState(null, "", url);
     if (!validWorkflowPath(workflowPath)) {
       console.error("[YoYoTV] Refused invalid workflow path", workflowPath);
