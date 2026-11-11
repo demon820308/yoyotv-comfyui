@@ -32,9 +32,7 @@ import { registerWorkflowRoutes } from "./workflow-routes.js";
 
 syncProcessEnv();
 
-export const takeBoardVersion = "1.0.0-beta.2";
-// shortcut: yoyotvVersion alias for future unification, remove takeBoardVersion in v2.0.0
-export const yoyotvVersion = takeBoardVersion;
+export const yoyotvVersion = "1.0.0-beta.2";
 
 export type AppOptions = {
   gpuPool?: { config: GpuPoolConfig; runtime?: GpuRuntime };
@@ -111,7 +109,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.get("/api/health", async () => ({
     service: "yoyotv-server",
     status: "ok",
-    version: takeBoardVersion,
+    version: yoyotvVersion,
     instanceId: getEnv("INSTANCE_ID") ?? null,
   }));
 
@@ -146,7 +144,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     configPath: resolve(projectsRoot, ".system", "portal-connector.json"),
     instanceId: getEnv("INSTANCE_ID") ?? "yoyotv-local-instance",
     instanceName: getEnv("INSTANCE_NAME") ?? "YoYoTV Workstation",
-    applicationVersion: takeBoardVersion,
+    applicationVersion: yoyotvVersion,
     localOrigin: `http://127.0.0.1:${serverPort}`,
     auth,
   });
@@ -189,7 +187,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     extensionRegistry,
   });
   registerOperationsRoutes(app, projectsRoot, auth, {
-    version: takeBoardVersion,
+    version: yoyotvVersion,
     comfyUrl: activeComfyUrl,
     webRoot,
     backupAutomation,

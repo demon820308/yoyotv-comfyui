@@ -21,7 +21,7 @@ test("desktop release versions match the server, native host and workspace manif
     assert.equal(JSON.parse(await read(path)).version, version, path);
   }
   assert.equal(
-    (await read("apps/server/src/app.ts")).match(/takeBoardVersion = "([^"]+)"/)[1],
+    (await read("apps/server/src/app.ts")).match(/yoyotvVersion = "([^"]+)"/)[1],
     version,
   );
   for (const path of ["apps/desktop/src-tauri/Cargo.toml", "apps/desktop/src-tauri/Cargo.lock"]) {

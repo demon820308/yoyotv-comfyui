@@ -2,7 +2,7 @@ import {
   authModeFromEnvironment,
   buildApp,
   resolveDefaultProjectsRoot,
-  takeBoardVersion,
+  yoyotvVersion,
 } from "./app.js";
 import { completionFor, hasUnfinishedWork } from "./background-completion.js";
 import { getEnv, syncProcessEnv } from "./env.js";
@@ -96,7 +96,7 @@ if (process.connected) process.once("disconnect", () => void shutdown("launcher-
 try {
   await app.listen({ host, port });
   const address = app.server.address();
-  if (address && typeof address !== "string") lease.publish(address.port, takeBoardVersion);
+  if (address && typeof address !== "string") lease.publish(address.port, yoyotvVersion);
 } catch (error) {
   app.log.error(error);
   process.exitCode = 1;

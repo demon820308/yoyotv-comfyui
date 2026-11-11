@@ -178,9 +178,6 @@ export class YoYoTVApiError extends Error {
   }
 }
 
-export const TakeBoardApiError = YoYoTVApiError;
-export type TakeBoardApiError = YoYoTVApiError;
-
 export type TrashedProjectItem = {
   trashKey: string;
   originalKey: string;
