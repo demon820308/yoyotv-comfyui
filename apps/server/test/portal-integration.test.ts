@@ -88,24 +88,24 @@ describe.sequential("TakeBoard portal end-to-end", () => {
       });
       await portal.listen({ host: "127.0.0.1", port: portalPort });
 
-      const previousPort = process.env.TAKEBOARD_PORT;
-      const previousInstance = process.env.TAKEBOARD_INSTANCE_ID;
-      const previousName = process.env.TAKEBOARD_INSTANCE_NAME;
-      process.env.TAKEBOARD_PORT = String(localPort);
-      process.env.TAKEBOARD_INSTANCE_ID = "instance-portal-e2e-123456";
-      process.env.TAKEBOARD_INSTANCE_NAME = "Portal test workstation";
+      const previousPort = process.env.YOYOTV_PORT;
+      const previousInstance = process.env.YOYOTV_INSTANCE_ID;
+      const previousName = process.env.YOYOTV_INSTANCE_NAME;
+      process.env.YOYOTV_PORT = String(localPort);
+      process.env.YOYOTV_INSTANCE_ID = "instance-portal-e2e-123456";
+      process.env.YOYOTV_INSTANCE_NAME = "Portal test workstation";
       const local = buildApp({
         projectsRoot: join(root, "local", "projects"),
         webRoot: null,
         auth: { mode, databasePath: join(root, "local", "auth.db") },
         backupAutomation: false,
       });
-      if (previousPort === undefined) delete process.env.TAKEBOARD_PORT;
-      else process.env.TAKEBOARD_PORT = previousPort;
-      if (previousInstance === undefined) delete process.env.TAKEBOARD_INSTANCE_ID;
-      else process.env.TAKEBOARD_INSTANCE_ID = previousInstance;
-      if (previousName === undefined) delete process.env.TAKEBOARD_INSTANCE_NAME;
-      else process.env.TAKEBOARD_INSTANCE_NAME = previousName;
+      if (previousPort === undefined) delete process.env.YOYOTV_PORT;
+      else process.env.YOYOTV_PORT = previousPort;
+      if (previousInstance === undefined) delete process.env.YOYOTV_INSTANCE_ID;
+      else process.env.YOYOTV_INSTANCE_ID = previousInstance;
+      if (previousName === undefined) delete process.env.YOYOTV_INSTANCE_NAME;
+      else process.env.YOYOTV_INSTANCE_NAME = previousName;
       await local.listen({ host: "127.0.0.1", port: localPort });
       cleanup.push(async () => {
         await local.close();

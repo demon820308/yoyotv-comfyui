@@ -19,7 +19,7 @@ export function tokenDigest(token: string) {
 }
 
 export function csrfForSessionToken(token: string) {
-  return createHash("sha256").update("takeboard-csrf\0").update(token).digest("base64url");
+  return createHash("sha256").update("yoyotv-csrf\0").update(token).digest("base64url");
 }
 
 export function validatePassword(password: string) {

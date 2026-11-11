@@ -203,7 +203,7 @@ describe("workflow binding execution", () => {
         }),
       );
 
-      process.env.TAKEBOARD_TRUST_WORKFLOW_DIR = tempDir;
+      process.env.YOYOTV_TRUST_WORKFLOW_DIR = tempDir;
       const loaded = await loadExecutableWorkflow("http://127.0.0.1:8188", "test_workflow.json");
       expect(loaded.binding.workflowHash).toBe(mockBinding.workflowHash);
 
@@ -222,6 +222,7 @@ describe("workflow binding execution", () => {
       expect(readUpscale?.binding.capability).toBe("upscale_image");
       expect(readUpscale?.binding.trusted).toBe(true);
     } finally {
+      delete process.env.YOYOTV_TRUST_WORKFLOW_DIR;
       delete process.env.TAKEBOARD_TRUST_WORKFLOW_DIR;
       vi.unstubAllGlobals();
       rmSync(tempDir, { recursive: true, force: true });

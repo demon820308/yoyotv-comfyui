@@ -27,11 +27,11 @@ function sessionHeaders(response: {
 
 function retentionRecord(id: string, createdAt: string): ExternalBackupRecord {
   return {
-    format: "takeboard.external-instance-backup",
+    format: "yoyotv.external-instance-backup",
     version: 1,
     sourceInstanceId: "11111111-1111-4111-8111-111111111111",
     id: `backup-${id}`,
-    filename: `backup-${id}.takeboard-instance.tgz`,
+    filename: `backup-${id}.yoyotv-instance.tgz`,
     createdAt,
     copiedAt: createdAt,
     size: 1,
@@ -351,11 +351,11 @@ describe("scheduled external backups", () => {
 
   it("rejects fractional retention counts instead of silently rounding them", () => {
     const config = backupAutomationConfigFromEnvironment({
-      TAKEBOARD_BACKUP_DESTINATION: "/external/backups",
-      TAKEBOARD_BACKUP_KEEP_DAILY: "2.5",
+      YOYOTV_BACKUP_DESTINATION: "/external/backups",
+      YOYOTV_BACKUP_KEEP_DAILY: "2.5",
     });
     expect(config.localCopies).toBe(2);
-    expect(config.configurationError).toContain("TAKEBOARD_BACKUP_KEEP_DAILY");
+    expect(config.configurationError).toContain("YOYOTV_BACKUP_KEEP_DAILY");
   });
 
   it("validates programmatic automation configuration at the service boundary", async () => {

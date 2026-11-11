@@ -76,9 +76,9 @@ describe("production operations center", () => {
     });
     await store.save(current.snapshot, { type: "test.operations", payload: {} });
     store.close();
-    const brokenDirectory = join(root, "broken-project.takeboard");
+    const brokenDirectory = join(root, "broken-project.yoyotv");
     await mkdir(brokenDirectory, { recursive: true });
-    await writeFile(join(brokenDirectory, "takeboard.db"), "not a sqlite database", "utf8");
+    await writeFile(join(brokenDirectory, "yoyotv.db"), "not a sqlite database", "utf8");
 
     const tasks = await app.inject({ method: "GET", url: "/api/operations/tasks" });
     expect(tasks.statusCode, tasks.body).toBe(200);

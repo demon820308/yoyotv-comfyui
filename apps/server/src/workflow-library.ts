@@ -7,24 +7,12 @@ function metadataUrl(endpoint: string, path: string) {
   return `${endpoint}/api/userdata/${encodeURIComponent(`yoyotv/library/${Buffer.from(path).toString("base64url")}.json`)}`;
 }
 
-// shortcut: legacy takeboard/library read fallback, remove in v2.0.0
-function legacyMetadataUrl(endpoint: string, path: string) {
-  return `${endpoint}/api/userdata/${encodeURIComponent(`takeboard/library/${Buffer.from(path).toString("base64url")}.json`)}`;
-}
-
 export async function readWorkflowLibraryEntry(
   endpoint: string,
   path: string,
 ): Promise<WorkflowLibraryEntry> {
   const response = await fetch(metadataUrl(endpoint, path), { signal: AbortSignal.timeout(5000) });
-  if (response.status === 404) {
-    const legacyResponse = await fetch(legacyMetadataUrl(endpoint, path), {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (legacyResponse.status === 404) return {};
-    if (!legacyResponse.ok) throw new Error(`工作流列表偏好读取失败 (${legacyResponse.status})`);
-    return workflowLibrarySchema.parse(await legacyResponse.json());
-  }
+  if (response.status === 404) return {};
   if (!response.ok) throw new Error(`工作流列表偏好读取失败 (${response.status})`);
   return workflowLibrarySchema.parse(await response.json());
 }

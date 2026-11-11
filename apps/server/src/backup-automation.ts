@@ -30,9 +30,9 @@ import {
 import { projectDirectory } from "./project-locations.js";
 import { ProjectStore } from "./storage/project-store.js";
 
-const stateFormat = "takeboard.backup-automation-state";
-const externalRecordFormat = "takeboard.external-instance-backup";
-const restoreDrillFormat = "takeboard.restore-drill";
+const stateFormat = "yoyotv.backup-automation-state";
+const externalRecordFormat = "yoyotv.external-instance-backup";
+const restoreDrillFormat = "yoyotv.restore-drill";
 const stateFilename = "backup-automation.json";
 const externalMetadataSuffix = ".external.json";
 const maximumTimerDelay = 2_147_000_000;
@@ -158,7 +158,7 @@ function configuredNumber(
   maximum: number,
   integer = false,
 ) {
-  const shortKey = name.replace(/^TAKEBOARD_|^YOYOTV_/, "");
+  const shortKey = name.replace(/^YOYOTV_/, "");
   const raw = (environment[`YOYOTV_${shortKey}`] ?? environment[name])?.trim();
   if (!raw) return { value: fallback, error: null };
   const value = Number(raw);
@@ -179,22 +179,20 @@ function configuredNumber(
 export function backupAutomationConfigFromEnvironment(
   environment: NodeJS.ProcessEnv = process.env,
 ): BackupAutomationConfig {
-  const interval = configuredNumber(environment, "TAKEBOARD_BACKUP_INTERVAL_HOURS", 24, 1, 720);
-  const localCopies = configuredNumber(environment, "TAKEBOARD_BACKUP_KEEP_LOCAL", 2, 1, 5, true);
-  const daily = configuredNumber(environment, "TAKEBOARD_BACKUP_KEEP_DAILY", 7, 1, 90, true);
-  const weekly = configuredNumber(environment, "TAKEBOARD_BACKUP_KEEP_WEEKLY", 4, 0, 52, true);
-  const monthly = configuredNumber(environment, "TAKEBOARD_BACKUP_KEEP_MONTHLY", 6, 0, 60, true);
+  const interval = configuredNumber(environment, "YOYOTV_BACKUP_INTERVAL_HOURS", 24, 1, 720);
+  const localCopies = configuredNumber(environment, "YOYOTV_BACKUP_KEEP_LOCAL", 2, 1, 5, true);
+  const daily = configuredNumber(environment, "YOYOTV_BACKUP_KEEP_DAILY", 7, 1, 90, true);
+  const weekly = configuredNumber(environment, "YOYOTV_BACKUP_KEEP_WEEKLY", 4, 0, 52, true);
+  const monthly = configuredNumber(environment, "YOYOTV_BACKUP_KEEP_MONTHLY", 6, 0, 60, true);
   const drill = configuredNumber(
     environment,
-    "TAKEBOARD_BACKUP_DRILL_INTERVAL_DAYS",
+    "YOYOTV_BACKUP_DRILL_INTERVAL_DAYS",
     30,
     1,
     365,
     true,
   );
-  const destination =
-    (environment.YOYOTV_BACKUP_DESTINATION ?? environment.TAKEBOARD_BACKUP_DESTINATION)?.trim() ||
-    null;
+  const destination = environment.YOYOTV_BACKUP_DESTINATION?.trim() || null;
   const errors = [
     interval.error,
     localCopies.error,
@@ -297,8 +295,7 @@ function validExternalRecord(value: unknown): value is ExternalBackupRecord {
       /^[A-Za-z0-9-]{10,100}$/.test(record.id) &&
       typeof record.filename === "string" &&
       basename(record.filename) === record.filename &&
-      // shortcut: legacy .takeboard-instance.tgz external backup support, remove in v2.0.0
-      /\.(?:yoyotv|takeboard)-instance\.tgz$/.test(record.filename) &&
+      /\.yoyotv-instance\.tgz$/.test(record.filename) &&
       validTimestamp(record.createdAt) &&
       validTimestamp(record.copiedAt) &&
       Number.isSafeInteger(record.size) &&
@@ -327,7 +324,7 @@ async function inspectExternalBackups(destination: string, sourceInstanceId: str
     try {
       const record = JSON.parse(await readFile(join(destination, entry.name), "utf8")) as unknown;
       const candidate = record as Partial<ExternalBackupRecord> | null;
-      // A shared NAS directory may contain backups from several TakeBoard data roots.
+      // A shared NAS directory may contain backups from several YoYoTV data roots.
       // Valid foreign records are invisible to this instance and must never be pruned.
       if (
         validSourceInstanceId(candidate?.sourceInstanceId) &&
@@ -425,7 +422,7 @@ async function prepareDestination(projectsRoot: string, destination: string) {
   const root = resolve(projectsRoot);
   const target = resolve(destination);
   if (pathIsInside(root, target)) {
-    throw new BackupAutomationError(400, "异地备份目录不能位于 TakeBoard 数据目录内部");
+    throw new BackupAutomationError(400, "异地备份目录不能位于 YoYoTV 数据目录内部");
   }
   await mkdir(root, { recursive: true, mode: 0o700 });
   await mkdir(target, { recursive: true, mode: 0o700 });
@@ -532,7 +529,7 @@ async function restoredProjectCount(root: string) {
   for (const entry of entries) {
     if (
       !entry.isDirectory() ||
-      (!entry.name.endsWith(".yoyotv") && !entry.name.endsWith(".takeboard"))
+      !entry.name.endsWith(".yoyotv")
     )
       continue;
     const store = ProjectStore.openExisting(projectDirectory(root, entry.name));
@@ -560,7 +557,7 @@ async function executeRestoreDrill(destination: string, record: ExternalBackupRe
   // Restore into an isolated local workspace. Nesting the restore tree under a
   // user-selected backup path can exceed SQLite's usable path length on
   // Windows, and it needlessly writes a second full copy to the backup volume.
-  const drillRoot = await mkdtemp(join(tmpdir(), "takeboard-restore-drill-"));
+  const drillRoot = await mkdtemp(join(tmpdir(), "yoyotv-restore-drill-"));
   const restoredRoot = join(drillRoot, "data");
   const authPath = join(restoredRoot, ".system", "auth.db");
   try {
@@ -664,7 +661,7 @@ export class BackupAutomation {
       ...config,
       destination,
       configurationError:
-        [validationError, insideRoot ? "异地备份目录不能位于 TakeBoard 数据目录内部" : null]
+        [validationError, insideRoot ? "异地备份目录不能位于 YoYoTV 数据目录内部" : null]
           .filter((value): value is string => Boolean(value))
           .join("；") || null,
     };

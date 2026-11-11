@@ -12,16 +12,13 @@ import { assertSafeBindHost } from "./request-security.js";
 syncProcessEnv();
 
 // Match runtime-launcher: local device access stays login-free, accounts become available.
-// Updated: executor-comfy & workflow-bindings compatibility sync v2
-process.env.YOYOTV_AUTH_MODE ??= process.env.TAKEBOARD_AUTH_MODE ?? "optional";
-process.env.TAKEBOARD_AUTH_MODE ??= process.env.YOYOTV_AUTH_MODE;
+process.env.YOYOTV_AUTH_MODE ??= "optional";
 
 const host = getEnv("HOST") ?? "127.0.0.1";
 const port = Number.parseInt(getEnv("PORT") ?? "48120", 10);
 assertSafeBindHost(host, getEnv("ALLOW_NON_LOOPBACK") === "1", authModeFromEnvironment());
 const lease = acquireInstanceLease(resolveDefaultProjectsRoot());
 process.env.YOYOTV_INSTANCE_ID = lease.instanceId;
-process.env.TAKEBOARD_INSTANCE_ID = lease.instanceId;
 process.once("exit", lease.release);
 const app = (() => {
   try {

@@ -284,7 +284,7 @@ describe("project command API", () => {
     const unchanged = await app.inject({
       method: "GET",
       url: `/api/projects/${key}/sync`,
-      headers: { "if-none-match": `"takeboard-r${revision}"` },
+      headers: { "if-none-match": `"yoyotv-r${revision}"` },
     });
     expect(unchanged.statusCode).toBe(304);
     const created = await app.inject({
@@ -315,10 +315,10 @@ describe("project command API", () => {
     const synchronized = await app.inject({
       method: "GET",
       url: `/api/projects/${key}/sync`,
-      headers: { "if-none-match": `"takeboard-r${revision}"` },
+      headers: { "if-none-match": `"yoyotv-r${revision}"` },
     });
     expect(synchronized.statusCode).toBe(200);
-    expect(synchronized.headers.etag).toBe(`"takeboard-r${revision + 1}"`);
+    expect(synchronized.headers.etag).toBe(`"yoyotv-r${revision + 1}"`);
     expect(synchronized.json()).toMatchObject({ revision: revision + 1 });
     const staleRename = await app.inject({
       method: "PATCH",

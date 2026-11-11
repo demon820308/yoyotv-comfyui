@@ -9,7 +9,7 @@ const apps: ReturnType<typeof buildApp>[] = [];
 const directories: string[] = [];
 
 function multipartFile(filename: string, mimeType: string, bytes: Uint8Array) {
-  const boundary = "----takeboard-workflow-package";
+  const boundary = "----yoyotv-workflow-package";
   return {
     payload: Buffer.concat([
       Buffer.from(
@@ -32,7 +32,7 @@ afterEach(async () => {
 
 describe("ComfyUI workflow detection", () => {
   it("exports and safely imports a portable Recipe without inheriting execution trust", async () => {
-    const sourcePath = "TakeBoard/custom-t2i.json";
+    const sourcePath = "YoYoTV/custom-t2i.json";
     const workflow = {
       "1": {
         class_type: "PromptNode",
@@ -56,7 +56,7 @@ describe("ComfyUI workflow detection", () => {
       trusted: true,
       verifiedAt: "2026-08-30T00:00:00.000Z",
     };
-    const bindingPath = `takeboard/bindings/${Buffer.from(sourcePath).toString("base64url")}.json`;
+    const bindingPath = `yoyotv/bindings/${Buffer.from(sourcePath).toString("base64url")}.json`;
     const documents = new Map<string, unknown>([
       [`workflows/${sourcePath}`, workflow],
       [bindingPath, binding],
@@ -105,7 +105,7 @@ describe("ComfyUI workflow detection", () => {
     const imported = await app.inject({
       method: "POST",
       url: "/api/workflows/recipe-package/import",
-      ...multipartFile("portable.takeboard-recipe.tgz", "application/gzip", exported.rawPayload),
+      ...multipartFile("portable.yoyotv-recipe.tgz", "application/gzip", exported.rawPayload),
     });
     expect(imported.statusCode, imported.body).toBe(201);
     expect(imported.json()).toMatchObject({
@@ -227,14 +227,14 @@ describe("ComfyUI workflow detection", () => {
     const destination = imported.json().path as string;
     expect(documents.has(`workflows/${destination}`)).toBe(true);
     expect(
-      documents.has(`takeboard/bindings/${Buffer.from(destination).toString("base64url")}.json`),
+      documents.has(`yoyotv/bindings/${Buffer.from(destination).toString("base64url")}.json`),
     ).toBe(false);
   });
 
   it("blocks referenced workflows, then archives and restores unreferenced imports", async () => {
-    const root = await mkdtemp(join(tmpdir(), "takeboard-workflow-archive-"));
+    const root = await mkdtemp(join(tmpdir(), "yoyotv-workflow-archive-"));
     directories.push(root);
-    let paths = ["TakeBoard/custom-t2i.json"];
+    let paths = ["YoYoTV/custom-t2i.json"];
     const workflow = {
       nodes: [{ id: 1, type: "SaveImage", widgets_values: ["output"] }],
     };
@@ -252,7 +252,7 @@ describe("ComfyUI workflow detection", () => {
           paths.push(destination);
           return Response.json({});
         }
-        if (url.includes("takeboard/bindings/")) return new Response("missing", { status: 404 });
+        if (url.includes("yoyotv/bindings/")) return new Response("missing", { status: 404 });
         return Response.json(workflow);
       }),
     );
@@ -279,14 +279,14 @@ describe("ComfyUI workflow detection", () => {
         command: {
           type: "canvas.edit_item",
           itemId: shot.json().itemId,
-          workflowPath: "TakeBoard/custom-t2i.json",
+          workflowPath: "YoYoTV/custom-t2i.json",
         },
         requestId: "test:workflow-archive-bind:1",
       },
     });
     const blockedPreview = await app.inject({
       method: "GET",
-      url: "/api/workflows/archive-preview?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/archive-preview?path=YoYoTV%2Fcustom-t2i.json",
     });
     expect(blockedPreview.statusCode, blockedPreview.body).toBe(200);
     expect(blockedPreview.json()).toMatchObject({
@@ -297,7 +297,7 @@ describe("ComfyUI workflow detection", () => {
       method: "POST",
       url: "/api/workflows/archive",
       payload: {
-        path: "TakeBoard/custom-t2i.json",
+        path: "YoYoTV/custom-t2i.json",
         confirmationToken: blockedPreview.json().confirmationToken,
       },
     });
@@ -310,21 +310,21 @@ describe("ComfyUI workflow detection", () => {
         command: {
           type: "canvas.edit_item",
           itemId: shot.json().itemId,
-          workflowPath: "TakeBoard/replacement.json",
+          workflowPath: "YoYoTV/replacement.json",
         },
         requestId: "test:workflow-archive-unbind:1",
       },
     });
     const safePreview = await app.inject({
       method: "GET",
-      url: "/api/workflows/archive-preview?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/archive-preview?path=YoYoTV%2Fcustom-t2i.json",
     });
     expect(safePreview.json()).toMatchObject({ blocked: false, references: [] });
     const archived = await app.inject({
       method: "POST",
       url: "/api/workflows/archive",
       payload: {
-        path: "TakeBoard/custom-t2i.json",
+        path: "YoYoTV/custom-t2i.json",
         confirmationToken: safePreview.json().confirmationToken,
       },
     });
@@ -335,7 +335,7 @@ describe("ComfyUI workflow detection", () => {
     expect(listed.json().workflows).toEqual([]);
     const archives = await app.inject({ method: "GET", url: "/api/workflows/archives" });
     expect(archives.json().archives).toEqual([
-      expect.objectContaining({ archivePath, originalPath: "TakeBoard/custom-t2i.json" }),
+      expect.objectContaining({ archivePath, originalPath: "YoYoTV/custom-t2i.json" }),
     ]);
     const restored = await app.inject({
       method: "POST",
@@ -343,7 +343,7 @@ describe("ComfyUI workflow detection", () => {
       payload: { archivePath },
     });
     expect(restored.statusCode, restored.body).toBe(200);
-    expect(restored.json()).toMatchObject({ restored: true, path: "TakeBoard/custom-t2i.json" });
+    expect(restored.json()).toMatchObject({ restored: true, path: "YoYoTV/custom-t2i.json" });
   });
 
   it("does not mistake model loader filenames for prompts and discovers denoise", () => {
@@ -434,10 +434,10 @@ describe("ComfyUI workflow detection", () => {
       vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
         const url = decodeURIComponent(String(input));
         if (url.includes("/userdata?dir=workflows")) {
-          return Response.json(["TakeBoard/custom-t2i.json"]);
+          return Response.json(["YoYoTV/custom-t2i.json"]);
         }
         if (url.endsWith("/object_info")) return Response.json(objectInfo);
-        if (url.includes("yoyotv/bindings/") || url.includes("takeboard/bindings/")) {
+        if (url.includes("yoyotv/bindings/")) {
           if (init?.method === "POST") {
             savedBinding = String(init.body);
             return Response.json({});
@@ -459,7 +459,7 @@ describe("ComfyUI workflow detection", () => {
     });
     const inspect = await app.inject({
       method: "GET",
-      url: "/api/workflows/binding?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/binding?path=YoYoTV%2Fcustom-t2i.json",
     });
     expect(inspect.statusCode, inspect.body).toBe(200);
     const draft = inspect.json().suggested;
@@ -478,17 +478,17 @@ describe("ComfyUI workflow detection", () => {
 
     const structuredInspect = await app.inject({
       method: "GET",
-      url: "/api/workflows/inspect?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/inspect?path=YoYoTV%2Fcustom-t2i.json",
     });
     expect(structuredInspect.statusCode, structuredInspect.body).toBe(200);
     expect(structuredInspect.json()).toMatchObject({
       status: "needs_binding",
-      diagnostic: { path: "TakeBoard/custom-t2i.json" },
+      diagnostic: { path: "YoYoTV/custom-t2i.json" },
     });
 
     const invalidTransform = await app.inject({
       method: "PUT",
-      url: "/api/workflows/binding?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/binding?path=YoYoTV%2Fcustom-t2i.json",
       payload: {
         ...draft,
         trusted: true,
@@ -502,7 +502,7 @@ describe("ComfyUI workflow detection", () => {
 
     const enabled = await app.inject({
       method: "PUT",
-      url: "/api/workflows/binding?path=TakeBoard%2Fcustom-t2i.json",
+      url: "/api/workflows/binding?path=YoYoTV%2Fcustom-t2i.json",
       payload: { ...draft, trusted: true },
     });
     expect(enabled.statusCode).toBe(200);
@@ -543,7 +543,7 @@ describe("ComfyUI workflow detection", () => {
               type: "UNETLoader",
               widgets_values: ["wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"],
             },
-            { type: "SaveVideo", widgets_values: ["takeboard/output"] },
+            { type: "SaveVideo", widgets_values: ["yoyotv/output"] },
           ],
         });
       }),

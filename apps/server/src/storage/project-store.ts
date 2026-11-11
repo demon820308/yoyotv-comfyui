@@ -24,10 +24,7 @@ import { migrateDatabase, pendingDatabaseMigrations } from "./migrations.js";
 import { commandLogTable, eventLogTable, projectStateTable } from "./schema.js";
 
 const databaseFileName = "yoyotv.db";
-// shortcut: legacy takeboard.db and project.takeboard.json migration, remove in v2.0.0
-const legacyDatabaseFileName = "takeboard.db";
 const snapshotFileName = "project.yoyotv.json";
-const legacySnapshotFileName = "project.takeboard.json";
 
 type MigrationBackup = {
   directory: string;
@@ -49,14 +46,8 @@ function migrationBackup(
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const backupDatabasePath = join(directory, databaseFileName);
   client.prepare("VACUUM INTO ?").run(backupDatabasePath);
-  const primarySnapshotPath = join(projectDirectory, snapshotFileName);
-  const legacySnapshotPath = join(projectDirectory, legacySnapshotFileName);
-  const snapshotPath = existsSync(primarySnapshotPath)
-    ? primarySnapshotPath
-    : existsSync(legacySnapshotPath)
-      ? legacySnapshotPath
-      : null;
-  if (snapshotPath) copyFileSync(snapshotPath, join(directory, snapshotFileName));
+  const snapshotPath = join(projectDirectory, snapshotFileName);
+  if (existsSync(snapshotPath)) copyFileSync(snapshotPath, join(directory, snapshotFileName));
   writeFileSync(
     join(directory, "migration-backup.json"),
     `${JSON.stringify(
@@ -66,7 +57,7 @@ function migrationBackup(
         createdAt: new Date().toISOString(),
         pendingMigrations,
         databaseFile: databaseFileName,
-        snapshotFile: snapshotPath ? snapshotFileName : null,
+        snapshotFile: existsSync(snapshotPath) ? snapshotFileName : null,
       },
       null,
       2,
@@ -127,10 +118,7 @@ export class ProjectStore {
 
   private constructor(projectDirectory: string) {
     this.projectDirectory = resolve(projectDirectory);
-    const primaryDatabasePath = join(this.projectDirectory, databaseFileName);
-    const legacyDatabasePath = join(this.projectDirectory, legacyDatabaseFileName);
-    const migratingLegacy = !existsSync(primaryDatabasePath) && existsSync(legacyDatabasePath);
-    const activeDatabasePath = migratingLegacy ? legacyDatabasePath : primaryDatabasePath;
+    const activeDatabasePath = join(this.projectDirectory, databaseFileName);
     const existingDatabase =
       existsSync(activeDatabasePath) && statSync(activeDatabasePath).size > 0;
     let client = new BetterSqlite3(activeDatabasePath);
@@ -162,40 +150,9 @@ export class ProjectStore {
         }
         throw error;
       }
-      if (migratingLegacy) {
-        try {
-          client.pragma("wal_checkpoint(TRUNCATE)");
-        } catch {
-          // Best-effort WAL flush before closing for rename.
-        }
-        closeClient();
-        for (const suffix of ["-wal", "-shm", "-journal"]) {
-          try {
-            unlinkSync(`${legacyDatabasePath}${suffix}`);
-          } catch {
-            // Optional SQLite sidecars may already be removed after close.
-          }
-        }
-        renameSync(legacyDatabasePath, primaryDatabasePath);
-        client = new BetterSqlite3(primaryDatabasePath);
-        clientClosed = false;
-        client.pragma("journal_mode = WAL");
-        client.pragma("foreign_keys = ON");
-      }
       this.client = client;
       this.database = drizzle(client);
       this.reconcilePortableSnapshot();
-      const legacySnapshotPath = join(this.projectDirectory, legacySnapshotFileName);
-      if (
-        existsSync(legacySnapshotPath) &&
-        existsSync(join(this.projectDirectory, snapshotFileName))
-      ) {
-        try {
-          unlinkSync(legacySnapshotPath);
-        } catch {
-          // Legacy snapshot cleanup is non-fatal once project.yoyotv.json is reconciled.
-        }
-      }
     } catch (error) {
       try {
         closeClient();
@@ -227,10 +184,7 @@ export class ProjectStore {
 
   static openExisting(projectDirectory: string) {
     const resolvedDirectory = resolve(projectDirectory);
-    if (
-      !existsSync(join(resolvedDirectory, databaseFileName)) &&
-      !existsSync(join(resolvedDirectory, legacyDatabaseFileName))
-    ) {
+    if (!existsSync(join(resolvedDirectory, databaseFileName))) {
       return null;
     }
     return new ProjectStore(resolvedDirectory);
@@ -460,10 +414,7 @@ export class ProjectStore {
   }
 
   async readOpenSnapshot() {
-    const primary = join(this.projectDirectory, snapshotFileName);
-    const snapshotPath = existsSync(primary)
-      ? primary
-      : join(this.projectDirectory, legacySnapshotFileName);
+    const snapshotPath = join(this.projectDirectory, snapshotFileName);
     const contents = await readFile(snapshotPath, "utf8");
     return projectSnapshotSchema.parse(JSON.parse(contents));
   }

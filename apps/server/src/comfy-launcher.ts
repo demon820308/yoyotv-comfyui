@@ -295,18 +295,11 @@ function processLauncher(
     return unavailable("PID 文件必须位于 ComfyUI 工作目录内");
   }
   const readRunningPid = async () => {
-    // shortcut: legacy .takeboard-comfy.pid read fallback, remove in v2.0.0
-    const candidates = [resolvedPidFile];
-    if (resolvedPidFile.endsWith(".yoyotv-comfy.pid")) {
-      candidates.push(resolve(resolvedCwd, ".takeboard-comfy.pid"));
-    }
-    for (const candidate of candidates) {
-      try {
-        const pid = Number.parseInt(await readFile(candidate, "utf8"), 10);
-        if (Number.isInteger(pid) && pid > 0 && runtime.processRunning(pid)) return pid;
-      } catch {
-        // Ignore absent or unreadable PID file.
-      }
+    try {
+      const pid = Number.parseInt(await readFile(resolvedPidFile, "utf8"), 10);
+      if (Number.isInteger(pid) && pid > 0 && runtime.processRunning(pid)) return pid;
+    } catch {
+      // Ignore absent or unreadable PID file.
     }
     return null;
   };

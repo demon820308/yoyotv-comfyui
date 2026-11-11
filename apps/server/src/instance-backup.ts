@@ -20,8 +20,6 @@ import { acquireProjectLock, acquireProjectLocks } from "./project-request-lock.
 import { ProjectStore } from "./storage/project-store.js";
 
 const manifestName = "yoyotv-instance.json";
-// shortcut: legacy takeboard-instance.json and .takeboard-instance.tgz support, remove in v2.0.0
-const legacyManifestName = "takeboard-instance.json";
 const identityName = "identity/auth.db";
 const maxManifestBytes = 2 * 1024 * 1024;
 const maxEntries = 10_000;
@@ -31,7 +29,7 @@ type BackupFile = { path: string; size: number; sha256: string };
 type BackupProject = { key: string; projectId: string; title: string; revision: number };
 
 export type InstanceBackupManifest = {
-  format: "yoyotv.instance-backup" | "takeboard.instance-backup";
+  format: "yoyotv.instance-backup";
   version: 1;
   createdAt: string;
   projects: BackupProject[];
@@ -68,7 +66,7 @@ export class InstanceBackupError extends Error {
 }
 
 function isProjectKey(value: string) {
-  return /^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(value) && basename(value) === value;
+  return /^[a-z0-9][a-z0-9-]{0,80}\.yoyotv$/.test(value) && basename(value) === value;
 }
 
 function safePath(value: string) {
@@ -252,7 +250,7 @@ function storedBackupFromManifest(
   size: number,
 ): StoredInstanceBackup {
   return {
-    id: basename(path).replace(/\.(?:yoyotv|takeboard)-instance\.tgz$/, ""),
+    id: basename(path).replace(/\.yoyotv-instance\.tgz$/, ""),
     filename: basename(path),
     createdAt: manifest.createdAt,
     size,
@@ -263,7 +261,7 @@ function storedBackupFromManifest(
 
 async function pruneBackups(root: string, retainedCopies: number) {
   const files = (await readdir(root, { withFileTypes: true }).catch(() => []))
-    .filter((entry) => entry.isFile() && /\.(?:yoyotv|takeboard)-instance\.tgz$/.test(entry.name))
+    .filter((entry) => entry.isFile() && /\.yoyotv-instance\.tgz$/.test(entry.name))
     .map((entry) => entry.name)
     .sort()
     .reverse();
@@ -278,7 +276,7 @@ export async function listInstanceBackups(projectsRoot: string) {
   const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
   const backups: StoredInstanceBackup[] = [];
   for (const entry of entries) {
-    if (!entry.isFile() || !/\.(?:yoyotv|takeboard)-instance\.tgz\.json$/.test(entry.name))
+    if (!entry.isFile() || !/\.yoyotv-instance\.tgz\.json$/.test(entry.name))
       continue;
     try {
       const parsed = JSON.parse(
@@ -297,9 +295,7 @@ export async function listInstanceBackups(projectsRoot: string) {
 export function instanceBackupPath(projectsRoot: string, id: string) {
   if (!/^[A-Za-z0-9-]{10,100}$/.test(id)) return null;
   const backupsRoot = join(resolve(projectsRoot), ".system", "backups");
-  const primary = join(backupsRoot, `${id}.yoyotv-instance.tgz`);
-  const legacy = join(backupsRoot, `${id}.takeboard-instance.tgz`);
-  return existsSync(legacy) && !existsSync(primary) ? legacy : primary;
+  return join(backupsRoot, `${id}.yoyotv-instance.tgz`);
 }
 
 function parseManifest(value: Buffer) {
@@ -311,8 +307,7 @@ function parseManifest(value: Buffer) {
   }
   const manifest = candidate as Partial<InstanceBackupManifest> | null;
   if (
-    (manifest?.format !== "yoyotv.instance-backup" &&
-      manifest?.format !== "takeboard.instance-backup") ||
+    manifest?.format !== "yoyotv.instance-backup" ||
     manifest.version !== 1 ||
     typeof manifest.createdAt !== "string" ||
     !Number.isFinite(Date.parse(manifest.createdAt)) ||
@@ -423,7 +418,7 @@ export async function stageInstanceRestore(
       expanded += declared;
       if (expanded > maxExpandedBytes)
         throw new InstanceBackupError(413, "实例备份解压后超过安全上限");
-      if (name === manifestName || name === legacyManifestName) {
+      if (name === manifestName) {
         if (manifestBuffer || declared > maxManifestBytes)
           throw new InstanceBackupError(400, "实例备份清单无效");
         const chunks: Buffer[] = [];
@@ -439,7 +434,7 @@ export async function stageInstanceRestore(
       }
       if (
         name !== identityName &&
-        !/^projects\/[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)\.tgz$/.test(name)
+        !/^projects\/[a-z0-9][a-z0-9-]{0,80}\.yoyotv\.tgz$/.test(name)
       )
         throw new InstanceBackupError(400, "实例备份目录结构无效");
       if (actual.has(name)) throw new InstanceBackupError(400, "实例备份包含重复文件路径");

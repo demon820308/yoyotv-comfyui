@@ -5,14 +5,12 @@ import { createGunzip, createGzip } from "node:zlib";
 import { extract, type Header, pack } from "tar-stream";
 
 const manifestName = "yoyotv-recipe.json";
-// shortcut: legacy takeboard-recipe.json and takeboard.workflow-recipe support, remove in v2.0.0
-const legacyManifestName = "takeboard-recipe.json";
 const workflowName = "workflow.json";
 const bindingName = "binding.json";
 const maxCompressedBytes = 25 * 1024 * 1024;
 const maxExpandedBytes = 50 * 1024 * 1024;
 const maxEntryBytes = 40 * 1024 * 1024;
-const allowedEntries = new Set([manifestName, legacyManifestName, workflowName, bindingName]);
+const allowedEntries = new Set([manifestName, workflowName, bindingName]);
 const capabilities = new Set([
   "text_to_image",
   "image_to_image",
@@ -31,7 +29,7 @@ type RecipePackageFile = {
 };
 
 export type WorkflowRecipeManifest = {
-  format: "yoyotv.workflow-recipe" | "takeboard.workflow-recipe";
+  format: "yoyotv.workflow-recipe";
   version: 1;
   exportedAt: string;
   name: string;
@@ -163,8 +161,7 @@ function parseManifest(bytes: Buffer): WorkflowRecipeManifest {
   }
   const manifest = candidate as Partial<WorkflowRecipeManifest>;
   if (
-    (manifest.format !== "yoyotv.workflow-recipe" &&
-      manifest.format !== "takeboard.workflow-recipe") ||
+    manifest.format !== "yoyotv.workflow-recipe" ||
     manifest.version !== 1 ||
     typeof manifest.name !== "string" ||
     !manifest.name.trim() ||
@@ -268,7 +265,7 @@ export async function parseWorkflowRecipeArchive(bytes: Buffer): Promise<ParsedW
     if (error instanceof WorkflowRecipePackageError) throw error;
     throw new WorkflowRecipePackageError(400, "Recipe 包不是有效的 .tgz 文件");
   }
-  const manifestBytes = entries.get(manifestName) ?? entries.get(legacyManifestName);
+  const manifestBytes = entries.get(manifestName);
   if (!manifestBytes) throw new WorkflowRecipePackageError(400, "Recipe 包缺少清单");
   const manifest = parseManifest(manifestBytes);
   if (entries.size !== manifest.files.length + 1) {

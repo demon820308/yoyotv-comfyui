@@ -5,32 +5,19 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export type StorageRoot = { id: string; name: string; path: string };
 const marker = ".yoyotv-location.json";
-// shortcut: legacy .takeboard-location.json and .takeboard project directory support, remove in v2.0.0
-const legacyMarker = ".takeboard-location.json";
 const configuration = (root: string) => join(root, ".system", "project-storage-roots.json");
 
 function isProjectDirectoryName(part: string) {
-  return part.endsWith(".yoyotv") || part.endsWith(".takeboard");
+  return part.endsWith(".yoyotv");
 }
 
 function hasProjectSnapshot(directory: string) {
-  return (
-    existsSync(join(directory, "project.yoyotv.json")) ||
-    existsSync(join(directory, "project.takeboard.json"))
-  );
+  return existsSync(join(directory, "project.yoyotv.json"));
 }
 
 function resolveLocationMarker(index: string): string | null {
   const primary = join(index, marker);
-  if (existsSync(primary)) return primary;
-  const legacy = join(index, legacyMarker);
-  if (!existsSync(legacy)) return null;
-  try {
-    renameSync(legacy, primary);
-    return primary;
-  } catch {
-    return legacy;
-  }
+  return existsSync(primary) ? primary : null;
 }
 
 export function storageRoots(root: string): StorageRoot[] {

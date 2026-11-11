@@ -44,9 +44,9 @@ function videoUpload() {
 }
 
 function projectPackageUpload(bytes: Buffer) {
-  const boundary = "----takeboard-project-package-boundary";
+  const boundary = "----yoyotv-project-package-boundary";
   const prefix = Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="projectPackage"; filename="project.takeboard.tgz"\r\nContent-Type: application/gzip\r\n\r\n`,
+    `--${boundary}\r\nContent-Disposition: form-data; name="projectPackage"; filename="project.yoyotv.tgz"\r\nContent-Type: application/gzip\r\n\r\n`,
   );
   const suffix = Buffer.from(`\r\n--${boundary}--\r\n`);
   return {
@@ -912,7 +912,7 @@ describe("TakeBoard project API", () => {
     const app = buildApp({ projectsRoot: root, webRoot: null });
     cleanup.push(() => app.close());
 
-    const response = await app.inject({ method: "GET", url: "/api/projects/ghost.takeboard" });
+    const response = await app.inject({ method: "GET", url: "/api/projects/ghost.yoyotv" });
 
     expect(response.statusCode).toBe(404);
     expect(await readdir(root)).toEqual([]);
@@ -932,8 +932,8 @@ describe("TakeBoard project API", () => {
     });
 
     await Promise.all([
-      app.inject({ method: "POST", url: "/api/projects/locked.takeboard/test-lock" }),
-      app.inject({ method: "POST", url: "/api/projects/locked.takeboard/test-lock" }),
+      app.inject({ method: "POST", url: "/api/projects/locked.yoyotv/test-lock" }),
+      app.inject({ method: "POST", url: "/api/projects/locked.yoyotv/test-lock" }),
     ]);
 
     expect(maximumActive).toBe(1);

@@ -36,18 +36,15 @@ const KNOWN_ENV_KEYS = [
 
 export function syncProcessEnv(): void {
   for (const key of KNOWN_ENV_KEYS) {
-    const yoyoVal = process.env[`YOYOTV_${key}`];
-    const takeboardVal = process.env[`TAKEBOARD_${key}`];
-    const val = yoyoVal ?? takeboardVal;
+    const val = process.env[`YOYOTV_${key}`];
     if (val !== undefined) {
       process.env[`YOYOTV_${key}`] = val;
-      process.env[`TAKEBOARD_${key}`] = val;
     }
   }
 }
 
 export function getEnv(key: string, defaultValue?: string): string | undefined {
-  return process.env[`YOYOTV_${key}`] ?? process.env[`TAKEBOARD_${key}`] ?? defaultValue;
+  return process.env[`YOYOTV_${key}`] ?? defaultValue;
 }
 
 syncProcessEnv();

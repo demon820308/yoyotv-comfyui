@@ -30,6 +30,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 });
 
 afterEach(async () => {
+  delete process.env.YOYOTV_MIN_FREE_DISK_GB;
   delete process.env.TAKEBOARD_MIN_FREE_DISK_GB;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -402,7 +403,7 @@ describe("real generation routes", () => {
   });
   it("blocks generation before contacting ComfyUI when the project disk cannot keep its reserve", async () => {
     const { app, key, shotId } = await projectFixture();
-    process.env.TAKEBOARD_MIN_FREE_DISK_GB = "999999999";
+    process.env.YOYOTV_MIN_FREE_DISK_GB = "999999999";
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -574,9 +575,8 @@ describe("real generation routes", () => {
     });
 
     expect(response.statusCode).toBe(422);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("yoyotv%2Fbindings");
-    expect(String(fetchMock.mock.calls[1]?.[0])).toContain("takeboard%2Fbindings");
   });
 
   it("cancels the remote prompt when persisting the submitted run fails", async () => {

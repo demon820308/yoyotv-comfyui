@@ -106,13 +106,8 @@ export function isWorkflowPath(path: unknown): path is string {
 
 const bindingPath = (path: string) =>
   `yoyotv/bindings/${Buffer.from(path).toString("base64url")}.json`;
-// shortcut: legacy takeboard/bindings and takeboard/binding-proposals read fallback, remove in v2.0.0
-const legacyBindingPath = (path: string) =>
-  `takeboard/bindings/${Buffer.from(path).toString("base64url")}.json`;
 const bindingProposalPath = (path: string) =>
   `yoyotv/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
-const legacyBindingProposalPath = (path: string) =>
-  `takeboard/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
 
 export function findTrustWorkflowDir(startDir: string = process.cwd()): string | null {
   const configuredTrust = getEnv("TRUST_WORKFLOW_DIR");
@@ -281,11 +276,7 @@ export async function readWorkflowBinding(comfyUrl: string, path: string) {
   try {
     payload = await fetchJson(comfyUrl, bindingPath(path));
   } catch {
-    try {
-      payload = await fetchJson(comfyUrl, legacyBindingPath(path));
-    } catch {
-      return null;
-    }
+    return null;
   }
   return parseWorkflowBinding(payload, path);
 }
@@ -295,11 +286,7 @@ export async function readWorkflowBindingProposal(comfyUrl: string, path: string
   try {
     payload = await fetchJson(comfyUrl, bindingProposalPath(path));
   } catch {
-    try {
-      payload = await fetchJson(comfyUrl, legacyBindingProposalPath(path));
-    } catch {
-      return null;
-    }
+    return null;
   }
   return parseWorkflowBinding(payload, path);
 }

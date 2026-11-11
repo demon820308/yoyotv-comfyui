@@ -21,9 +21,9 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
-describe("TakeBoard instance backups", () => {
+describe("YoYoTV instance backups", () => {
   it("backs up real externally located content and restores a self-contained project without overwriting the source", async () => {
-    const base = await mkdtemp(join(tmpdir(), "takeboard-external-backup-"));
+    const base = await mkdtemp(join(tmpdir(), "yoyotv-external-backup-"));
     roots.push(base);
     const root = join(base, "instance");
     const external = join(base, "film-drive");
@@ -40,8 +40,8 @@ describe("TakeBoard instance backups", () => {
         [],
       );
       await addStorageRoot(root, { path: external, name: "Film drive" });
-      const key = "external-film.takeboard";
-      const directory = join(external, "Film (external).takeboard");
+      const key = "external-film.yoyotv";
+      const directory = join(external, "Film (external).yoyotv");
       const created = await new ProjectService().create({
         projectDirectory: directory,
         title: "External film",
@@ -73,7 +73,7 @@ describe("TakeBoard instance backups", () => {
     }
   });
   it("honors the requested local recovery-point limit", async () => {
-    const dataRoot = await mkdtemp(join(tmpdir(), "takeboard-instance-retention-"));
+    const dataRoot = await mkdtemp(join(tmpdir(), "yoyotv-instance-retention-"));
     roots.push(dataRoot);
     const auth = new AuthService(join(dataRoot, ".system", "auth.db"), "required");
     auth.createBootstrap(
@@ -93,7 +93,7 @@ describe("TakeBoard instance backups", () => {
   });
 
   it("creates a consistent verified backup and restores only missing projects online", async () => {
-    const dataRoot = await mkdtemp(join(tmpdir(), "takeboard-instance-backup-"));
+    const dataRoot = await mkdtemp(join(tmpdir(), "yoyotv-instance-backup-"));
     roots.push(dataRoot);
     const auth = new AuthService(join(dataRoot, ".system", "auth.db"), "required");
     const admin = auth.createBootstrap(
@@ -104,7 +104,7 @@ describe("TakeBoard instance backups", () => {
       },
       [],
     );
-    const key = "recoverable-film.takeboard";
+    const key = "recoverable-film.yoyotv";
     const created = await new ProjectService().create({
       projectDirectory: join(dataRoot, key),
       title: "Recoverable film",

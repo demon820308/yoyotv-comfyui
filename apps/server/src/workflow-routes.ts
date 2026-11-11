@@ -441,7 +441,7 @@ function workflowSummary(
       path.startsWith("YoYo/") ||
       trustSnapshot
         ? ("built_in" as const)
-        : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
+        : path.startsWith("YoYoTV/")
           ? ("imported" as const)
           : ("comfyui" as const),
     trustSnapshot: Boolean(trustSnapshot),
@@ -492,14 +492,12 @@ type WorkflowReference = {
   runCount: number;
 };
 
-// shortcut: legacy TakeBoard/ and TakeBoard/.archive/ workflow path compatibility, remove in v2.0.0
 function importedWorkflowPath(path: unknown): path is string {
   return (
     typeof path === "string" &&
     isWorkflowPath(path) &&
-    (path.startsWith("YoYoTV/") || path.startsWith("TakeBoard/")) &&
-    !path.startsWith("YoYoTV/.archive/") &&
-    !path.startsWith("TakeBoard/.archive/")
+    path.startsWith("YoYoTV/") &&
+    !path.startsWith("YoYoTV/.archive/")
   );
 }
 
@@ -508,7 +506,7 @@ function workflowArchivePath(path: string) {
 }
 
 function archivedWorkflow(path: string) {
-  const match = /^(?:YoYoTV|TakeBoard)\/\.archive\/(\d+)-([A-Za-z0-9_-]+)\.json$/.exec(path);
+  const match = /^YoYoTV\/\.archive\/(\d+)-([A-Za-z0-9_-]+)\.json$/.exec(path);
   if (!match) return null;
   try {
     const timestamp = Number(match[1]);
@@ -561,9 +559,7 @@ async function workflowReferences(projectsRoot: string, path: string) {
     for (const entry of entries) {
       if (
         !entry.isDirectory() ||
-        (source.location === "active" &&
-          !entry.name.endsWith(".yoyotv") &&
-          !entry.name.endsWith(".takeboard"))
+        (source.location === "active" && !entry.name.endsWith(".yoyotv"))
       ) {
         continue;
       }
@@ -722,7 +718,7 @@ export function registerWorkflowRoutes(
     const editorUrl = getEditorUrl();
     try {
       const paths = (await listComfyWorkflowPaths(endpoint)).filter(
-        (path) => !path.startsWith("YoYoTV/.archive/") && !path.startsWith("TakeBoard/.archive/"),
+        (path) => !path.startsWith("YoYoTV/.archive/"),
       );
       let objectInfoError: string | null = null;
       const objectInfo = await fetchComfyObjectInfo(endpoint).catch((error: unknown) => {
@@ -963,7 +959,7 @@ export function registerWorkflowRoutes(
         warning: inspected.warning,
         diagnostic: inspected.diagnostic,
         ...(inspected.bindingStatus === "built_in"
-          ? { message: "该工作流由 TakeBoard 内置适配器执行" }
+          ? { message: "该工作流由 YoYoTV 内置适配器执行" }
           : {}),
       };
     } catch (error) {
@@ -1187,7 +1183,6 @@ export function registerWorkflowRoutes(
     if (
       !upload ||
       (!lowerFilename.endsWith(".yoyotv-recipe.tgz") &&
-        !lowerFilename.endsWith(".takeboard-recipe.tgz") &&
         !lowerFilename.endsWith(".tgz"))
     ) {
       return await reply.code(400).send({ error: "请选择 .yoyotv-recipe.tgz 文件" });
@@ -1389,7 +1384,7 @@ export function registerWorkflowRoutes(
     async (request, reply) => {
       const path = request.query.path;
       if (!importedWorkflowPath(path)) {
-        return await reply.code(400).send({ error: "只能归档从 TakeBoard 导入的工作流" });
+        return await reply.code(400).send({ error: "只能归档从 YoYoTV 导入的工作流" });
       }
       try {
         const workflow = await fetchWorkflow(getComfyUrl(), path);

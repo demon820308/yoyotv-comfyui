@@ -62,27 +62,22 @@ export function authModeFromEnvironment(): AuthMode {
   }
   if (configured?.trim()) {
     throw new Error(
-      "YOYOTV_AUTH_MODE / TAKEBOARD_AUTH_MODE 无效；请选择 optional、required、trusted_local 或 off",
+      "YOYOTV_AUTH_MODE 无效；请选择 optional、required、trusted_local 或 off",
     );
   }
   return process.env.NODE_ENV === "test" ? "off" : "optional";
 }
 
-// shortcut: fallback to legacy .takeboard-data directory when .yoyotv-data is absent, remove in v2.0.0
 export function resolveDefaultProjectsRoot() {
   const custom = getEnv("DATA_ROOT");
   if (custom) return resolve(custom);
-  const primary = resolve(".yoyotv-data/projects");
-  const legacy = resolve(".takeboard-data/projects");
-  return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
+  return resolve(".yoyotv-data/projects");
 }
 
 function resolveDefaultDemoDirectory() {
   const custom = getEnv("DEMO_DIRECTORY");
   if (custom) return resolve(custom);
-  const primary = resolve(".yoyotv-data/demo.yoyotv");
-  const legacy = resolve(".takeboard-data/demo.takeboard");
-  return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
+  return resolve(".yoyotv-data/demo.yoyotv");
 }
 
 export function buildApp(options: AppOptions = {}): FastifyInstance {

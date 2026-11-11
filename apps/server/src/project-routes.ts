@@ -149,9 +149,8 @@ function canvasItemMedia(snapshot: ProjectSnapshot, item: { refType: string; ref
     : {};
 }
 
-// shortcut: legacy .takeboard project directory suffix support, remove in v2.0.0
 export function projectKey(value: unknown): string | null {
-  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(value)) {
+  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9-]{0,80}\.yoyotv$/.test(value)) {
     return null;
   }
   return basename(value) === value ? value : null;
@@ -179,9 +178,7 @@ function originalKeyFromTrashEntry(value: string) {
   if (yoyotvMarker >= 0) {
     return projectKey(value.slice(0, yoyotvMarker + ".yoyotv".length));
   }
-  const marker = value.lastIndexOf(".takeboard.");
-  if (marker < 0) return null;
-  return projectKey(value.slice(0, marker + ".takeboard".length));
+  return null;
 }
 
 type ProjectRouteOptions = {
@@ -240,7 +237,7 @@ async function cleanupDeletedProjectRun(
     ...inputFiles.flatMap((file) => {
       const target =
         options.comfyInputRoot &&
-        (file.startsWith(`takeboard_${run.id}_`) || file.startsWith(`yoyotv_${run.id}_`)) &&
+        file.startsWith(`yoyotv_${run.id}_`) &&
         !file.includes("/") &&
         !file.includes("\\")
           ? safeChild(options.comfyInputRoot, file)
@@ -248,8 +245,7 @@ async function cleanupDeletedProjectRun(
       return target ? [unlink(target)] : [];
     }),
     ...(options.comfyOutputRoot &&
-    (outputDirectory === `takeboard/${projectId}/${run.shotId}/${run.id}` ||
-      outputDirectory === `yoyotv/${projectId}/${run.shotId}/${run.id}`)
+    outputDirectory === `yoyotv/${projectId}/${run.shotId}/${run.id}`
       ? (() => {
           const target = safeChild(options.comfyOutputRoot, outputDirectory);
           return target ? [rm(target, { recursive: true, force: true })] : [];
@@ -521,7 +517,7 @@ export function registerProjectRoutes(
       const part = await request.file({
         limits: { fileSize: projectPackageUploadLimit, files: 1 },
       });
-      if (!part) return await reply.code(400).send({ error: "请选择 TakeBoard 项目包" });
+      if (!part) return await reply.code(400).send({ error: "请选择 YoYoTV 项目包" });
       await pipeline(part.file, createWriteStream(uploadPath, { flags: "wx", mode: 0o600 }));
       if (part.file.truncated) {
         return await reply.code(413).send({ error: "项目包超过当前服务允许的容量上限" });
@@ -902,7 +898,7 @@ export function registerProjectRoutes(
     try {
       const currentRevision = store.currentRevision();
       if (currentRevision === null) return await reply.code(404).send({ error: "项目不存在" });
-      const etag = `"takeboard-r${currentRevision}"`;
+      const etag = `"yoyotv-r${currentRevision}"`;
       reply.header("etag", etag).header("cache-control", "no-store");
       if (request.headers["if-none-match"] === etag) return await reply.code(304).send();
       const current = store.loadCurrent();

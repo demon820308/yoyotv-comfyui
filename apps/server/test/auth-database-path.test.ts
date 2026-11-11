@@ -13,10 +13,10 @@ afterEach(async () => {
 
 describe("identity database location", () => {
   it("opens an explicit filename and keeps the same accounts after restart", async () => {
-    const root = await mkdtemp(join(tmpdir(), "takeboard-auth-path-"));
+    const root = await mkdtemp(join(tmpdir(), "yoyotv-auth-path-"));
     roots.push(root);
     const path = join(root, "identity.db");
-    vi.stubEnv("TAKEBOARD_AUTH_DATABASE", path);
+    vi.stubEnv("YOYOTV_AUTH_DATABASE", path);
     const options = {
       projectsRoot: join(root, "projects"),
       webRoot: null,
@@ -47,7 +47,7 @@ describe("identity database location", () => {
   });
 
   it("preserves the legacy nested database and rejects unrelated directories", async () => {
-    const root = await mkdtemp(join(tmpdir(), "takeboard-auth-legacy-"));
+    const root = await mkdtemp(join(tmpdir(), "yoyotv-auth-legacy-"));
     roots.push(root);
     const configured = join(root, "auth.db");
     const legacy = join(configured, ".system", "auth.db");

@@ -12,8 +12,6 @@ import { locatedProjectSummary, projectDirectory } from "./project-locations.js"
 import { ProjectStore } from "./storage/project-store.js";
 
 const manifestName = "yoyotv-package.json";
-// shortcut: legacy takeboard-package.json and .takeboard archive support, remove in v2.0.0
-const legacyManifestName = "takeboard-package.json";
 const projectPrefix = "project/";
 const maxManifestBytes = 2 * 1024 * 1024;
 const maxArchiveEntries = 100_000;
@@ -27,7 +25,7 @@ type ProjectPackageFile = {
 };
 
 export type ProjectPackageManifest = {
-  format: "yoyotv.project-package" | "takeboard.project-package";
+  format: "yoyotv.project-package";
   version: 1;
   exportedAt: string;
   sourceKey: string;
@@ -171,8 +169,7 @@ function parseManifest(value: Buffer): ProjectPackageManifest {
   }
   const manifest = candidate as Partial<ProjectPackageManifest>;
   if (
-    (manifest.format !== "yoyotv.project-package" &&
-      manifest.format !== "takeboard.project-package") ||
+    manifest.format !== "yoyotv.project-package" ||
     manifest.version !== 1 ||
     typeof manifest.exportedAt !== "string" ||
     !Number.isFinite(Date.parse(manifest.exportedAt)) ||
@@ -215,13 +212,11 @@ function parseManifest(value: Buffer): ProjectPackageManifest {
 export async function findActiveProjectById(root: string, projectId: string) {
   const directory = await opendir(root);
   for await (const entry of directory) {
-    if (!entry.isDirectory() || !/^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(entry.name))
+    if (!entry.isDirectory() || !/^[a-z0-9][a-z0-9-]{0,80}\.yoyotv$/.test(entry.name))
       continue;
     try {
       const targetDirectory = projectDirectory(root, entry.name);
-      const raw = await readFile(join(targetDirectory, "project.yoyotv.json"), "utf8").catch(() =>
-        readFile(join(targetDirectory, "project.takeboard.json"), "utf8"),
-      );
+      const raw = await readFile(join(targetDirectory, "project.yoyotv.json"), "utf8");
       const marker = JSON.parse(raw) as { project?: { id?: string } };
       if (marker.project?.id === projectId) return entry.name;
     } catch {
@@ -238,9 +233,6 @@ function importedProjectKey(sourceKey: string, title: string) {
     .replace(/[^a-zA-Z0-9._-]/g, "-")
     .slice(0, 120);
   if (safeSource.endsWith(".yoyotv") && safeSource.length > ".yoyotv".length) {
-    return safeSource;
-  }
-  if (safeSource.endsWith(".takeboard") && safeSource.length > ".takeboard".length) {
     return safeSource;
   }
   const safeTitle = [...title.normalize("NFKC")]
@@ -262,7 +254,7 @@ async function availableProjectKey(root: string, desired: string) {
   } catch {
     return desired;
   }
-  const suffix = desired.endsWith(".takeboard") ? ".takeboard" : ".yoyotv";
+  const suffix = ".yoyotv";
   const stem = desired.endsWith(suffix) ? desired.slice(0, -suffix.length) : desired;
   for (let index = 2; index < 10_000; index += 1) {
     const candidate = `${stem}-${index}${suffix}`;
@@ -309,7 +301,7 @@ export async function importProjectArchive(projectsRoot: string, archivePath: st
       if (expandedBytes > maxExpandedBytes) {
         throw new ProjectArchiveError(413, "项目包解压后超过安全容量上限");
       }
-      if (name === manifestName || name === legacyManifestName) {
+      if (name === manifestName) {
         if (manifestBuffer) throw new ProjectArchiveError(400, "项目包包含重复清单");
         if (declaredSize > maxManifestBytes) {
           throw new ProjectArchiveError(413, "项目包清单过大");
@@ -370,15 +362,11 @@ export async function importProjectArchive(projectsRoot: string, archivePath: st
         throw new ProjectArchiveError(400, `项目包文件校验失败：${file.path}`);
       }
     }
-    const hasModernFiles = actualFiles.has("project.yoyotv.json") && actualFiles.has("yoyotv.db");
-    const hasLegacyFiles =
-      actualFiles.has("project.takeboard.json") && actualFiles.has("takeboard.db");
-    if (!hasModernFiles && !hasLegacyFiles) {
+    if (!actualFiles.has("project.yoyotv.json") || !actualFiles.has("yoyotv.db")) {
       throw new ProjectArchiveError(400, "项目包缺少项目清单或数据库");
     }
-    const snapshotName = hasModernFiles ? "project.yoyotv.json" : "project.takeboard.json";
     const portableSnapshot = projectSnapshotSchema.parse(
-      JSON.parse(await readFile(join(extractedProject, snapshotName), "utf8")),
+      JSON.parse(await readFile(join(extractedProject, "project.yoyotv.json"), "utf8")),
     );
     const store = ProjectStore.openExisting(extractedProject);
     if (!store) throw new ProjectArchiveError(400, "项目包不是可读取的 YoYoTV 项目");

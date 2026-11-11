@@ -12,5 +12,5 @@ export function resolveAuthDatabasePath(projectsRoot: string, configured?: strin
   if (statSync(path).isDirectory() && existsSync(legacyPath) && statSync(legacyPath).isFile()) {
     return legacyPath;
   }
-  throw new Error("TAKEBOARD_AUTH_DATABASE 必须指向数据库文件，不能指向目录；原数据未修改");
+  throw new Error("YOYOTV_AUTH_DATABASE 必须指向数据库文件，不能指向目录；原数据未修改");
 }

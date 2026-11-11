@@ -102,9 +102,9 @@ describe("ProjectStore", () => {
   it("upgrades an existing project database with command history without rebuilding it", async () => {
     const root = await mkdtemp(join(tmpdir(), "takeboard-project-migration-"));
     temporaryDirectories.push(root);
-    const projectDirectory = join(root, "existing.takeboard");
+    const projectDirectory = join(root, "existing.yoyotv");
     await mkdir(projectDirectory, { recursive: true });
-    const client = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    const client = new BetterSqlite3(join(projectDirectory, "yoyotv.db"));
     client.exec(`
       CREATE TABLE schema_migrations (
         id TEXT PRIMARY KEY NOT NULL,
@@ -184,9 +184,9 @@ describe("ProjectStore", () => {
   it("migrates legacy camelCase createdAt column in event_log to created_at", async () => {
     const root = await mkdtemp(join(tmpdir(), "takeboard-project-legacy-col-"));
     temporaryDirectories.push(root);
-    const projectDirectory = join(root, "legacy.takeboard");
+    const projectDirectory = join(root, "legacy.yoyotv");
     await mkdir(projectDirectory, { recursive: true });
-    const client = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    const client = new BetterSqlite3(join(projectDirectory, "yoyotv.db"));
     client.exec(`
       CREATE TABLE schema_migrations (
         id TEXT PRIMARY KEY NOT NULL,
@@ -249,9 +249,9 @@ describe("ProjectStore", () => {
   it("restores the pre-upgrade database when a migration cannot be applied", async () => {
     const root = await mkdtemp(join(tmpdir(), "takeboard-project-migration-rollback-"));
     temporaryDirectories.push(root);
-    const projectDirectory = join(root, "broken-upgrade.takeboard");
+    const projectDirectory = join(root, "broken-upgrade.yoyotv");
     await mkdir(projectDirectory, { recursive: true });
-    const client = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    const client = new BetterSqlite3(join(projectDirectory, "yoyotv.db"));
     client.exec(`
       CREATE TABLE schema_migrations (
         id TEXT PRIMARY KEY NOT NULL,
@@ -283,7 +283,7 @@ describe("ProjectStore", () => {
 
     expect(() => ProjectStore.openExisting(projectDirectory)).toThrow(/已从.+自动恢复/);
 
-    const restored = new BetterSqlite3(join(projectDirectory, "takeboard.db"), { readonly: true });
+    const restored = new BetterSqlite3(join(projectDirectory, "yoyotv.db"), { readonly: true });
     expect(
       restored
         .prepare("SELECT revision FROM project_state WHERE project_id = ?")
@@ -303,8 +303,8 @@ describe("ProjectStore", () => {
   it("releases the file handle when an existing database is malformed", async () => {
     const root = await mkdtemp(join(tmpdir(), "takeboard-project-corrupt-"));
     temporaryDirectories.push(root);
-    const projectDirectory = join(root, "corrupt.takeboard");
-    const databasePath = join(projectDirectory, "takeboard.db");
+    const projectDirectory = join(root, "corrupt.yoyotv");
+    const databasePath = join(projectDirectory, "yoyotv.db");
     await mkdir(projectDirectory, { recursive: true });
     await writeFile(databasePath, "not a sqlite database", "utf8");
 

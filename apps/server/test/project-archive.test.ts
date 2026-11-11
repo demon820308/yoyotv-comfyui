@@ -45,11 +45,11 @@ async function writeTarGzip(
   await writing;
 }
 
-describe("TakeBoard project packages", () => {
+describe("YoYoTV project packages", () => {
   it("streams a complete project through export, integrity validation and import", async () => {
-    const sourceRoot = await temporaryRoot("takeboard-package-source-");
-    const destinationRoot = await temporaryRoot("takeboard-package-destination-");
-    const sourceKey = "night-ferry.takeboard";
+    const sourceRoot = await temporaryRoot("yoyotv-package-source-");
+    const destinationRoot = await temporaryRoot("yoyotv-package-destination-");
+    const sourceKey = "night-ferry.yoyotv";
     const sourceDirectory = join(sourceRoot, sourceKey);
     const created = await new ProjectService().create({
       projectDirectory: sourceDirectory,
@@ -58,11 +58,11 @@ describe("TakeBoard project packages", () => {
       firstShotIntent: "人物走进雨幕",
     });
     const originalBytes = Buffer.concat([
-      Buffer.from("TakeBoard project package\n"),
+      Buffer.from("YoYoTV project package\n"),
       Buffer.alloc(256 * 1024, 37),
     ]);
     await writeFile(join(sourceDirectory, "assets", "originals", "reference.bin"), originalBytes);
-    const archivePath = join(sourceRoot, "night-ferry.takeboard.tgz");
+    const archivePath = join(sourceRoot, "night-ferry.yoyotv.tgz");
     await pipeline(
       await createProjectArchive(sourceDirectory, {
         sourceKey,
@@ -114,9 +114,9 @@ describe("TakeBoard project packages", () => {
   });
 
   it("rejects signed package metadata that disagrees with the project database", async () => {
-    const sourceRoot = await temporaryRoot("takeboard-package-metadata-source-");
-    const destinationRoot = await temporaryRoot("takeboard-package-metadata-destination-");
-    const sourceKey = "metadata-check.takeboard";
+    const sourceRoot = await temporaryRoot("yoyotv-package-metadata-source-");
+    const destinationRoot = await temporaryRoot("yoyotv-package-metadata-destination-");
+    const sourceKey = "metadata-check.yoyotv";
     const sourceDirectory = join(sourceRoot, sourceKey);
     const created = await new ProjectService().create({
       projectDirectory: sourceDirectory,
@@ -140,9 +140,9 @@ describe("TakeBoard project packages", () => {
   });
 
   it("rejects a signed package whose portable snapshot disagrees with SQLite", async () => {
-    const sourceRoot = await temporaryRoot("takeboard-package-snapshot-source-");
-    const destinationRoot = await temporaryRoot("takeboard-package-snapshot-destination-");
-    const sourceKey = "snapshot-check.takeboard";
+    const sourceRoot = await temporaryRoot("yoyotv-package-snapshot-source-");
+    const destinationRoot = await temporaryRoot("yoyotv-package-snapshot-destination-");
+    const sourceKey = "snapshot-check.yoyotv";
     const sourceDirectory = join(sourceRoot, sourceKey);
     const created = await new ProjectService().create({
       projectDirectory: sourceDirectory,
@@ -177,17 +177,17 @@ describe("TakeBoard project packages", () => {
   });
 
   it("rejects a package when any extracted file differs from its signed manifest", async () => {
-    const root = await temporaryRoot("takeboard-package-integrity-");
+    const root = await temporaryRoot("yoyotv-package-integrity-");
     const archivePath = join(root, "tampered.tgz");
     const files = [
-      { path: "project.takeboard.json", value: Buffer.from("{}") },
-      { path: "takeboard.db", value: Buffer.from("not-a-database") },
+      { path: "project.yoyotv.json", value: Buffer.from("{}") },
+      { path: "yoyotv.db", value: Buffer.from("not-a-database") },
     ];
     const manifest = {
-      format: "takeboard.project-package",
+      format: "yoyotv.project-package",
       version: 1,
       exportedAt: "2026-08-29T12:00:00.000Z",
-      sourceKey: "tampered.takeboard",
+      sourceKey: "tampered.yoyotv",
       projectId: "project_tampered",
       title: "被篡改的项目",
       revision: 1,
@@ -198,7 +198,7 @@ describe("TakeBoard project packages", () => {
       })),
     };
     await writeTarGzip(archivePath, [
-      { name: "takeboard-package.json", value: JSON.stringify(manifest) },
+      { name: "yoyotv-package.json", value: JSON.stringify(manifest) },
       ...files.map((file) => ({ name: `project/${file.path}`, value: file.value })),
     ]);
 
@@ -208,44 +208,25 @@ describe("TakeBoard project packages", () => {
     });
   });
 
-  it("imports a legacy takeboard-package.json archive and migrates its database in place", async () => {
-    const sourceRoot = await temporaryRoot("takeboard-legacy-package-source-");
-    const destinationRoot = await temporaryRoot("takeboard-legacy-package-destination-");
-    const sourceKey = "legacy-film.takeboard";
-    const sourceDirectory = join(sourceRoot, sourceKey);
-    const created = await new ProjectService().create({
-      projectDirectory: sourceDirectory,
-      title: "旧版项目包",
-    });
-    const snapshotBytes = await readFile(join(sourceDirectory, "project.yoyotv.json"));
-    const dbBytes = await readFile(join(sourceDirectory, "yoyotv.db"));
-    const files = [
-      { path: "project.takeboard.json", value: snapshotBytes },
-      { path: "takeboard.db", value: dbBytes },
-    ];
+  it("rejects legacy takeboard.project-package format", async () => {
+    const root = await temporaryRoot("yoyotv-legacy-package-");
     const manifest = {
       format: "takeboard.project-package",
       version: 1,
       exportedAt: "2026-08-29T12:00:00.000Z",
-      sourceKey,
-      projectId: created.snapshot.project.id,
-      title: created.snapshot.project.title,
-      revision: created.revision,
-      files: files.map((file) => ({
-        path: file.path,
-        size: file.value.byteLength,
-        sha256: createHash("sha256").update(file.value).digest("hex"),
-      })),
+      sourceKey: "legacy.takeboard",
+      projectId: "project_legacy",
+      title: "旧版项目包",
+      revision: 1,
+      files: [],
     };
-    const archivePath = join(sourceRoot, "legacy-film.takeboard.tgz");
+    const archivePath = join(root, "legacy.tgz");
     await writeTarGzip(archivePath, [
-      { name: "takeboard-package.json", value: JSON.stringify(manifest) },
-      ...files.map((file) => ({ name: `project/${file.path}`, value: file.value })),
+      { name: "yoyotv-package.json", value: JSON.stringify(manifest) },
     ]);
-
-    const imported = await importProjectArchive(destinationRoot, archivePath);
-    expect(imported.title).toBe("旧版项目包");
-    expect(existsSync(join(destinationRoot, imported.key, "yoyotv.db"))).toBe(true);
-    expect(existsSync(join(destinationRoot, imported.key, "project.yoyotv.json"))).toBe(true);
+    await expect(importProjectArchive(join(root, "projects"), archivePath)).rejects.toMatchObject({
+      statusCode: 400,
+      message: expect.stringMatching(/格式或版本不受支持/),
+    });
   });
 });
