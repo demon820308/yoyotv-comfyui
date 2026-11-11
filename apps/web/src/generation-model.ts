@@ -55,6 +55,7 @@ export type ShotCanvasControls = {
   workflows: WorkflowSummary[];
   workflowLocked: boolean;
   mentionAliases: string[];
+  mentions?: PromptMention[];
   busy: boolean;
   progress: GenerationProgress | null;
   disabledReason: string | null;

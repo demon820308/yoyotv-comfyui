@@ -2066,6 +2066,7 @@ export function App() {
             workflows: availableWorkflows,
             workflowLocked,
             mentionAliases: promptMentions.map((mention) => mention.alias),
+            mentions: promptMentions,
             busy: busy || generationBusy || generationCancelling,
             progress: generationProgress,
             disabledReason:

@@ -60,9 +60,20 @@ export function removePromptMention(prompt: string, alias: string): string {
     .trim();
 }
 
-export function togglePromptMention(prompt: string, alias: string): string {
+export function togglePromptMention(
+  prompt: string,
+  alias: string,
+  cursor?: number,
+): string {
   if (prompt.includes(`@${alias}`)) {
     return removePromptMention(prompt, alias);
+  }
+  if (typeof cursor === "number" && cursor >= 0 && cursor <= prompt.length) {
+    const before = prompt.slice(0, cursor).replace(/@[^\s，。；：,.!?]*$/, "");
+    const after = prompt.slice(cursor);
+    const beforeSpacer = before && !/\s$/.test(before) ? " " : "";
+    const afterTrimmed = after.replace(/^\s+/, "");
+    return `${before}${beforeSpacer}@${alias} ${afterTrimmed}`;
   }
   return `${prompt}${prompt && !/\s$/.test(prompt) ? " " : ""}@${alias} `;
 }

@@ -298,6 +298,7 @@ export function boardNodes(
                       )
                     : [],
                 mentionAliases: controls.mentionAliases,
+                mentions: controls.mentions,
                 busy: controls.busy,
                 progress: controls.progress,
                 disabledReason: controls.disabledReason,

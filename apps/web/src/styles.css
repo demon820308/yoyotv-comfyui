@@ -6610,11 +6610,38 @@ html[data-theme="chroma"] .loading-mark {
 }
 
 .shot-inline-mentions button {
-  max-width: 150px;
-  padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 190px;
+  padding: 3px 6px;
   overflow: hidden;
   color: var(--accent-strong);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.shot-inline-mentions button .shot-inline-mention-thumb {
+  width: 14px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.shot-inline-mentions button .shot-inline-mention-role,
+.shot-inline-active-pill small {
+  color: var(--accent-strong);
   font-size: 8px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface-2));
+  padding: 1px 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.shot-inline-mentions button .shot-inline-mention-name {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

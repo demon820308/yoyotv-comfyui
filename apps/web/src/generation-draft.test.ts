@@ -143,6 +143,11 @@ describe("generation input and ownership boundaries", () => {
     // Toggle appends if absent
     expect(togglePromptMention("女孩在海边", "亚也-三视图")).toBe("女孩在海边 @亚也-三视图 ");
 
+    // Toggle inserts at cursor if provided
+    expect(
+      togglePromptMention("【角色】(含面部立绘)", "亚也-三视图", 4),
+    ).toBe("【角色】 @亚也-三视图 (含面部立绘)");
+
     // Splits into highlighted mention segments
     expect(splitPromptMentionSegments(original, ["亚也-三视图", "公交车进站"])).toEqual([
       { text: "亚也 ", isMention: false },

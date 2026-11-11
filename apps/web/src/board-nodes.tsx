@@ -13,6 +13,7 @@ import {
   togglePromptMention,
 } from "./generation-draft";
 import { NumericInput } from "./numeric-input";
+import type { PromptMention } from "./generation-model";
 import {
   closestAspectRatio,
   megapixelsFromResolution,
@@ -87,6 +88,7 @@ export type BoardNodeData = {
     denoiseStep?: number;
     denoise?: number;
     mentionAliases: string[];
+    mentions?: PromptMention[] | undefined;
     busy: boolean;
     progress: {
       phase: "preparing" | "queued" | "running" | "collecting";
@@ -382,6 +384,8 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
   const settingsDraftRef = useRef(settingsDraft);
   settingsDraftRef.current = settingsDraft;
   const promptBackdropRef = useRef<HTMLDivElement>(null);
+  const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const promptCursorRef = useRef<number | null>(null);
   const updateSettingsDraft = (input: Partial<typeof settingsDraft>) => {
     const next = { ...settingsDraftRef.current, ...input };
     settingsDraftRef.current = next;
@@ -722,31 +726,54 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               选择工作流
             </button>
           </div>
-          {data.inlineControls.mentionAliases.some((alias) =>
-            settingsDraft.prompt.includes(`@${alias}`),
-          ) ? (
-            <div className="shot-inline-active-mentions" role="status" aria-label="已关联素材">
-              <span className="shot-inline-active-title">已引用:</span>
-              {data.inlineControls.mentionAliases
-                .filter((alias) => settingsDraft.prompt.includes(`@${alias}`))
-                .map((alias) => (
-                  <span key={alias} className="shot-inline-active-pill">
-                    <span>@{alias}</span>
-                    <button
-                      type="button"
-                      aria-label={`移除 @${alias}`}
-                      onClick={() =>
-                        updateSettingsDraft({
-                          prompt: removePromptMention(settingsDraftRef.current.prompt, alias),
-                        })
-                      }
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-            </div>
-          ) : null}
+          {(() => {
+            const availableMentions =
+              data.inlineControls.mentions ??
+              data.inlineControls.mentionAliases.map((alias, index) => ({
+                assetId: alias,
+                alias,
+                role: `参考图 ${index + 1}`,
+                canonicalToken: `<Picture ${index + 1}>`,
+                thumbnailUrl: undefined,
+              }));
+            return availableMentions.some((item) =>
+              settingsDraft.prompt.includes(`@${item.alias}`),
+            ) ? (
+              <div className="shot-inline-active-mentions" role="status" aria-label="已关联素材">
+                <span className="shot-inline-active-title">已引用:</span>
+                {availableMentions
+                  .filter((item) => settingsDraft.prompt.includes(`@${item.alias}`))
+                  .map((mention, index) => {
+                    const roleLabel = mention.role || `参考图 ${index + 1}`;
+                    const canonical = mention.canonicalToken || `<Picture ${index + 1}>`;
+                    return (
+                      <span
+                        key={mention.alias}
+                        className="shot-inline-active-pill"
+                        title={`${canonical} (${roleLabel}) · @${mention.alias}`}
+                      >
+                        {mention.thumbnailUrl ? (
+                          <img src={mention.thumbnailUrl} alt="" className="prompt-active-thumb" />
+                        ) : null}
+                        <small>{roleLabel}</small>
+                        <span>@{mention.alias}</span>
+                        <button
+                          type="button"
+                          aria-label={`移除 @${mention.alias}`}
+                          onClick={() =>
+                            updateSettingsDraft({
+                              prompt: removePromptMention(settingsDraftRef.current.prompt, mention.alias),
+                            })
+                          }
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+              </div>
+            ) : null;
+          })()}
           <div className="prompt-mirror-wrap">
             <div ref={promptBackdropRef} className="prompt-mirror-backdrop" aria-hidden="true">
               {splitPromptMentionSegments(
@@ -764,17 +791,30 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               {settingsDraft.prompt.endsWith("\n") ? "\n" : null}
             </div>
             <textarea
+              ref={promptTextareaRef}
               rows={2}
               aria-label="画布提示词"
               className="prompt-mirror-textarea"
               value={settingsDraft.prompt}
               placeholder={data.inlineControls.promptPlaceholder}
+              onSelect={(event) => {
+                promptCursorRef.current = event.currentTarget.selectionStart;
+              }}
+              onKeyUp={(event) => {
+                promptCursorRef.current = event.currentTarget.selectionStart;
+              }}
+              onMouseUp={(event) => {
+                promptCursorRef.current = event.currentTarget.selectionStart;
+              }}
               onScroll={(event) => {
                 if (promptBackdropRef.current) {
                   promptBackdropRef.current.scrollTop = event.currentTarget.scrollTop;
                 }
               }}
-              onChange={(event) => updateSettingsDraft({ prompt: event.target.value })}
+              onChange={(event) => {
+                promptCursorRef.current = event.target.selectionStart;
+                updateSettingsDraft({ prompt: event.target.value });
+              }}
             />
           </div>
           {data.inlineControls.resolutionOptions?.length ? (
@@ -816,27 +856,76 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               </select>
             </label>
           ) : null}
-          {data.inlineControls.mentionAliases.length ? (
-            <div className="shot-inline-mentions">
-              {data.inlineControls.mentionAliases.map((alias) => {
-                const isActive = settingsDraft.prompt.includes(`@${alias}`);
-                return (
-                  <button
-                    type="button"
-                    key={alias}
-                    className={isActive ? "is-active" : ""}
-                    onClick={() =>
-                      updateSettingsDraft({
-                        prompt: togglePromptMention(settingsDraftRef.current.prompt, alias),
-                      })
-                    }
-                  >
-                    {isActive ? <span className="shot-inline-mention-check">✓</span> : null}@{alias}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
+          {(() => {
+            const availableMentions =
+              data.inlineControls.mentions ??
+              data.inlineControls.mentionAliases.map((alias, index) => ({
+                assetId: alias,
+                alias,
+                role: `参考图 ${index + 1}`,
+                canonicalToken: `<Picture ${index + 1}>`,
+                thumbnailUrl: undefined,
+              }));
+            return availableMentions.length ? (
+              <div className="shot-inline-mentions">
+                {availableMentions.map((mention, index) => {
+                  const isActive = settingsDraft.prompt.includes(`@${mention.alias}`);
+                  const roleLabel = mention.role || `参考图 ${index + 1}`;
+                  const canonical = mention.canonicalToken || `<Picture ${index + 1}>`;
+                  return (
+                    <button
+                      type="button"
+                      key={mention.alias}
+                      className={isActive ? "is-active" : ""}
+                      title={`${canonical} (${roleLabel}) · @${mention.alias}`}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                      }}
+                      onClick={() => {
+                        const textarea = promptTextareaRef.current;
+                        const currentCursor =
+                          promptCursorRef.current ??
+                          textarea?.selectionStart ??
+                          settingsDraftRef.current.prompt.length;
+
+                        const nextPrompt = togglePromptMention(
+                          settingsDraftRef.current.prompt,
+                          mention.alias,
+                          isActive ? undefined : currentCursor,
+                        );
+
+                        updateSettingsDraft({ prompt: nextPrompt });
+
+                        if (!isActive && textarea) {
+                          const before = settingsDraftRef.current.prompt
+                            .slice(0, currentCursor)
+                            .replace(/@[^\s，。；：,.!?]*$/, "");
+                          const spacer = before && !/\s$/.test(before) ? " " : "";
+                          const nextPos = (before + spacer + `@${mention.alias} `).length;
+                          promptCursorRef.current = nextPos;
+                          window.requestAnimationFrame(() => {
+                            textarea.focus();
+                            textarea.setSelectionRange(nextPos, nextPos);
+                          });
+                        }
+                      }}
+                    >
+                      {isActive ? <span className="shot-inline-mention-check">✓</span> : null}
+                      {mention.thumbnailUrl ? (
+                        <img
+                          src={mention.thumbnailUrl}
+                          alt=""
+                          className="shot-inline-mention-thumb"
+                        />
+                      ) : null}
+                      <small className="shot-inline-mention-role">{roleLabel}</small>
+                      <span className="shot-inline-mention-name">@{mention.alias}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null;
+          })()}
           <div className="shot-inline-parameters">
             {data.inlineControls.supportsResolution !== false ? (
               <label className="shot-inline-resolution" htmlFor={`${quickSettingsId}-width`}>
