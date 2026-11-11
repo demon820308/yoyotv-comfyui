@@ -5,29 +5,33 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { validateCompatibilityEvidence } from "./compatibility-evidence.mjs";
 
-const baseUrl = (process.env.TAKEBOARD_GATE_URL ?? "http://127.0.0.1:48120").replace(/\/$/, "");
-const email = process.env.TAKEBOARD_GATE_EMAIL;
-const password = process.env.TAKEBOARD_GATE_PASSWORD;
-const authOff = process.env.TAKEBOARD_GATE_AUTH === "off";
-const workflowPath = process.env.TAKEBOARD_GATE_WORKFLOW ?? "Kino/Kino_MinimaxH3_T2V.json";
-const timeoutMinutes = Number(process.env.TAKEBOARD_GATE_TIMEOUT_MINUTES ?? 45);
-const keepProject = process.env.TAKEBOARD_GATE_KEEP === "1";
+function gateEnv(name, fallback = undefined) {
+  return process.env[`YOYOTV_GATE_${name}`] ?? process.env[`TAKEBOARD_GATE_${name}`] ?? fallback;
+}
+
+const baseUrl = gateEnv("URL", "http://127.0.0.1:48120").replace(/\/$/, "");
+const email = gateEnv("EMAIL");
+const password = gateEnv("PASSWORD");
+const authOff = gateEnv("AUTH") === "off";
+const workflowPath = gateEnv("WORKFLOW", "Kino/Kino_MinimaxH3_T2V.json");
+const timeoutMinutes = Number(gateEnv("TIMEOUT_MINUTES", "45"));
+const keepProject = gateEnv("KEEP") === "1";
 const generation = {
-  width: Number(process.env.TAKEBOARD_GATE_WIDTH ?? 480),
-  height: Number(process.env.TAKEBOARD_GATE_HEIGHT ?? 848),
-  durationSeconds: Number(process.env.TAKEBOARD_GATE_DURATION ?? 5),
-  fps: Number(process.env.TAKEBOARD_GATE_FPS ?? 24),
-  steps: Number(process.env.TAKEBOARD_GATE_STEPS ?? 20),
-  seed: Number(process.env.TAKEBOARD_GATE_SEED ?? 20260830),
+  width: Number(gateEnv("WIDTH", "480")),
+  height: Number(gateEnv("HEIGHT", "848")),
+  durationSeconds: Number(gateEnv("DURATION", "5")),
+  fps: Number(gateEnv("FPS", "24")),
+  steps: Number(gateEnv("STEPS", "20")),
+  seed: Number(gateEnv("SEED", "20260830")),
 };
 
 if (!authOff && (!email || !password)) {
   throw new Error(
-    "真实 GPU Gate 需要 TAKEBOARD_GATE_EMAIL 和 TAKEBOARD_GATE_PASSWORD；凭据只用于本次本机登录，不会写入报告。",
+    "真实 GPU Gate 需要 YOYOTV_GATE_EMAIL 和 YOYOTV_GATE_PASSWORD；凭据只用于本次本机登录，不会写入报告。",
   );
 }
 if (!Number.isFinite(timeoutMinutes) || timeoutMinutes < 1 || timeoutMinutes > 240) {
-  throw new Error("TAKEBOARD_GATE_TIMEOUT_MINUTES 必须在 1–240 之间");
+  throw new Error("YOYOTV_GATE_TIMEOUT_MINUTES 必须在 1–240 之间");
 }
 if (
   !Number.isInteger(generation.width) ||

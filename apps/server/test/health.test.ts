@@ -9,7 +9,7 @@ afterEach(async () => {
 });
 
 describe("GET /api/health", () => {
-  it("reports a local TakeBoard server", async () => {
+  it("reports a local YoYoTV server", async () => {
     const app = buildApp();
     apps.push(app);
 
@@ -17,7 +17,7 @@ describe("GET /api/health", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      service: "takeboard-server",
+      service: "yoyotv-server",
       status: "ok",
       version: JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"))
         .version,

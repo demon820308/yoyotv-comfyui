@@ -1,4 +1,4 @@
-import type { ComfyPrompt } from "@takeboard/executor-comfy";
+import type { ComfyPrompt } from "@yoyotv/executor-comfy";
 import type { WorkflowBinding, WorkflowParameterKey } from "./workflow-bindings.js";
 
 function resolveInputNumber(

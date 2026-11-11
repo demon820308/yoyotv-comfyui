@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ComfyClient, type ComfyOutputFile, type ComfyPrompt } from "@takeboard/executor-comfy";
+import { ComfyClient, type ComfyOutputFile, type ComfyPrompt } from "@yoyotv/executor-comfy";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGpuGateway } from "../src/same-gpu-gateway.js";
 import { atomicGpuJson, gpuAdmission, SameGpuPool } from "../src/same-gpu-pool.js";

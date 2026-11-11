@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { authContext } from "./auth-routes.js";
 import { readDeviceSettings, saveDeviceSettings } from "./device-settings.js";
+import { getEnv } from "./env.js";
 import {
   addStorageRoot,
   projectDirectory,
@@ -179,8 +180,8 @@ export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string)
     const context = authContext(request);
     const canManage = !context || context.local || context.user.instanceRole === "admin";
     return {
-      instanceId: process.env.TAKEBOARD_INSTANCE_ID ?? null,
-      name: process.env.TAKEBOARD_INSTANCE_NAME?.trim() || hostname(),
+      instanceId: getEnv("INSTANCE_ID") ?? null,
+      name: getEnv("INSTANCE_NAME")?.trim() || hostname(),
       platform: process.platform,
       canManage,
       // Never include filesystem locations in public health or support reports.
@@ -204,7 +205,7 @@ export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string)
         key,
         title: current.snapshot.project.title,
         directory: canInspectPath ? directory : null,
-        deviceName: process.env.TAKEBOARD_INSTANCE_NAME?.trim() || hostname(),
+        deviceName: getEnv("INSTANCE_NAME")?.trim() || hostname(),
         downloadIsCopy: true,
       };
     } finally {

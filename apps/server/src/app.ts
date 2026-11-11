@@ -11,6 +11,7 @@ import { type BackupAutomationConfig, registerBackupAutomation } from "./backup-
 import { ComfyConnections, registerComfyConnections } from "./comfy-connection.js";
 import { registerDemoRoutes } from "./demo/routes.js";
 import { registerDeviceRoutes } from "./device-routes.js";
+import { getEnv, syncProcessEnv } from "./env.js";
 import { ExtensionRegistry } from "./extension-registry.js";
 import { registerExtensionRoutes } from "./extension-routes.js";
 import { registerGenerationRoutes } from "./generation-routes.js";
@@ -28,6 +29,8 @@ import type { GpuPoolConfig, GpuRuntime } from "./same-gpu-runtime.js";
 import { WorkerPool } from "./worker-pool.js";
 import { registerWorkerRoutes, type WorkerRouteOptions } from "./worker-routes.js";
 import { registerWorkflowRoutes } from "./workflow-routes.js";
+
+syncProcessEnv();
 
 export const takeBoardVersion = "1.0.0-beta.1";
 
@@ -48,7 +51,7 @@ export type AppOptions = {
 };
 
 export function authModeFromEnvironment(): AuthMode {
-  const configured = process.env.TAKEBOARD_AUTH_MODE;
+  const configured = getEnv("AUTH_MODE");
   if (
     configured === "off" ||
     configured === "trusted_local" ||
@@ -58,21 +61,25 @@ export function authModeFromEnvironment(): AuthMode {
     return configured;
   }
   if (configured?.trim()) {
-    throw new Error("TAKEBOARD_AUTH_MODE 无效；请选择 optional、required、trusted_local 或 off");
+    throw new Error(
+      "YOYOTV_AUTH_MODE / TAKEBOARD_AUTH_MODE 无效；请选择 optional、required、trusted_local 或 off",
+    );
   }
   return process.env.NODE_ENV === "test" ? "off" : "optional";
 }
 
 // shortcut: fallback to legacy .takeboard-data directory when .yoyotv-data is absent, remove in v2.0.0
 export function resolveDefaultProjectsRoot() {
-  if (process.env.TAKEBOARD_DATA_ROOT) return resolve(process.env.TAKEBOARD_DATA_ROOT);
+  const custom = getEnv("DATA_ROOT");
+  if (custom) return resolve(custom);
   const primary = resolve(".yoyotv-data/projects");
   const legacy = resolve(".takeboard-data/projects");
   return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
 }
 
 function resolveDefaultDemoDirectory() {
-  if (process.env.TAKEBOARD_DEMO_DIRECTORY) return resolve(process.env.TAKEBOARD_DEMO_DIRECTORY);
+  const custom = getEnv("DEMO_DIRECTORY");
+  if (custom) return resolve(custom);
   const primary = resolve(".yoyotv-data/demo.yoyotv");
   const legacy = resolve(".takeboard-data/demo.takeboard");
   return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
@@ -92,8 +99,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   const auth = registerAuth(app, {
     mode: options.auth?.mode ?? authModeFromEnvironment(),
     databasePath:
-      options.auth?.databasePath ??
-      resolveAuthDatabasePath(projectsRoot, process.env.TAKEBOARD_AUTH_DATABASE),
+      options.auth?.databasePath ?? resolveAuthDatabasePath(projectsRoot, getEnv("AUTH_DATABASE")),
     projectsRoot,
     ...(options.auth?.secureCookies === undefined
       ? {}
@@ -101,10 +107,10 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   });
 
   app.get("/api/health", async () => ({
-    service: "takeboard-server",
+    service: "yoyotv-server",
     status: "ok",
     version: takeBoardVersion,
-    instanceId: process.env.TAKEBOARD_INSTANCE_ID ?? null,
+    instanceId: getEnv("INSTANCE_ID") ?? null,
   }));
 
   const backupAutomation =
@@ -118,11 +124,11 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
 
   registerRemoteAccessRoutes(app, {
     auth,
-    instanceId: process.env.TAKEBOARD_INSTANCE_ID ?? null,
-    instanceName: process.env.TAKEBOARD_INSTANCE_NAME ?? null,
-    bindHost: process.env.TAKEBOARD_HOST ?? "127.0.0.1",
-    port: Number.parseInt(process.env.TAKEBOARD_PORT ?? "48120", 10),
-    publicUrl: process.env.TAKEBOARD_PUBLIC_URL ?? null,
+    instanceId: getEnv("INSTANCE_ID") ?? null,
+    instanceName: getEnv("INSTANCE_NAME") ?? null,
+    bindHost: getEnv("HOST") ?? "127.0.0.1",
+    port: Number.parseInt(getEnv("PORT") ?? "48120", 10),
+    publicUrl: getEnv("PUBLIC_URL") ?? null,
     ...(options.auth?.secureCookies === undefined
       ? {}
       : { secureCookies: options.auth.secureCookies }),
@@ -133,11 +139,11 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
       ? { allowedOrigins: options.requestSecurity.allowedOrigins }
       : {}),
   });
-  const serverPort = Number.parseInt(process.env.TAKEBOARD_PORT ?? "48120", 10);
+  const serverPort = Number.parseInt(getEnv("PORT") ?? "48120", 10);
   const portalConnector = new PortalConnector({
     configPath: resolve(projectsRoot, ".system", "portal-connector.json"),
-    instanceId: process.env.TAKEBOARD_INSTANCE_ID ?? "takeboard-local-instance",
-    instanceName: process.env.TAKEBOARD_INSTANCE_NAME ?? "TakeBoard Workstation",
+    instanceId: getEnv("INSTANCE_ID") ?? "yoyotv-local-instance",
+    instanceName: getEnv("INSTANCE_NAME") ?? "YoYoTV Workstation",
     applicationVersion: takeBoardVersion,
     localOrigin: `http://127.0.0.1:${serverPort}`,
     auth,
@@ -150,7 +156,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   const comfyUrl = options.comfyUrl ?? process.env.COMFY_URL ?? "http://127.0.0.1:8188";
   const comfyInputRoot = options.comfyInputRoot ?? process.env.COMFY_INPUT_ROOT ?? null;
   const comfyOutputRoot = options.comfyOutputRoot ?? process.env.COMFY_OUTPUT_ROOT ?? null;
-  const webRoot = options.webRoot ?? process.env.TAKEBOARD_WEB_ROOT ?? null;
+  const webRoot = options.webRoot ?? getEnv("WEB_ROOT") ?? null;
   const workerPool = new WorkerPool(
     resolve(projectsRoot, ".system", "workers.json"),
     comfyUrl,

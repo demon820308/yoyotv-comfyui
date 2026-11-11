@@ -32,7 +32,7 @@ import type {
   WorkerDefinition,
   WorkerHealth,
   WorkflowDiagnostic,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 
 export type DemoPayload = {
   revision: number;
@@ -150,7 +150,7 @@ async function apiFetch(path: string, options?: RequestInit) {
   } catch (cause) {
     const timedOut = isTimeoutFailure(cause);
     if (!options?.signal?.aborted) window.dispatchEvent(new Event("yoyotv:connection-lost"));
-    throw new TakeBoardApiError(
+    throw new YoYoTVApiError(
       timedOut
         ? "YoYoTV 请求超时。请保持页面打开，检查服务器或 SSH 连接后重试。"
         : "无法连接 YoYoTV 服务。请保持页面打开，检查服务状态或 SSH 隧道后重试。",
@@ -165,7 +165,7 @@ async function apiFetch(path: string, options?: RequestInit) {
   return response;
 }
 
-export class TakeBoardApiError extends Error {
+export class YoYoTVApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
@@ -174,9 +174,12 @@ export class TakeBoardApiError extends Error {
     cause?: unknown,
   ) {
     super(message, { cause });
-    this.name = "TakeBoardApiError";
+    this.name = "YoYoTVApiError";
   }
 }
+
+export const TakeBoardApiError = YoYoTVApiError;
+export type TakeBoardApiError = YoYoTVApiError;
 
 export type TrashedProjectItem = {
   trashKey: string;
@@ -526,14 +529,14 @@ async function jsonRequest<T>(path: string, options?: RequestInit): Promise<T> {
       );
     }
     if (response.status === 413) {
-      throw new TakeBoardApiError(
+      throw new YoYoTVApiError(
         payload.error ?? "文件超过当前服务上传上限",
         response.status,
         payload.code ?? null,
         false,
       );
     }
-    throw new TakeBoardApiError(
+    throw new YoYoTVApiError(
       payload.error ?? `YoYoTV 请求失败（${response.status}）`,
       response.status,
       payload.code ?? null,

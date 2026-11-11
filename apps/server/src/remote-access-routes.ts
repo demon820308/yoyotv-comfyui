@@ -1,6 +1,7 @@
-import type { RemoteAccessCheck, RemoteAccessStatus } from "@takeboard/contracts";
+import type { RemoteAccessCheck, RemoteAccessStatus } from "@yoyotv/contracts";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { AuthService } from "./auth-service.js";
+import { getEnv } from "./env.js";
 import { isLoopbackHostname } from "./request-security.js";
 
 export type RemoteAccessOptions = {
@@ -47,7 +48,7 @@ function inspectPublicUrl(raw: string | null | undefined) {
     url.pathname = url.pathname.replace(/\/+$/, "") || "/";
     return { url, error: null };
   } catch {
-    return { url: null, error: "TAKEBOARD_PUBLIC_URL 不是有效网址" };
+    return { url: null, error: "YOYOTV_PUBLIC_URL 不是有效网址" };
   }
 }
 
@@ -60,11 +61,11 @@ export function buildRemoteAccessStatus(
   const port = options.port && options.port > 0 && options.port <= 65_535 ? options.port : 48_120;
   const publicUrlResult = inspectPublicUrl(options.publicUrl);
   const allowedHosts = normalizedEntries([
-    ...configuredEntries(process.env.TAKEBOARD_ALLOWED_HOSTS),
+    ...configuredEntries(getEnv("ALLOWED_HOSTS")),
     ...(options.allowedHosts ?? []),
   ]);
   const allowedOrigins = normalizedEntries([
-    ...configuredEntries(process.env.TAKEBOARD_ALLOWED_ORIGINS),
+    ...configuredEntries(getEnv("ALLOWED_ORIGINS")),
     ...(options.allowedOrigins ?? []),
   ]);
   const publicHost = publicUrlResult.url?.host.toLowerCase() ?? null;
@@ -76,7 +77,7 @@ export function buildRemoteAccessStatus(
       (allowedHosts.has(publicHost) || allowedHosts.has(publicHostname)),
   );
   const originAllowed = Boolean(publicOrigin && allowedOrigins.has(publicOrigin));
-  const secureCookies = options.secureCookies ?? process.env.TAKEBOARD_SECURE_COOKIES === "1";
+  const secureCookies = options.secureCookies ?? getEnv("SECURE_COOKIES") === "1";
   const accountReady =
     ["required", "optional"].includes(options.auth.mode) && options.auth.configured();
   const checks: RemoteAccessCheck[] = [
@@ -120,7 +121,7 @@ export function buildRemoteAccessStatus(
         detail:
           options.auth.mode === "required"
             ? "公开访问必须登录账号"
-            : "公开入口需要 TAKEBOARD_AUTH_MODE=required，不能使用可选登录策略",
+            : "公开入口需要 YOYOTV_AUTH_MODE=required，不能使用可选登录策略",
       },
       {
         id: "https",
@@ -134,7 +135,7 @@ export function buildRemoteAccessStatus(
         status: secureCookies ? "pass" : "blocked",
         detail: secureCookies
           ? "会话 Cookie 仅通过安全连接发送"
-          : "配置公开入口时必须设置 TAKEBOARD_SECURE_COOKIES=1",
+          : "配置公开入口时必须设置 YOYOTV_SECURE_COOKIES=1",
       },
       {
         id: "allowlist",
@@ -143,7 +144,7 @@ export function buildRemoteAccessStatus(
         detail:
           hostAllowed && originAllowed
             ? "公开域名已同时加入 Host 与 Origin 白名单"
-            : "请把公开域名加入 TAKEBOARD_ALLOWED_HOSTS 与 TAKEBOARD_ALLOWED_ORIGINS",
+            : "请把公开域名加入 YOYOTV_ALLOWED_HOSTS 与 YOYOTV_ALLOWED_ORIGINS",
       },
     ];
     checks.push(...httpsChecks);

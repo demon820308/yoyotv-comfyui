@@ -1,4 +1,4 @@
-import type { ProjectSnapshot, Run } from "@takeboard/contracts";
+import type { ProjectSnapshot, Run } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import { generatedAssetName } from "../src/generated-asset-name.js";
 

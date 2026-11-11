@@ -7,8 +7,8 @@ import {
   executionPolicySchema,
   type ProjectSnapshot,
   resolveGenerationResolution,
-} from "@takeboard/contracts";
-import { createTakeBoardId, toIsoTimestamp } from "@takeboard/domain";
+} from "@yoyotv/contracts";
+import { createTakeBoardId, toIsoTimestamp } from "@yoyotv/domain";
 import {
   buildLtx23I2VPrompt,
   buildMiniMaxH3Prompt,
@@ -21,8 +21,9 @@ import {
   type ComfyPrompt,
   miniMaxH3Resolution,
   qwenImage2512Resolution,
-} from "@takeboard/executor-comfy";
+} from "@yoyotv/executor-comfy";
 import type { FastifyInstance } from "fastify";
+import sharp from "sharp";
 import { createImageProxy, inspectImage, inspectVideo } from "./asset-inspection.js";
 import { generatedAssetName } from "./generated-asset-name.js";
 import { IdleResourceCleaner } from "./idle-resource-cleaner.js";
@@ -46,7 +47,6 @@ import {
 import { type WorkerPool, WorkerSelectionError } from "./worker-pool.js";
 import { applyWorkflowBinding, loadExecutableWorkflow } from "./workflow-bindings.js";
 import { WorkflowExecutionError } from "./workflow-errors.js";
-import sharp from "sharp";
 
 async function compositeMaskImage(origBytes: Buffer, maskBytes: Buffer): Promise<Uint8Array> {
   const origMeta = await sharp(origBytes).metadata();
@@ -146,7 +146,11 @@ function extractOptimizedPrompt(outputs?: Record<string, unknown> | null): strin
     const output = nodeOutput as Record<string, unknown>;
     if (Array.isArray(output.gh_display)) {
       for (const item of output.gh_display) {
-        if (item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string") {
+        if (
+          item &&
+          typeof item === "object" &&
+          typeof (item as { text?: unknown }).text === "string"
+        ) {
           const text = (item as { text: string }).text.trim();
           if (text) return text;
         }
@@ -157,7 +161,9 @@ function extractOptimizedPrompt(outputs?: Record<string, unknown> | null): strin
       if (text) return text.trim();
     }
     if (Array.isArray(output.string)) {
-      const text = output.string.find((t): t is string => typeof t === "string" && Boolean(t.trim()));
+      const text = output.string.find(
+        (t): t is string => typeof t === "string" && Boolean(t.trim()),
+      );
       if (text) return text.trim();
     }
   }
@@ -1456,7 +1462,7 @@ export function registerGenerationRoutes(
         if (inputAsset?.mediaType === "image") {
           let uploadBytes: Uint8Array;
           let filename: string;
-          let subfolder: string | undefined = undefined;
+          let subfolder: string | undefined;
 
           let maskBytes: Buffer | null = null;
           if (maskAsset?.mediaType === "image") {
@@ -1480,12 +1486,7 @@ export function registerGenerationRoutes(
             filename = `yoyotv_${current.snapshot.project.id}_${runId}_${inputAsset.id}${extension}`;
           }
 
-          comfyImage = await comfy.uploadImage(
-            uploadBytes,
-            filename,
-            "image/png",
-            subfolder,
-          );
+          comfyImage = await comfy.uploadImage(uploadBytes, filename, "image/png", subfolder);
           if (subfolder === "clipspace") {
             comfyImage = `${comfyImage} [input]`;
           }

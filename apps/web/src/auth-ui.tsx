@@ -1,4 +1,4 @@
-import type { Account, ProjectRole, PublicInvitation } from "@takeboard/contracts";
+import type { Account, ProjectRole, PublicInvitation } from "@yoyotv/contracts";
 import {
   createContext,
   type FormEvent,

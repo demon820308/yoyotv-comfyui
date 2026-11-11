@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { expect, it } from "vitest";
 import type { WorkflowSummary } from "./api";
 import { defaultGenerationSettings } from "./generation-model";
@@ -94,9 +94,7 @@ it("allows prompt to be empty for mask workflows if mask asset and first frame a
     },
     selectedModelProfile: modelProfile(maskWorkflow, "16:9"),
     selectedInputCounts: { reference: 0, reference_video: 0, reference_audio: 0 },
-    assets: [
-      { id: "asset-img", mediaType: "image" } as ProjectSnapshot["assets"][number],
-    ],
+    assets: [{ id: "asset-img", mediaType: "image" } as ProjectSnapshot["assets"][number]],
   });
   expect(problemWithoutMask).toBe("请先绘制或连接遮罩");
 

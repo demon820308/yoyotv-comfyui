@@ -68,7 +68,7 @@ export async function takeboardHealth(port, signal, timeout = 750) {
     }
     const text = Buffer.concat(chunks).toString("utf8");
     const health = JSON.parse(text);
-    return health?.service === "takeboard-server" &&
+    return (health?.service === "yoyotv-server" || health?.service === "takeboard-server") &&
       health.status === "ok" &&
       typeof health.instanceId === "string" &&
       health.instanceId.length > 0

@@ -134,7 +134,7 @@ jobs:
         env:
           TAKEBOARD_DESKTOP_TARGET: ${{ matrix.rust_target }}
       - name: Build, sign, notarize and staple DMG
-        run: pnpm --filter @takeboard/desktop exec tauri build --verbose --target ${{ matrix.rust_target }} --bundles dmg
+        run: pnpm --filter @yoyotv/desktop exec tauri build --verbose --target ${{ matrix.rust_target }} --bundles dmg
         env:
           APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -217,7 +217,7 @@ jobs:
         env:
           TAKEBOARD_DESKTOP_TARGET: x86_64-pc-windows-msvc
       - name: Compile application before bundling
-        run: pnpm --filter @takeboard/desktop exec tauri build --verbose --target x86_64-pc-windows-msvc --no-bundle
+        run: pnpm --filter @yoyotv/desktop exec tauri build --verbose --target x86_64-pc-windows-msvc --no-bundle
       - name: Sign application and bundled runtime executables
         uses: azure/artifact-signing-action@v2
         with:
@@ -245,7 +245,7 @@ jobs:
             Write-Host "$path publisher: $($signature.SignerCertificate.Subject)"
           }
       - name: Bundle signed application
-        run: pnpm --filter @takeboard/desktop exec tauri bundle --verbose --target x86_64-pc-windows-msvc --bundles nsis
+        run: pnpm --filter @yoyotv/desktop exec tauri bundle --verbose --target x86_64-pc-windows-msvc --bundles nsis
       - name: Sign NSIS installer
         uses: azure/artifact-signing-action@v2
         with:

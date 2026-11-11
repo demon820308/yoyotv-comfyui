@@ -8,7 +8,7 @@ import type {
   RunCost,
   Shot,
   Take,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import { approveTake } from "./approval.js";
 import { DomainError } from "./errors.js";
 

@@ -6,7 +6,7 @@ import { type Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { isDeepStrictEqual } from "node:util";
 import { createGunzip, createGzip } from "node:zlib";
-import { projectSnapshotSchema } from "@takeboard/contracts";
+import { projectSnapshotSchema } from "@yoyotv/contracts";
 import { extract, type Header, pack } from "tar-stream";
 import { locatedProjectSummary, projectDirectory } from "./project-locations.js";
 import { ProjectStore } from "./storage/project-store.js";

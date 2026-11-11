@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { schemaVersion } from "@takeboard/contracts";
+import { schemaVersion } from "@yoyotv/contracts";
 import BetterSqlite3 from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
 import { ProjectService } from "../src/project-service.js";

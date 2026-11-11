@@ -8,7 +8,7 @@ import {
   portalMaximumBodyBytes,
   portalProtocolVersion,
   relayHeaders,
-} from "@takeboard/portal-protocol";
+} from "@yoyotv/portal-protocol";
 import type { FastifyReply } from "fastify";
 import WebSocket from "ws";
 import type { PortalStore } from "./portal-store.js";

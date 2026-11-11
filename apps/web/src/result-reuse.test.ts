@@ -1,4 +1,4 @@
-import type { Asset, Run, Take } from "@takeboard/contracts";
+import type { Asset, Run, Take } from "@yoyotv/contracts";
 import { expect, it } from "vitest";
 import { defaultGenerationSettings } from "./generation-model";
 import { comparableResults, recordedSettings } from "./result-reuse";

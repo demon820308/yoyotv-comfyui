@@ -1,4 +1,4 @@
-import type { WorkflowDiagnosticCheck } from "@takeboard/contracts";
+import type { WorkflowDiagnosticCheck } from "@yoyotv/contracts";
 import type { WorkflowSummary } from "./api";
 
 export function workflowCheckGuidance(check: Pick<WorkflowDiagnosticCheck, "code">) {

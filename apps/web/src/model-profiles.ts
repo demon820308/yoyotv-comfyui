@@ -1,4 +1,4 @@
-import type { AspectRatio } from "@takeboard/contracts";
+import type { AspectRatio } from "@yoyotv/contracts";
 import type { WorkflowSummary } from "./api";
 import { optionalLocalStorage } from "./browser-storage";
 

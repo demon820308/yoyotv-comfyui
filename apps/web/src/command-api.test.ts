@@ -1,4 +1,4 @@
-import type { ProjectCommand, ProjectCommandPreview } from "@takeboard/contracts";
+import type { ProjectCommand, ProjectCommandPreview } from "@yoyotv/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { projectApi } from "./api";
 

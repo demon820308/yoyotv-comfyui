@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { getEnv } from "./env.js";
 
 const safeMethods = new Set(["GET", "HEAD", "OPTIONS"]);
 
@@ -47,7 +48,7 @@ export function assertSafeBindHost(
   if (isLoopbackHostname(host)) return;
   if (allowNonLoopback && authMode === "required") return;
   throw new Error(
-    `TakeBoard 拒绝监听非回环地址 ${host}。公网或局域网监听必须同时设置 TAKEBOARD_AUTH_MODE=required、TAKEBOARD_ALLOW_NON_LOOPBACK=1，并通过 HTTPS 反向代理访问。`,
+    `YoYoTV 拒绝监听非回环地址 ${host}。公网或局域网监听必须同时设置 YOYOTV_AUTH_MODE=required、YOYOTV_ALLOW_NON_LOOPBACK=1，并通过 HTTPS 反向代理访问。`,
   );
 }
 
@@ -61,11 +62,11 @@ export function registerRequestSecurity(
   options: RequestSecurityOptions = {},
 ) {
   const configuredHosts = new Set([
-    ...commaSeparated(process.env.TAKEBOARD_ALLOWED_HOSTS),
+    ...commaSeparated(getEnv("ALLOWED_HOSTS")),
     ...(options.allowedHosts ?? []).map((entry) => entry.trim().toLowerCase()),
   ]);
   const configuredOrigins = new Set([
-    ...commaSeparated(process.env.TAKEBOARD_ALLOWED_ORIGINS),
+    ...commaSeparated(getEnv("ALLOWED_ORIGINS")),
     ...(options.allowedOrigins ?? []).map((entry) => entry.trim().toLowerCase()),
   ]);
 

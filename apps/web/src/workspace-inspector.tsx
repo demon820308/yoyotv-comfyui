@@ -1,5 +1,5 @@
-import type { Asset, CanvasItem, ProjectSnapshot, Run, Shot, Take } from "@takeboard/contracts";
-import { resolveGenerationResolution } from "@takeboard/contracts";
+import type { Asset, CanvasItem, ProjectSnapshot, Run, Shot, Take } from "@yoyotv/contracts";
+import { resolveGenerationResolution } from "@yoyotv/contracts";
 import { useEffect, useRef, useState } from "react";
 import { projectApi, type WorkflowSummary } from "./api";
 import { DetailMedia } from "./detail-media";
@@ -605,8 +605,7 @@ export function Inspector({
     [...shotRuns]
       .reverse()
       .find(
-        (run) =>
-          run.status === "completed" && typeof run.parameters?.optimizedPrompt === "string",
+        (run) => run.status === "completed" && typeof run.parameters?.optimizedPrompt === "string",
       ) ??
     shotRuns[shotRuns.length - 1];
   const peOptimizedPrompt =
@@ -1097,24 +1096,25 @@ export function Inspector({
                         const lastFrameAsset = assets.find(
                           (asset) => asset.id === settings.lastFrameAssetId,
                         );
-                        const maskAsset = assets.find(
-                          (asset) => asset.id === settings.maskAssetId,
-                        );
+                        const maskAsset = assets.find((asset) => asset.id === settings.maskAssetId);
                         const isMaskSlot = slot.id === "mask";
                         const isAttachedMask = isMaskSlot && Boolean(firstFrameAsset?.maskPath);
-                        const effectiveCount = directCount > 0 ? directCount : (isAttachedMask ? 1 : 0);
+                        const effectiveCount =
+                          directCount > 0 ? directCount : isAttachedMask ? 1 : 0;
 
-                        let thumbUrl: string | undefined = undefined;
-                        let maskOverlayUrl: string | undefined = undefined;
+                        let thumbUrl: string | undefined;
+                        let maskOverlayUrl: string | undefined;
 
                         if (slot.id === "first_frame") {
-                          thumbUrl = firstFrameAsset && projectKey
-                            ? projectApi.assetUrl(projectKey, firstFrameAsset.id, true)
-                            : undefined;
+                          thumbUrl =
+                            firstFrameAsset && projectKey
+                              ? projectApi.assetUrl(projectKey, firstFrameAsset.id, true)
+                              : undefined;
                         } else if (slot.id === "last_frame") {
-                          thumbUrl = lastFrameAsset && projectKey
-                            ? projectApi.assetUrl(projectKey, lastFrameAsset.id, true)
-                            : undefined;
+                          thumbUrl =
+                            lastFrameAsset && projectKey
+                              ? projectApi.assetUrl(projectKey, lastFrameAsset.id, true)
+                              : undefined;
                         } else if (slot.id === "mask") {
                           if (firstFrameAsset?.maskPath) {
                             thumbUrl = projectKey

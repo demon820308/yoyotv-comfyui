@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { resolve } from "node:path";
 import fastifyStatic from "@fastify/static";
-import { tokenDigest } from "@takeboard/identity";
+import { tokenDigest } from "@yoyotv/identity";
 import Fastify, { type FastifyRequest } from "fastify";
 import { WebSocketServer } from "ws";
 import { PortalRelay } from "./portal-relay.js";

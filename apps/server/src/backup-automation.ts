@@ -158,7 +158,8 @@ function configuredNumber(
   maximum: number,
   integer = false,
 ) {
-  const raw = environment[name]?.trim();
+  const shortKey = name.replace(/^TAKEBOARD_|^YOYOTV_/, "");
+  const raw = (environment[`YOYOTV_${shortKey}`] ?? environment[name])?.trim();
   if (!raw) return { value: fallback, error: null };
   const value = Number(raw);
   if (
@@ -191,7 +192,9 @@ export function backupAutomationConfigFromEnvironment(
     365,
     true,
   );
-  const destination = environment.TAKEBOARD_BACKUP_DESTINATION?.trim() || null;
+  const destination =
+    (environment.YOYOTV_BACKUP_DESTINATION ?? environment.TAKEBOARD_BACKUP_DESTINATION)?.trim() ||
+    null;
   const errors = [
     interval.error,
     localCopies.error,
@@ -201,7 +204,7 @@ export function backupAutomationConfigFromEnvironment(
     drill.error,
   ].filter((value): value is string => Boolean(value));
   if (destination && !isAbsolute(destination)) {
-    errors.push("TAKEBOARD_BACKUP_DESTINATION 必须是绝对路径");
+    errors.push("YOYOTV_BACKUP_DESTINATION 必须是绝对路径");
   }
   return {
     destination,
@@ -712,7 +715,7 @@ export class BackupAutomation {
     if (!this.config.destination) {
       throw new BackupAutomationError(
         400,
-        "尚未配置异地备份目录，请设置 TAKEBOARD_BACKUP_DESTINATION 后重启",
+        "尚未配置异地备份目录，请设置 YOYOTV_BACKUP_DESTINATION 后重启",
       );
     }
     return this.config.destination;

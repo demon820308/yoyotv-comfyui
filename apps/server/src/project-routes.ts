@@ -9,7 +9,7 @@ import {
   batchApprovalApplyRequestSchema,
   batchApprovalPreviewRequestSchema,
   type ProjectSnapshot,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import {
   approveTake,
   approveTakesBatch,
@@ -17,11 +17,12 @@ import {
   rejectTake,
   summarizeProjectCosts,
   toIsoTimestamp,
-} from "@takeboard/domain";
+} from "@yoyotv/domain";
 import type { FastifyInstance } from "fastify";
 import { authContext } from "./auth-routes.js";
 import type { AuthService } from "./auth-service.js";
 import { readDeviceSettings } from "./device-settings.js";
+import { getEnv } from "./env.js";
 import { concatVideos, createZipArchive } from "./export-service.js";
 import type { ExtensionRegistry } from "./extension-registry.js";
 import {
@@ -194,7 +195,7 @@ type ProjectRouteOptions = {
 
 const terminalProjectRunStatuses = new Set(["completed", "failed", "cancelled"]);
 const projectPackageUploadLimit = (() => {
-  const configured = Number.parseInt(process.env.TAKEBOARD_PROJECT_PACKAGE_MAX_BYTES ?? "", 10);
+  const configured = Number.parseInt(getEnv("PROJECT_PACKAGE_MAX_BYTES") ?? "", 10);
   return Number.isSafeInteger(configured) && configured > 0
     ? configured
     : 1024 * 1024 * 1024 * 1024;

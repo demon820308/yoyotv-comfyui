@@ -3,8 +3,8 @@ import {
   type ProjectSnapshot,
   projectSnapshotSchema,
   schemaVersion,
-} from "@takeboard/contracts";
-import { createTakeBoardId, toIsoTimestamp } from "@takeboard/domain";
+} from "@yoyotv/contracts";
+import { createTakeBoardId, toIsoTimestamp } from "@yoyotv/domain";
 import { ProjectStore } from "./storage/project-store.js";
 
 export type CreateProjectInput = {

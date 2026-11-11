@@ -1,4 +1,4 @@
-import { resolveGenerationResolution } from "@takeboard/contracts";
+import { resolveGenerationResolution } from "@yoyotv/contracts";
 import { ComfyProgressTracker } from "./progress.js";
 import { inspectPromptInputs } from "./prompt-preflight.js";
 
@@ -938,11 +938,7 @@ export function convertUiWorkflowToPrompt(
   };
 
   for (const node of workflow.nodes) {
-    if (
-      node.mode === 2 ||
-      node.mode === 4 ||
-      frontendOnlyNodeTypes.has(node.type)
-    ) {
+    if (node.mode === 2 || node.mode === 4 || frontendOnlyNodeTypes.has(node.type)) {
       continue;
     }
     const inputs: Record<string, unknown> = {};
@@ -1027,11 +1023,7 @@ export function expandSingleSubgraphWorkflow(
     links: UiWorkflowLink[],
     resolve: (link: UiWorkflowLink) => [string, number] | null,
   ) => {
-    if (
-      node.mode === 4 ||
-      node.mode === 2 ||
-      frontendOnlyNodeTypes.has(node.type)
-    ) {
+    if (node.mode === 4 || node.mode === 2 || frontendOnlyNodeTypes.has(node.type)) {
       return;
     }
     const inputs: Record<string, unknown> = {};

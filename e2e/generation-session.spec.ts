@@ -1,5 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
-import type { ProjectSnapshot, Run } from "@takeboard/contracts";
+import type { ProjectSnapshot, Run } from "@yoyotv/contracts";
 import { expect, test } from "./fixtures";
 
 // Controlled acknowledgement fixtures exercise the real UI session controller;

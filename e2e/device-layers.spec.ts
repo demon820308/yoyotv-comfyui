@@ -1,4 +1,4 @@
-import type { RemoteDeviceStatus } from "@takeboard/contracts";
+import type { RemoteDeviceStatus } from "@yoyotv/contracts";
 import { expect, test } from "./fixtures";
 
 test("device, GPU and service remain independent with one action and one error owner", async ({

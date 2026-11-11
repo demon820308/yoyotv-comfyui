@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { RemoteDeviceStatus } from "@takeboard/contracts";
+import type { RemoteDeviceStatus } from "@yoyotv/contracts";
 
-export type { RemoteDeviceStatus } from "@takeboard/contracts";
+export type { RemoteDeviceStatus } from "@yoyotv/contracts";
 
 export type RemoteExecute = (
   file: string,

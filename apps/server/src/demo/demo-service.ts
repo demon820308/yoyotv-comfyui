@@ -1,5 +1,5 @@
-import { type ProjectSnapshot, projectSnapshotSchema } from "@takeboard/contracts";
-import { approveTake, createTakeBoardId, rejectTake, toIsoTimestamp } from "@takeboard/domain";
+import { type ProjectSnapshot, projectSnapshotSchema } from "@yoyotv/contracts";
+import { approveTake, createTakeBoardId, rejectTake, toIsoTimestamp } from "@yoyotv/domain";
 import { ProjectStore } from "../storage/project-store.js";
 import { createDemoSnapshot } from "./fixture.js";
 

@@ -1,4 +1,4 @@
-import type { Run, RunStatus } from "@takeboard/contracts";
+import type { Run, RunStatus } from "@yoyotv/contracts";
 import { DomainError } from "./errors.js";
 
 const allowedTransitions: Readonly<Record<RunStatus, readonly RunStatus[]>> = {

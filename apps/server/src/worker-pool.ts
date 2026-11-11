@@ -8,10 +8,10 @@ import type {
   WorkerDefinition,
   WorkerHealth,
   WorkerSelectionCandidate,
-} from "@takeboard/contracts";
-import { workerDefinitionSchema } from "@takeboard/contracts";
-import { createTakeBoardId, toIsoTimestamp } from "@takeboard/domain";
-import { ComfyClient } from "@takeboard/executor-comfy";
+} from "@yoyotv/contracts";
+import { workerDefinitionSchema } from "@yoyotv/contracts";
+import { createTakeBoardId, toIsoTimestamp } from "@yoyotv/domain";
+import { ComfyClient } from "@yoyotv/executor-comfy";
 
 type WorkerFile = {
   version: 1;

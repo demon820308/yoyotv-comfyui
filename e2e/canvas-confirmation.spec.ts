@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { ProjectCommand, ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectCommand, ProjectSnapshot } from "@yoyotv/contracts";
 import { expect, test } from "./fixtures";
 
 test("gentle arrangement uses rendered bounds, confirms changes and preserves the viewport", async ({

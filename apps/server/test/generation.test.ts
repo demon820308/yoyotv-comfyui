@@ -1,7 +1,7 @@
 import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ComfyClient } from "@takeboard/executor-comfy";
+import { ComfyClient } from "@yoyotv/executor-comfy";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";
 import { ProjectStore } from "../src/storage/project-store.js";

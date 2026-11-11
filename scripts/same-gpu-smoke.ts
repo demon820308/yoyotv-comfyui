@@ -5,9 +5,11 @@ import { SameGpuPool } from "../apps/server/src/same-gpu-pool.js";
 import { NvidiaGpuRuntime, parseGpuPoolConfig } from "../apps/server/src/same-gpu-runtime.js";
 
 // Explicit opt-in hardware test. Never use the user's original ComfyUI endpoint.
-if (process.env.TAKEBOARD_REAL_GPU_TEST !== "1")
-  throw new Error("Set TAKEBOARD_REAL_GPU_TEST=1 explicitly");
-const config = parseGpuPoolConfig(JSON.parse(process.env.TAKEBOARD_GPU_TEST_CONFIG ?? "null"));
+const realGpuTest = process.env.YOYOTV_REAL_GPU_TEST ?? process.env.TAKEBOARD_REAL_GPU_TEST;
+if (realGpuTest !== "1") throw new Error("Set YOYOTV_REAL_GPU_TEST=1 explicitly");
+const configRaw =
+  process.env.YOYOTV_GPU_TEST_CONFIG ?? process.env.TAKEBOARD_GPU_TEST_CONFIG ?? "null";
+const config = parseGpuPoolConfig(JSON.parse(configRaw));
 const root = await mkdtemp(join(tmpdir(), "takeboard-real-gpu-"));
 const runtime = new NvidiaGpuRuntime(config, root);
 const pool = new SameGpuPool(config, root, runtime);

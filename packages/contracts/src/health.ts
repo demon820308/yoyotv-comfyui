@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const healthResponseSchema = z.object({
-  service: z.literal("takeboard-server"),
+  service: z.enum(["yoyotv-server", "takeboard-server"]),
   status: z.literal("ok"),
   version: z.string().min(1),
 });

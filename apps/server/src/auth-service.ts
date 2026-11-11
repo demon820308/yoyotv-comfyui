@@ -9,7 +9,7 @@ import type {
   ProjectMember,
   ProjectRole,
   RecoveryCodeStatus,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import {
   csrfForSessionToken,
   hashPassword,
@@ -17,7 +17,7 @@ import {
   tokenDigest,
   validatePassword,
   verifyPassword,
-} from "@takeboard/identity";
+} from "@yoyotv/identity";
 import BetterSqlite3 from "better-sqlite3";
 
 export type AuthMode = "optional" | "required" | "trusted_local" | "off";

@@ -5,21 +5,22 @@ import {
   takeBoardVersion,
 } from "./app.js";
 import { completionFor, hasUnfinishedWork } from "./background-completion.js";
+import { getEnv, syncProcessEnv } from "./env.js";
 import { acquireInstanceLease } from "./instance-lease.js";
 import { assertSafeBindHost } from "./request-security.js";
 
+syncProcessEnv();
+
 // Match runtime-launcher: local device access stays login-free, accounts become available.
 // Updated: executor-comfy & workflow-bindings compatibility sync v2
-process.env.TAKEBOARD_AUTH_MODE ??= "optional";
+process.env.YOYOTV_AUTH_MODE ??= process.env.TAKEBOARD_AUTH_MODE ?? "optional";
+process.env.TAKEBOARD_AUTH_MODE ??= process.env.YOYOTV_AUTH_MODE;
 
-const host = process.env.TAKEBOARD_HOST ?? "127.0.0.1";
-const port = Number.parseInt(process.env.TAKEBOARD_PORT ?? "48120", 10);
-assertSafeBindHost(
-  host,
-  process.env.TAKEBOARD_ALLOW_NON_LOOPBACK === "1",
-  authModeFromEnvironment(),
-);
+const host = getEnv("HOST") ?? "127.0.0.1";
+const port = Number.parseInt(getEnv("PORT") ?? "48120", 10);
+assertSafeBindHost(host, getEnv("ALLOW_NON_LOOPBACK") === "1", authModeFromEnvironment());
 const lease = acquireInstanceLease(resolveDefaultProjectsRoot());
+process.env.YOYOTV_INSTANCE_ID = lease.instanceId;
 process.env.TAKEBOARD_INSTANCE_ID = lease.instanceId;
 process.once("exit", lease.release);
 const app = (() => {
@@ -38,11 +39,11 @@ function disconnectParent() {
 
 function closeServer(reason: string) {
   shutdownPromise ??= (async () => {
-    app.log.info({ reason }, "TakeBoard server is stopping");
+    app.log.info({ reason }, "YoYoTV server is stopping");
     try {
       await app.close();
     } catch (error) {
-      app.log.error(error, "TakeBoard server could not stop cleanly");
+      app.log.error(error, "YoYoTV server could not stop cleanly");
       process.exitCode = 1;
     } finally {
       lease.release();
@@ -53,11 +54,11 @@ function closeServer(reason: string) {
 }
 let completing: Promise<void> | null = null;
 function shutdown(reason: string) {
-  if (process.env.TAKEBOARD_DESKTOP !== "1" || reason === "startup-failure")
-    return closeServer(reason);
+  if (getEnv("DESKTOP") !== "1" || reason === "startup-failure") return closeServer(reason);
   // Acknowledge before scanning databases; the launcher must not escalate to SIGKILL.
   if (process.connected) {
     try {
+      process.send?.({ type: "yoyotv.server.background" }, () => {});
       process.send?.({ type: "takeboard.server.background" }, () => {});
     } catch {
       /* parent already exited */
@@ -79,7 +80,7 @@ const onControlMessage = (message: unknown) => {
     typeof message === "object" &&
     message !== null &&
     "type" in message &&
-    message.type === "takeboard.server.shutdown"
+    (message.type === "yoyotv.server.shutdown" || message.type === "takeboard.server.shutdown")
   ) {
     void shutdown("launcher");
   }

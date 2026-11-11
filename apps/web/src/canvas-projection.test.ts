@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import type { WorkflowSummary } from "./api";
 import { type BoardNode, shotMediaFactsText } from "./board-nodes";

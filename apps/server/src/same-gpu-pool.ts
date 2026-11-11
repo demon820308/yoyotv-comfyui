@@ -4,7 +4,7 @@ import { mkdir, open, readFile, rename, stat, statfs, unlink } from "node:fs/pro
 import { basename, join } from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import type { ComfyClient, ComfyOutputFile, ComfyPrompt } from "@takeboard/executor-comfy";
+import type { ComfyClient, ComfyOutputFile, ComfyPrompt } from "@yoyotv/executor-comfy";
 import {
   type GpuLane,
   type GpuPoolConfig,

@@ -1,4 +1,4 @@
-import type { RemoteDeviceStatus } from "@takeboard/contracts";
+import type { RemoteDeviceStatus } from "@yoyotv/contracts";
 
 export function RemoteDeviceSummary({ device }: { device: RemoteDeviceStatus }) {
   return (

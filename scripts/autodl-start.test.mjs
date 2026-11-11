@@ -72,18 +72,25 @@ test("cloud starts privately, requires accounts, and does not inherit desktop se
     HTTPS_PROXY: "http://proxy:8080",
     NO_PROXY: "example.org",
     TAKEBOARD_DESKTOP: "1",
+    YOYOTV_DESKTOP: "1",
     TAKEBOARD_AUTH_MODE: "off",
+    YOYOTV_AUTH_MODE: "off",
     COMFY_URL: "http://other:9999",
     COMFY_START_SERVICE: "external.service",
     TAKEBOARD_BACKUP_DESTINATION: "/private",
+    YOYOTV_BACKUP_DESTINATION: "/private",
   });
+  assert.equal(env.YOYOTV_HOST, "127.0.0.1");
   assert.equal(env.TAKEBOARD_HOST, "127.0.0.1");
+  assert.equal(env.YOYOTV_AUTH_MODE, "required");
   assert.equal(env.TAKEBOARD_AUTH_MODE, "required");
   assert.equal(env.COMFY_URL, "http://127.0.0.1:8188");
   assert.equal(env.COMFY_START_PID_FILE, join(env.COMFY_START_CWD, ".yoyotv-comfy.pid"));
   assert.equal(env.TAKEBOARD_DESKTOP, undefined);
+  assert.equal(env.YOYOTV_DESKTOP, undefined);
   assert.equal(env.COMFY_START_SERVICE, undefined);
   assert.equal(env.TAKEBOARD_BACKUP_DESTINATION, undefined);
+  assert.equal(env.YOYOTV_BACKUP_DESTINATION, undefined);
   assert.equal(env.HTTPS_PROXY, "http://proxy:8080");
   assert.equal(env.NO_PROXY, "example.org,127.0.0.1,localhost,::1");
   const args = JSON.parse(env.COMFY_START_ARGS_JSON);
@@ -95,9 +102,13 @@ test("HTTPS requires an exact root origin, secure cookies, and authenticated mod
     { ...config, mode: "https", publicUrl: "https://gpu.example.org:8443/" },
     {},
   );
+  assert.equal(env.YOYOTV_PORT, "6006");
   assert.equal(env.TAKEBOARD_PORT, "6006");
+  assert.equal(env.YOYOTV_ALLOWED_HOSTS, "gpu.example.org:8443");
   assert.equal(env.TAKEBOARD_ALLOWED_HOSTS, "gpu.example.org:8443");
+  assert.equal(env.YOYOTV_ALLOWED_ORIGINS, "https://gpu.example.org:8443");
   assert.equal(env.TAKEBOARD_ALLOWED_ORIGINS, "https://gpu.example.org:8443");
+  assert.equal(env.YOYOTV_SECURE_COOKIES, "1");
   assert.equal(env.TAKEBOARD_SECURE_COOKIES, "1");
   for (const publicUrl of [
     undefined,

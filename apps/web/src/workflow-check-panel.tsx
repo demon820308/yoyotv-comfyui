@@ -1,4 +1,4 @@
-import type { WorkflowDiagnostic } from "@takeboard/contracts";
+import type { WorkflowDiagnostic } from "@yoyotv/contracts";
 import { workflowCheckGuidance } from "./workflow-library";
 
 /** Ordinary users see blockers; full evidence remains available for troubleshooting. */

@@ -1,4 +1,4 @@
-import type { Shot } from "@takeboard/contracts";
+import type { Shot } from "@yoyotv/contracts";
 import { type SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { projectApi, type WorkflowSummary } from "./api";
 import { connectedAssetId, sourceAssetId } from "./canvas-projection";
@@ -85,9 +85,7 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
           ? connectedAssetId(snapshot, selectedShotId, "last_frame")
           : null,
       maskAssetId:
-        snapshot &&
-        selectedShotId &&
-        selectedModelProfile.slots.some((slot) => slot.id === "mask")
+        snapshot && selectedShotId && selectedModelProfile.slots.some((slot) => slot.id === "mask")
           ? connectedAssetId(snapshot, selectedShotId, "mask")
           : null,
       referenceAssetId:
@@ -222,12 +220,12 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
               : edge.targetSlot === "mask"
                 ? "遮罩"
                 : edge.targetSlot === "reference_video"
-                ? selectedWorkflow?.capability === "upscale_video"
-                  ? "源视频"
-                  : `参考视频 ${edge.targetSlotIndex + 1}`
-                : edge.targetSlot === "reference_audio"
-                  ? `参考音频 ${edge.targetSlotIndex + 1}`
-                  : `参考图 ${edge.targetSlotIndex + 1}`,
+                  ? selectedWorkflow?.capability === "upscale_video"
+                    ? "源视频"
+                    : `参考视频 ${edge.targetSlotIndex + 1}`
+                  : edge.targetSlot === "reference_audio"
+                    ? `参考音频 ${edge.targetSlotIndex + 1}`
+                    : `参考图 ${edge.targetSlotIndex + 1}`,
         thumbnailUrl:
           asset.mediaType === "image" && projectMode === "project" && projectKey
             ? projectApi.assetUrl(projectKey, asset.id, true)
@@ -244,9 +242,7 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
     generationSettings.referenceVideoAudio,
   ]);
   const selectedInputCounts = useMemo(() => {
-    const firstFrameEdge = selectedShotInputEdges.find(
-      (edge) => edge.targetSlot === "first_frame",
-    );
+    const firstFrameEdge = selectedShotInputEdges.find((edge) => edge.targetSlot === "first_frame");
     const firstFrameItem =
       firstFrameEdge && snapshot
         ? snapshot.canvasItems.find((ci) => ci.id === firstFrameEdge.sourceItemId)
@@ -264,7 +260,7 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
       first_frame: selectedShotInputEdges.filter((edge) => edge.targetSlot === "first_frame")
         .length,
       last_frame: selectedShotInputEdges.filter((edge) => edge.targetSlot === "last_frame").length,
-      mask: directMaskCount > 0 ? directMaskCount : (hasFirstFrameMask ? 1 : 0),
+      mask: directMaskCount > 0 ? directMaskCount : hasFirstFrameMask ? 1 : 0,
       reference: selectedShotInputEdges.filter((edge) => edge.targetSlot === "reference").length,
       reference_video: selectedShotInputEdges.filter(
         (edge) => edge.targetSlot === "reference_video",

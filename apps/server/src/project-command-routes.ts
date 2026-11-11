@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import {
   projectCommandEnvelopeSchema,
   projectCommandPreviewRequestSchema,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { ProjectCommandError, ProjectCommandService } from "./project-command-service.js";
 import { projectDirectory } from "./project-locations.js";

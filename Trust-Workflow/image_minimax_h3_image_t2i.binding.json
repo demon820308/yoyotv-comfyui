@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "workflowPath": "image_minimax_h3_image_t2i.json",
+  "workflowHash": "c50f1d16032298d15ae9a4707872db68654c242f9c27638e1922ce09dfc6ea19",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "36",
+        "input": "value"
+      },
+      {
+        "nodeId": "37",
+        "input": "value"
+      },
+      {
+        "nodeId": "40",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "39",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "39",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "39",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "32",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "32",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-11T14:14:19.338Z"
+}

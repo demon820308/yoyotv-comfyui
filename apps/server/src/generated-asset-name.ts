@@ -1,5 +1,5 @@
 import { extname } from "node:path";
-import type { ProjectSnapshot, Run } from "@takeboard/contracts";
+import type { ProjectSnapshot, Run } from "@yoyotv/contracts";
 
 /** Name the collected copy, never the upstream file. Existing user names remain untouched. */
 export function generatedAssetName(

@@ -1,4 +1,4 @@
-import type { Approval, ProjectSnapshot, Run, Shot, Take } from "@takeboard/contracts";
+import type { Approval, ProjectSnapshot, Run, Shot, Take } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import {
   approveTake,

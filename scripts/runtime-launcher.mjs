@@ -69,7 +69,10 @@ async function doctor() {
     access(serverEntry, constants.R_OK),
     access(join(webRoot, "index.html"), constants.R_OK),
   ]);
-  const configuredDataRoot = process.env.TAKEBOARD_DATA_ROOT || join(homedir(), "TakeBoardData");
+  const configuredDataRoot =
+    process.env.YOYOTV_DATA_ROOT ||
+    process.env.TAKEBOARD_DATA_ROOT ||
+    join(homedir(), "YoYoTVData");
   const dataRoot =
     configuredDataRoot === "~"
       ? homedir()
@@ -91,7 +94,7 @@ async function doctor() {
   const database = new sqliteModule.default(":memory:");
   database.close();
   await import(pathToFileURL(requireFromServer.resolve("sharp")).href);
-  console.log("TakeBoard 启动检查通过");
+  console.log("YoYoTV 启动检查通过");
   console.log(`系统：${process.platform} ${process.arch}`);
   console.log(`运行时：Node.js ${process.versions.node}`);
   console.log(`数据目录：${dataRoot}`);
@@ -105,7 +108,10 @@ function health(port, timeout = 1_200) {
     .then(async (response) => {
       if (!response.ok) return null;
       const payload = await response.json();
-      return payload?.service === "takeboard-server" && payload?.status === "ok" ? payload : null;
+      return (payload?.service === "yoyotv-server" || payload?.service === "takeboard-server") &&
+        payload?.status === "ok"
+        ? payload
+        : null;
     })
     .catch(() => null);
 }
@@ -120,9 +126,9 @@ function portAvailable(port) {
 }
 
 async function selectPort(instanceId, applicationVersion, dataRoot) {
-  const configured = process.env.TAKEBOARD_PORT?.trim();
+  const configured = (process.env.YOYOTV_PORT || process.env.TAKEBOARD_PORT)?.trim();
   if (configured && !/^\d+$/.test(configured)) {
-    throw new Error("TAKEBOARD_PORT 必须是 1–65535 的整数");
+    throw new Error("YOYOTV_PORT 必须是 1–65535 的整数");
   }
   const ports = configured
     ? [Number(configured)]
@@ -251,11 +257,11 @@ async function start() {
   const selected = await selectPort(instanceId, applicationVersion, dataRoot);
   const url = `http://127.0.0.1:${selected.port}`;
   if (selected.existing) {
-    console.log(`TakeBoard 已经在运行：${url}`);
+    console.log(`YoYoTV 已经在运行：${url}`);
     if (openRequested) openBrowser(url);
     return;
   }
-  const desktop = process.env.TAKEBOARD_DESKTOP === "1";
+  const desktop = process.env.YOYOTV_DESKTOP === "1" || process.env.TAKEBOARD_DESKTOP === "1";
   if (desktop) await mkdir(join(dataRoot, ".system"), { recursive: true, mode: 0o700 });
   const serverLog = desktop
     ? await open(join(dataRoot, ".system", "runtime.log"), "a", 0o600)
@@ -264,11 +270,19 @@ async function start() {
     cwd: serverRoot,
     env: {
       ...process.env,
-      TAKEBOARD_AUTH_MODE: process.env.TAKEBOARD_AUTH_MODE || "optional",
+      YOYOTV_AUTH_MODE:
+        process.env.YOYOTV_AUTH_MODE || process.env.TAKEBOARD_AUTH_MODE || "optional",
+      TAKEBOARD_AUTH_MODE:
+        process.env.YOYOTV_AUTH_MODE || process.env.TAKEBOARD_AUTH_MODE || "optional",
+      YOYOTV_DATA_ROOT: dataRoot,
       TAKEBOARD_DATA_ROOT: dataRoot,
+      YOYOTV_HOST: "127.0.0.1",
       TAKEBOARD_HOST: "127.0.0.1",
+      YOYOTV_INSTANCE_ID: instanceId,
       TAKEBOARD_INSTANCE_ID: instanceId,
+      YOYOTV_PORT: String(selected.port),
       TAKEBOARD_PORT: String(selected.port),
+      YOYOTV_WEB_ROOT: webRoot,
       TAKEBOARD_WEB_ROOT: webRoot,
     },
     stdio: serverLog
@@ -282,7 +296,12 @@ async function start() {
   const childExit = new Promise((resolveExit) => {
     child.once("exit", resolveExit);
     child.on("message", (message) => {
-      if (!desktop || message?.type !== "takeboard.server.background") return;
+      if (
+        !desktop ||
+        (message?.type !== "yoyotv.server.background" &&
+          message?.type !== "takeboard.server.background")
+      )
+        return;
       backgroundChildren.add(child);
       child.unref();
       // Defer disconnect so the stop waiter can observe the acknowledgement too.
@@ -297,20 +316,26 @@ async function start() {
     void stopPromise.catch(() => undefined);
   };
   const onControlMessage = (message) => {
-    if (message?.type === "takeboard.launcher.shutdown") terminate();
+    if (
+      message?.type === "yoyotv.launcher.shutdown" ||
+      message?.type === "takeboard.launcher.shutdown"
+    )
+      terminate();
   };
   process.once("SIGINT", terminate);
   process.once("SIGTERM", terminate);
   process.on("message", onControlMessage);
   const desktopControl =
-    process.env.TAKEBOARD_DESKTOP === "1" ? createInterface({ input: process.stdin }) : null;
+    process.env.YOYOTV_DESKTOP === "1" || process.env.TAKEBOARD_DESKTOP === "1"
+      ? createInterface({ input: process.stdin })
+      : null;
   desktopControl?.on("line", (line) => {
-    if (line === "takeboard.launcher.shutdown") terminate();
+    if (line === "yoyotv.launcher.shutdown" || line === "takeboard.launcher.shutdown") terminate();
   });
   desktopControl?.once("close", terminate);
   try {
     await waitForServer(child, selected.port, instanceId);
-    console.log(`\nTakeBoard 已启动：${url}`);
+    console.log(`\nYoYoTV 已启动：${url}`);
     console.log("保持此窗口打开；按 Ctrl+C 安全停止。\n");
     if (openRequested) openBrowser(url);
     const code = await childExit;

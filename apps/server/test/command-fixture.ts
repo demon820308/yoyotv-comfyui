@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ProjectCommand } from "@takeboard/contracts";
+import type { ProjectCommand } from "@yoyotv/contracts";
 import type { FastifyInstance } from "fastify";
 
 /** Explicit test-user action through the same preview/execute API as the UI. */

@@ -1,15 +1,12 @@
 import { constants } from "node:fs";
 import { access, mkdir, readdir, stat } from "node:fs/promises";
 import { join, relative, resolve, sep } from "node:path";
-import type {
-  OperationsDiagnosticCheck,
-  OperationTask,
-  StorageCategory,
-} from "@takeboard/contracts";
+import type { OperationsDiagnosticCheck, OperationTask, StorageCategory } from "@yoyotv/contracts";
 import type { FastifyInstance } from "fastify";
 import { authContext } from "./auth-routes.js";
 import type { AuthService } from "./auth-service.js";
 import type { BackupAutomation } from "./backup-automation.js";
+import { getEnv } from "./env.js";
 import { listInstanceBackups } from "./instance-backup.js";
 import { projectDirectory } from "./project-locations.js";
 import { projectKey } from "./project-routes.js";
@@ -291,7 +288,7 @@ export function registerOperationsRoutes(
       detail: dataWritable
         ? "服务可以保存项目、素材索引和运行状态。"
         : "服务没有项目目录的写入权限；继续操作可能无法保存。",
-      action: dataWritable ? null : "检查 TAKEBOARD_DATA_ROOT 所在目录的所有者和写入权限。",
+      action: dataWritable ? null : "检查 YOYOTV_DATA_ROOT 所在目录的所有者和写入权限。",
     });
     if (canInspectInstance) {
       addCheck({
@@ -336,7 +333,7 @@ export function registerOperationsRoutes(
           : `可用 ${Math.round(capacity.availableBytes / 1024 ** 3)} GB，安全余量 ${Math.round(reserveBytes / 1024 ** 3)} GB。`,
       action:
         capacity && capacity.availableBytes < reserveBytes
-          ? "释放磁盘空间，或将 TAKEBOARD_DATA_ROOT 迁移到容量更充足的磁盘。"
+          ? "释放磁盘空间，或将 YOYOTV_DATA_ROOT 迁移到容量更充足的磁盘。"
           : null,
     });
 
@@ -380,7 +377,7 @@ export function registerOperationsRoutes(
       action: workerReady ? null : "在首页重新检测；需要时使用经过资源预检的安全启动。",
     });
 
-    const configuredHost = process.env.TAKEBOARD_HOST ?? "127.0.0.1";
+    const configuredHost = getEnv("HOST") ?? "127.0.0.1";
     const loopback = ["127.0.0.1", "localhost", "::1"].includes(configuredHost.toLowerCase());
     const secureExposure = loopback || auth.mode === "required";
     addCheck({
@@ -396,8 +393,8 @@ export function registerOperationsRoutes(
       action: loopback
         ? null
         : secureExposure
-          ? "确认入口使用 HTTPS、限定 Host / Origin，且不要公开 ComfyUI 端口。"
-          : "恢复 127.0.0.1 监听，或把 TAKEBOARD_AUTH_MODE 设为 required。",
+          ? "确认入口使用 HTTPS、限定 Host / Origin，且不要公开 ComfyUI端口。"
+          : "恢复 127.0.0.1 监听，或把 YOYOTV_AUTH_MODE 设为 required。",
     });
 
     const canInspectBackups = !context || context.user.instanceRole === "admin";
@@ -484,9 +481,9 @@ export function registerOperationsRoutes(
           action: healthy
             ? null
             : automation.configurationError
-              ? "修正 TAKEBOARD_BACKUP_* 环境变量并重启服务。"
+              ? "修正 YOYOTV_BACKUP_* 环境变量并重启服务。"
               : !automation.enabled
-                ? "将 TAKEBOARD_BACKUP_DESTINATION 指向数据目录之外的已挂载位置。"
+                ? "将 YOYOTV_BACKUP_DESTINATION 指向数据目录之外的已挂载位置。"
                 : automation.destinationReady === false
                   ? "检查外部磁盘或网络存储是否已挂载且可写。"
                   : automation.damagedExternalBackupCount > 0

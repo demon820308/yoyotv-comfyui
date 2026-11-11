@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { expect, test } from "./fixtures";
 
 // Explicitly opt in: this test consumes GPU time, never substitutes a mocked response.

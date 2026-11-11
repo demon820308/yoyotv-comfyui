@@ -1,5 +1,5 @@
-import type { WorkflowDiagnostic, WorkflowDiagnosticCheck } from "@takeboard/contracts";
-import type { ComfyObjectInfo, ComfyPrompt } from "@takeboard/executor-comfy";
+import type { WorkflowDiagnostic, WorkflowDiagnosticCheck } from "@yoyotv/contracts";
+import type { ComfyObjectInfo, ComfyPrompt } from "@yoyotv/executor-comfy";
 import { assertNativeWorkflowIntegrity } from "./native-workflow-integrity.js";
 import type {
   WorkflowBinding,

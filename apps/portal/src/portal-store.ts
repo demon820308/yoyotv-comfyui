@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { hashPassword, normalizeEmail, tokenDigest, verifyPassword } from "@takeboard/identity";
+import { hashPassword, normalizeEmail, tokenDigest, verifyPassword } from "@yoyotv/identity";
 import BetterSqlite3 from "better-sqlite3";
 
 type PortalUserRow = {

@@ -1,4 +1,4 @@
-import type { ProjectSnapshot, Shot } from "@takeboard/contracts";
+import type { ProjectSnapshot, Shot } from "@yoyotv/contracts";
 import type { WorkflowSummary } from "./api";
 import { defaultGenerationSettings, type GenerationSettings } from "./generation-model";
 import { modelProfile } from "./model-profiles";
@@ -60,11 +60,7 @@ export function removePromptMention(prompt: string, alias: string): string {
     .trim();
 }
 
-export function togglePromptMention(
-  prompt: string,
-  alias: string,
-  cursor?: number,
-): string {
+export function togglePromptMention(prompt: string, alias: string, cursor?: number): string {
   if (prompt.includes(`@${alias}`)) {
     return removePromptMention(prompt, alias);
   }

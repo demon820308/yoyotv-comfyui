@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { RemoteDeviceStatus } from "@takeboard/contracts";
+import type { RemoteDeviceStatus } from "@yoyotv/contracts";
 import Fastify from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";

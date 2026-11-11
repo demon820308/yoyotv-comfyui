@@ -1,4 +1,4 @@
-import { type ProjectSnapshot, projectSnapshotSchema, schemaVersion } from "@takeboard/contracts";
+import { type ProjectSnapshot, projectSnapshotSchema, schemaVersion } from "@yoyotv/contracts";
 
 const createdAt = "2026-08-13T03:30:00.000Z";
 const hash = (character: string) => character.repeat(64);

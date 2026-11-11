@@ -16,7 +16,7 @@ import {
   type CommandEffect,
   type ProjectSnapshot,
   projectSnapshotSchema,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import BetterSqlite3 from "better-sqlite3";
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";

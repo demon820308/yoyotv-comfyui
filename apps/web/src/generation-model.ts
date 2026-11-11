@@ -1,4 +1,4 @@
-import type { ExecutionPolicy, ProjectSnapshot } from "@takeboard/contracts";
+import type { ExecutionPolicy, ProjectSnapshot } from "@yoyotv/contracts";
 import type { WorkflowSummary } from "./api";
 
 export function generationPromptPlaceholder(

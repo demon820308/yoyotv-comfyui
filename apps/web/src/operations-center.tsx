@@ -4,7 +4,7 @@ import type {
   OperationTask,
   RunStatus,
   WorkerHealth,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { projectApi, workerApi } from "./api";
 import { optionalLocalStorage } from "./browser-storage";

@@ -81,7 +81,7 @@ tunnel_active() {
 
 healthy() {
   local response
-  local service_pattern='"service"[[:space:]]*:[[:space:]]*"takeboard-server"'
+  local service_pattern='"service"[[:space:]]*:[[:space:]]*"(yoyotv|takeboard)-server"'
   local status_pattern='"status"[[:space:]]*:[[:space:]]*"ok"'
   response=$(curl --noproxy '*' --fail --silent --max-time 2 --max-filesize 16384 "http://127.0.0.1:${tunnel_port}/api/health") || return 1
   [[ $response =~ $service_pattern && $response =~ $status_pattern ]]

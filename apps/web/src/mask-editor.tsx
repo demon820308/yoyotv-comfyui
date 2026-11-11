@@ -130,14 +130,23 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
   const [autoFillHoles, setAutoFillHoles] = useState<boolean>(false);
   const [brushSize, setBrushSize] = useState<number>(38);
   const [busy, setBusy] = useState(false);
-  const [imageDims, setImageDims] = useState<{ width: number; height: number; naturalW: number; naturalH: number } | null>(null);
+  const [imageDims, setImageDims] = useState<{
+    width: number;
+    height: number;
+    naturalW: number;
+    naturalH: number;
+  } | null>(null);
 
   // Undo / Redo history
   const [historyLength, setHistoryLength] = useState(0);
   const [redoLength, setRedoLength] = useState(0);
 
   // Transform (pan & zoom)
-  const [transform, setTransform] = useState<{ scale: number; x: number; y: number }>({ scale: 1, x: 0, y: 0 });
+  const [transform, setTransform] = useState<{ scale: number; x: number; y: number }>({
+    scale: 1,
+    x: 0,
+    y: 0,
+  });
 
   // Mouse & interaction states
   const stageRef = useRef<HTMLDivElement>(null);
@@ -167,9 +176,10 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
   const dashOffsetRef = useRef(0);
   const rafMarquee = useRef<number>(0);
 
-  const activeColorHex = outputMode === "color"
-    ? OVERLAY_COLORS[overlayColorKey]?.hex || "#28d66f"
-    : QUICK_COLORS[quickColor] || "#34d399";
+  const activeColorHex =
+    outputMode === "color"
+      ? OVERLAY_COLORS[overlayColorKey]?.hex || "#28d66f"
+      : QUICK_COLORS[quickColor] || "#34d399";
 
   // Repaint visible canvas from rawMaskCanvas (with hole filling / opacity / color if needed)
   const refreshDisplay = useCallback(() => {
@@ -295,49 +305,52 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
   }, [activeColorHex, pushHistory, refreshDisplay]);
 
   // Load image and initialize canvas
-  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const nw = img.naturalWidth || 800;
-    const nh = img.naturalHeight || 600;
-    const maxSide = 1536;
-    const sf = Math.max(nw, nh) > maxSide ? maxSide / Math.max(nw, nh) : 1;
-    const editW = Math.max(1, Math.round(nw * sf));
-    const editH = Math.max(1, Math.round(nh * sf));
+  const onImageLoad = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      const nw = img.naturalWidth || 800;
+      const nh = img.naturalHeight || 600;
+      const maxSide = 1536;
+      const sf = Math.max(nw, nh) > maxSide ? maxSide / Math.max(nw, nh) : 1;
+      const editW = Math.max(1, Math.round(nw * sf));
+      const editH = Math.max(1, Math.round(nh * sf));
 
-    setImageDims({ width: editW, height: editH, naturalW: nw, naturalH: nh });
+      setImageDims({ width: editW, height: editH, naturalW: nw, naturalH: nh });
 
-    const raw = document.createElement("canvas");
-    raw.width = editW;
-    raw.height = editH;
-    rawMaskCanvasRef.current = raw;
+      const raw = document.createElement("canvas");
+      raw.width = editW;
+      raw.height = editH;
+      rawMaskCanvasRef.current = raw;
 
-    const visible = paintCanvasRef.current;
-    if (visible) {
-      visible.width = editW;
-      visible.height = editH;
-    }
+      const visible = paintCanvasRef.current;
+      if (visible) {
+        visible.width = editW;
+        visible.height = editH;
+      }
 
-    if (maskUrl) {
-      const maskImg = new Image();
-      maskImg.crossOrigin = "anonymous";
-      maskImg.onload = () => {
-        const ctx = raw.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(maskImg, 0, 0, editW, editH);
-        }
+      if (maskUrl) {
+        const maskImg = new Image();
+        maskImg.crossOrigin = "anonymous";
+        maskImg.onload = () => {
+          const ctx = raw.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(maskImg, 0, 0, editW, editH);
+          }
+          pushHistory();
+          refreshDisplay();
+        };
+        maskImg.onerror = () => {
+          pushHistory();
+          refreshDisplay();
+        };
+        maskImg.src = maskUrl;
+      } else {
         pushHistory();
         refreshDisplay();
-      };
-      maskImg.onerror = () => {
-        pushHistory();
-        refreshDisplay();
-      };
-      maskImg.src = maskUrl;
-    } else {
-      pushHistory();
-      refreshDisplay();
-    }
-  }, [maskUrl, pushHistory, refreshDisplay]);
+      }
+    },
+    [maskUrl, pushHistory, refreshDisplay],
+  );
 
   // Convert client mouse coordinates to mask canvas coordinates
   const getCanvasPos = useCallback((clientX: number, clientY: number) => {
@@ -351,71 +364,77 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
   }, []);
 
   // Update cursor position and size
-  const updateCursor = useCallback((clientX: number, clientY: number) => {
-    const cursor = cursorRef.current;
-    const stage = stageRef.current;
-    const canvas = paintCanvasRef.current;
-    if (!cursor || !stage || !canvas) return;
+  const updateCursor = useCallback(
+    (clientX: number, clientY: number) => {
+      const cursor = cursorRef.current;
+      const stage = stageRef.current;
+      const canvas = paintCanvasRef.current;
+      if (!cursor || !stage || !canvas) return;
 
-    if (isSpaceDown.current) {
-      cursor.style.display = "none";
-      stage.style.cursor = "grab";
-      return;
-    }
-    if (tool === "marquee") {
-      cursor.style.display = "none";
-      stage.style.cursor = "crosshair";
-      return;
-    }
+      if (isSpaceDown.current) {
+        cursor.style.display = "none";
+        stage.style.cursor = "grab";
+        return;
+      }
+      if (tool === "marquee") {
+        cursor.style.display = "none";
+        stage.style.cursor = "crosshair";
+        return;
+      }
 
-    stage.style.cursor = "none";
-    const stageRect = stage.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    const displayScale = canvasRect.width / Math.max(1, canvas.width);
-    const size = Math.max(4, brushSize * displayScale);
+      stage.style.cursor = "none";
+      const stageRect = stage.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const displayScale = canvasRect.width / Math.max(1, canvas.width);
+      const size = Math.max(4, brushSize * displayScale);
 
-    cursor.style.display = "block";
-    cursor.style.width = `${size}px`;
-    cursor.style.height = `${size}px`;
-    cursor.style.left = `${clientX - stageRect.left - size / 2}px`;
-    cursor.style.top = `${clientY - stageRect.top - size / 2}px`;
-  }, [brushSize, tool]);
+      cursor.style.display = "block";
+      cursor.style.width = `${size}px`;
+      cursor.style.height = `${size}px`;
+      cursor.style.left = `${clientX - stageRect.left - size / 2}px`;
+      cursor.style.top = `${clientY - stageRect.top - size / 2}px`;
+    },
+    [brushSize, tool],
+  );
 
   // Draw stroke
-  const drawStroke = useCallback((from: { x: number; y: number }, to: { x: number; y: number }) => {
-    const raw = rawMaskCanvasRef.current;
-    if (!raw) return;
-    const ctx = raw.getContext("2d");
-    if (!ctx) return;
+  const drawStroke = useCallback(
+    (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      const raw = rawMaskCanvasRef.current;
+      if (!raw) return;
+      const ctx = raw.getContext("2d");
+      if (!ctx) return;
 
-    ctx.save();
-    ctx.lineWidth = brushSize;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+      ctx.save();
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-    const isEraser = tool === "eraser" || isAltDown.current;
-    if (isEraser) {
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.strokeStyle = "#fff";
-      ctx.fillStyle = "#fff";
-    } else {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = activeColorHex;
-      ctx.fillStyle = activeColorHex;
-    }
+      const isEraser = tool === "eraser" || isAltDown.current;
+      if (isEraser) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "#fff";
+        ctx.fillStyle = "#fff";
+      } else {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = activeColorHex;
+        ctx.fillStyle = activeColorHex;
+      }
 
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(to.x, to.y, brushSize / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+      ctx.beginPath();
+      ctx.arc(to.x, to.y, brushSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-    refreshDisplay();
-  }, [activeColorHex, brushSize, refreshDisplay, tool]);
+      refreshDisplay();
+    },
+    [activeColorHex, brushSize, refreshDisplay, tool],
+  );
 
   // Fill marquee selection into mask
   const commitMarquee = useCallback(() => {
@@ -517,82 +536,88 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
   }, []);
 
   // Pointer down handler
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest(".guhai-mask-panel")) return;
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if ((e.target as HTMLElement).closest(".guhai-mask-panel")) return;
 
-    // Pan with Space + Left Click OR Middle Click
-    if (isSpaceDown.current || e.button === 1) {
-      e.preventDefault();
-      isPanning.current = true;
-      panStart.current = { x: e.clientX, y: e.clientY, ox: transform.x, oy: transform.y };
-      return;
-    }
+      // Pan with Space + Left Click OR Middle Click
+      if (isSpaceDown.current || e.button === 1) {
+        e.preventDefault();
+        isPanning.current = true;
+        panStart.current = { x: e.clientX, y: e.clientY, ox: transform.x, oy: transform.y };
+        return;
+      }
 
-    // Right-click drag to resize brush
-    if (e.button === 2) {
-      e.preventDefault();
-      isRightResizing.current = true;
-      rightResizeStart.current = { x: e.clientX, size: brushSize };
-      return;
-    }
+      // Right-click drag to resize brush
+      if (e.button === 2) {
+        e.preventDefault();
+        isRightResizing.current = true;
+        rightResizeStart.current = { x: e.clientX, size: brushSize };
+        return;
+      }
 
-    if (e.button !== 0) return;
+      if (e.button !== 0) return;
 
-    if (tool === "marquee") {
+      if (tool === "marquee") {
+        const pos = getCanvasPos(e.clientX, e.clientY);
+        marqueeStart.current = pos;
+        marqueeDraft.current = { x: pos.x, y: pos.y, w: 0, h: 0 };
+        return;
+      }
+
+      // Drawing brush/eraser
+      isDrawing.current = true;
       const pos = getCanvasPos(e.clientX, e.clientY);
-      marqueeStart.current = pos;
-      marqueeDraft.current = { x: pos.x, y: pos.y, w: 0, h: 0 };
-      return;
-    }
-
-    // Drawing brush/eraser
-    isDrawing.current = true;
-    const pos = getCanvasPos(e.clientX, e.clientY);
-    lastDrawPos.current = pos;
-    drawStroke(pos, pos);
-  }, [brushSize, drawStroke, getCanvasPos, tool, transform.x, transform.y]);
+      lastDrawPos.current = pos;
+      drawStroke(pos, pos);
+    },
+    [brushSize, drawStroke, getCanvasPos, tool, transform.x, transform.y],
+  );
 
   // Pointer move handler
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    updateCursor(e.clientX, e.clientY);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      updateCursor(e.clientX, e.clientY);
 
-    // Right click resize
-    if (isRightResizing.current && rightResizeStart.current) {
-      const dx = e.clientX - rightResizeStart.current.x;
-      const newSize = clamp(rightResizeStart.current.size + Math.round(dx / 2), 2, 300);
-      setBrushSize(newSize);
-      return;
-    }
+      // Right click resize
+      if (isRightResizing.current && rightResizeStart.current) {
+        const dx = e.clientX - rightResizeStart.current.x;
+        const newSize = clamp(rightResizeStart.current.size + Math.round(dx / 2), 2, 300);
+        setBrushSize(newSize);
+        return;
+      }
 
-    // Panning
-    if (isPanning.current && panStart.current) {
-      setTransform((prev) => ({
-        ...prev,
-        x: panStart.current!.ox + (e.clientX - panStart.current!.x),
-        y: panStart.current!.oy + (e.clientY - panStart.current!.y),
-      }));
-      return;
-    }
+      // Panning
+      if (isPanning.current && panStart.current) {
+        setTransform((prev) => ({
+          ...prev,
+          x: panStart.current!.ox + (e.clientX - panStart.current!.x),
+          y: panStart.current!.oy + (e.clientY - panStart.current!.y),
+        }));
+        return;
+      }
 
-    // Marquee dragging
-    if (tool === "marquee" && marqueeStart.current) {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      const x0 = Math.min(marqueeStart.current.x, pos.x);
-      const y0 = Math.min(marqueeStart.current.y, pos.y);
-      const w = Math.abs(pos.x - marqueeStart.current.x);
-      const h = Math.abs(pos.y - marqueeStart.current.y);
-      marqueeDraft.current = { x: x0, y: y0, w, h };
-      redrawMarquee();
-      return;
-    }
+      // Marquee dragging
+      if (tool === "marquee" && marqueeStart.current) {
+        const pos = getCanvasPos(e.clientX, e.clientY);
+        const x0 = Math.min(marqueeStart.current.x, pos.x);
+        const y0 = Math.min(marqueeStart.current.y, pos.y);
+        const w = Math.abs(pos.x - marqueeStart.current.x);
+        const h = Math.abs(pos.y - marqueeStart.current.y);
+        marqueeDraft.current = { x: x0, y: y0, w, h };
+        redrawMarquee();
+        return;
+      }
 
-    // Drawing
-    if (isDrawing.current && lastDrawPos.current) {
-      const pos = getCanvasPos(e.clientX, e.clientY);
-      drawStroke(lastDrawPos.current, pos);
-      lastDrawPos.current = pos;
-    }
-  }, [drawStroke, getCanvasPos, redrawMarquee, tool, updateCursor]);
+      // Drawing
+      if (isDrawing.current && lastDrawPos.current) {
+        const pos = getCanvasPos(e.clientX, e.clientY);
+        drawStroke(lastDrawPos.current, pos);
+        lastDrawPos.current = pos;
+      }
+    },
+    [drawStroke, getCanvasPos, redrawMarquee, tool, updateCursor],
+  );
 
   // Pointer up handler
   const onPointerUp = useCallback(() => {
@@ -872,7 +897,15 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
         </div>
 
         {/* Right Action Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "flex-end", flex: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            justifyContent: "flex-end",
+            flex: 1,
+          }}
+        >
           <button
             type="button"
             onClick={handleUndo}
@@ -1118,9 +1151,13 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
           {/* Opacity slider */}
           {outputMode === "color" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              >
                 <span style={{ fontSize: "12px", fontWeight: 700, color: "#b9c2ce" }}>透明度</span>
-                <span style={{ fontSize: "12px", color: "#c8d1dc", fontFamily: "Consolas, monospace" }}>
+                <span
+                  style={{ fontSize: "12px", color: "#c8d1dc", fontFamily: "Consolas, monospace" }}
+                >
                   {overlayOpacity}%
                 </span>
               </div>
@@ -1233,7 +1270,10 @@ export function MaskEditor({ imageUrl, imageName, maskUrl, onClose, onSave }: Ma
             >
               {imageDims.width} × {imageDims.height}
               {imageDims.width !== imageDims.naturalW && (
-                <span> (原图 {imageDims.naturalW} × {imageDims.naturalH})</span>
+                <span>
+                  {" "}
+                  (原图 {imageDims.naturalW} × {imageDims.naturalH})
+                </span>
               )}
             </div>
           )}

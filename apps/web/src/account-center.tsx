@@ -7,7 +7,7 @@ import type {
   ProjectMember,
   ProjectRole,
   RecoveryCodeStatus,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   authApi,

@@ -1,17 +1,18 @@
 import { access, statfs } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { getEnv } from "./env.js";
 
 const gibibyte = 1024 ** 3;
 
 function configuredBytes(name: string, fallbackGiB: number) {
-  const value = Number(process.env[name]);
+  const value = Number(getEnv(name.replace(/^TAKEBOARD_|^YOYOTV_/, "")) ?? process.env[name]);
   return Number.isFinite(value) && value >= 0
     ? Math.round(value * gibibyte)
     : fallbackGiB * gibibyte;
 }
 
 export function projectStorageReserveBytes() {
-  return configuredBytes("TAKEBOARD_MIN_FREE_DISK_GB", 5);
+  return configuredBytes("YOYOTV_MIN_FREE_DISK_GB", 5);
 }
 
 export function comfyOutputReserveBytes() {

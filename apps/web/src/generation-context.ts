@@ -1,4 +1,4 @@
-import type { ProjectSnapshot, Shot } from "@takeboard/contracts";
+import type { ProjectSnapshot, Shot } from "@yoyotv/contracts";
 import type { DemoPayload } from "./api";
 
 export type GenerationContext = {

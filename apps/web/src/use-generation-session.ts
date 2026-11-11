@@ -1,4 +1,4 @@
-import type { Run, Shot } from "@takeboard/contracts";
+import type { Run, Shot } from "@yoyotv/contracts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { demoApi, projectApi, type WorkflowSummary } from "./api";
 import { compileMiniMaxH3Mentions } from "./canvas-projection";

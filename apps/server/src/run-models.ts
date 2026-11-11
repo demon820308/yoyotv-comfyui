@@ -1,4 +1,4 @@
-import type { ComfyPrompt } from "@takeboard/executor-comfy";
+import type { ComfyPrompt } from "@yoyotv/executor-comfy";
 
 /** Record literal weight files from the submitted graph, never the picker defaults.
  * Custom loaders without a recognizable weight input remain unreported. */

@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import { emptySelection, reconcileSelection, reduceEditorSelection } from "./editor-selection";
 

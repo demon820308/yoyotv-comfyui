@@ -1,4 +1,4 @@
-import type { OperationsDiagnostics } from "@takeboard/contracts";
+import type { OperationsDiagnostics } from "@yoyotv/contracts";
 import { useState } from "react";
 import { projectApi } from "./api";
 

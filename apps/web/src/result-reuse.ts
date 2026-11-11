@@ -1,4 +1,4 @@
-import type { Asset, Run, Take } from "@takeboard/contracts";
+import type { Asset, Run, Take } from "@yoyotv/contracts";
 import type { GenerationSettings } from "./generation-model";
 
 /** Restore recorded controls only. Connections and generation remain explicit user actions. */

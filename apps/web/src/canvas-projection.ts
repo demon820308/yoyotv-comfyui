@@ -1,5 +1,5 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
 import { type Edge, MarkerType } from "@xyflow/react";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { projectApi, type WorkflowSummary } from "./api";
 import type { BoardNode } from "./board-nodes";

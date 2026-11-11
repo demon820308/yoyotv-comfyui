@@ -1,4 +1,4 @@
-import type { RecommendedWorkflowTemplate, WorkflowDiagnostic } from "@takeboard/contracts";
+import type { RecommendedWorkflowTemplate, WorkflowDiagnostic } from "@yoyotv/contracts";
 import Fastify from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app.js";

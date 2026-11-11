@@ -1,4 +1,4 @@
-import type { ComfyObjectInfo, ComfyPrompt } from "@takeboard/executor-comfy";
+import type { ComfyObjectInfo, ComfyPrompt } from "@yoyotv/executor-comfy";
 import { describe, expect, it } from "vitest";
 import { buildWorkflowDiagnostic } from "../src/workflow-diagnostics.js";
 

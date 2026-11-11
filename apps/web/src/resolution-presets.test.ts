@@ -1,4 +1,4 @@
-import { resolveGenerationResolution } from "@takeboard/contracts";
+import { resolveGenerationResolution } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import {
   closestAspectRatio,

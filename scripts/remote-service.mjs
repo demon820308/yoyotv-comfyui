@@ -33,7 +33,7 @@ export async function inspectService(bundleRoot, dataRoot) {
     ) {
       const health = await takeboardHealth(record.port, undefined, 1500);
       if (
-        health?.service === "takeboard-server" &&
+        (health?.service === "yoyotv-server" || health?.service === "takeboard-server") &&
         health.status === "ok" &&
         health.instanceId === instanceId
       ) {
@@ -72,7 +72,7 @@ export async function startService(bundleRoot, dataRoot, expectedInstanceId) {
     throw new Error("服务器身份变化，拒绝自动启动；请重新核实设备");
   if (initial.state === "running") return initial;
   if (initial.state === "busy")
-    throw new Error("已有 TakeBoard 进程但尚未就绪，请稍后重试或检查现有服务；不会重复启动");
+    throw new Error("已有 YoYoTV 进程但尚未就绪，请稍后重试或检查现有服务；不会重复启动");
   await mkdir(join(dataRoot, ".system"), { recursive: true, mode: 0o700 });
   // Server-side instance leasing serializes concurrent startup attempts. This
   // helper never stops an existing launcher or kills a PID read from disk.
@@ -84,7 +84,13 @@ export async function startService(bundleRoot, dataRoot, expectedInstanceId) {
       cwd: bundleRoot,
       detached: true,
       windowsHide: true,
-      env: { ...process.env, TAKEBOARD_DATA_ROOT: dataRoot, TAKEBOARD_DESKTOP: "0" },
+      env: {
+        ...process.env,
+        YOYOTV_DATA_ROOT: dataRoot,
+        TAKEBOARD_DATA_ROOT: dataRoot,
+        YOYOTV_DESKTOP: "0",
+        TAKEBOARD_DESKTOP: "0",
+      },
       stdio: ["ignore", log.fd, log.fd, "ipc"],
     });
     let launchError = null;
@@ -123,7 +129,11 @@ export async function startService(bundleRoot, dataRoot, expectedInstanceId) {
 
 if (isMainModule(import.meta.url)) {
   const bundleRoot = dirname(fileURLToPath(import.meta.url));
-  const dataRoot = resolve(process.env.TAKEBOARD_DATA_ROOT || join(homedir(), "TakeBoardData"));
+  const dataRoot = resolve(
+    process.env.YOYOTV_DATA_ROOT ||
+      process.env.TAKEBOARD_DATA_ROOT ||
+      join(homedir(), "YoYoTVData"),
+  );
   try {
     const action = process.argv[2];
     if (!["inspect", "start"].includes(action)) throw new Error("仅支持 inspect 或 start 操作");

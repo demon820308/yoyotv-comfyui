@@ -3,7 +3,7 @@ import { mkdir, open } from "node:fs/promises";
 import { freemem } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { promisify } from "node:util";
-import { ComfyClient } from "@takeboard/executor-comfy";
+import { ComfyClient } from "@yoyotv/executor-comfy";
 
 const execFile = promisify(execFileCallback);
 export const MiB = 1024 ** 2;
@@ -82,7 +82,7 @@ export function parseGpuPoolConfig(value: unknown): GpuPoolConfig {
 export const gpuRunner = `
 import os, sys, json, inspect, runpy, signal, asyncio, time
 from pathlib import Path
-cfg = json.loads(os.environ.pop("TAKEBOARD_GPU_LANE"))
+cfg = json.loads(os.environ.pop("YOYOTV_GPU_LANE", None) or os.environ.pop("TAKEBOARD_GPU_LANE", "{}"))
 # No CUDA initialization before the parent has durably recorded ownership.
 deadline = time.monotonic() + 15
 while not Path(cfg["permit"]).exists():
@@ -233,6 +233,14 @@ export class NvidiaGpuRuntime implements GpuRuntime {
         stdio: ["ignore", log.fd, log.fd],
         env: {
           ...process.env,
+          YOYOTV_GPU_LANE: JSON.stringify({
+            ...this.config,
+            port,
+            token,
+            directory,
+            permit,
+            memoryBytes: this.config.instanceMemoryMiB * MiB,
+          }),
           TAKEBOARD_GPU_LANE: JSON.stringify({
             ...this.config,
             port,

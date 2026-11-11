@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { useEffect, useRef } from "react";
 import { projectApi } from "./api";
 

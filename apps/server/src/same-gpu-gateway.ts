@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import multipart from "@fastify/multipart";
-import type { ComfyPrompt } from "@takeboard/executor-comfy";
+import type { ComfyPrompt } from "@yoyotv/executor-comfy";
 import Fastify from "fastify";
 import { WebSocket, WebSocketServer } from "ws";
 import type { SameGpuPool } from "./same-gpu-pool.js";
@@ -11,24 +11,30 @@ export function createGpuGateway(pool: SameGpuPool) {
   void app.register(multipart, { limits: { fileSize: 100 * 1024 * 1024, files: 1 } });
   app.addHook("onRequest", async (request, reply) => {
     if (request.headers.origin && request.headers.origin !== `http://${request.headers.host}`)
-      return reply.code(403).send({ error: "这个入口仅供 TakeBoard 服务端连接" });
+      return reply.code(403).send({ error: "这个入口仅供 YoYoTV 服务端连接" });
     const host = request.headers.host?.split(":")[0];
     if (host !== "127.0.0.1" && host !== "localhost")
       return reply.code(403).send({ error: "Invalid Host" });
   });
-  app.get("/takeboard/pool", async () => ({
-    service: "takeboard-gpu-pool",
+  const poolStatus = async () => ({
+    service: "yoyotv-gpu-pool",
     configured: true,
     ...pool.status(),
-  }));
-  app.post("/takeboard/pool/start", async () => {
+  });
+  app.get("/yoyotv/pool", poolStatus);
+  app.get("/takeboard/pool", poolStatus);
+  const startPool = async () => {
     await pool.start();
     return { started: true };
-  });
-  app.post("/takeboard/pool/stop", async () => {
+  };
+  app.post("/yoyotv/pool/start", startPool);
+  app.post("/takeboard/pool/start", startPool);
+  const stopPool = async () => {
     await pool.stop();
     return { stopped: true };
-  });
+  };
+  app.post("/yoyotv/pool/stop", stopPool);
+  app.post("/takeboard/pool/stop", stopPool);
   app.post("/upload/image", async (request, reply) => {
     const file = await request.file();
     if (!file) return reply.code(400).send({ error: "Missing input file" });

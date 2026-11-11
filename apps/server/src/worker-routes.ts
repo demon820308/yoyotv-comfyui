@@ -4,7 +4,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { arch, freemem } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { executionPolicySchema, workerDefinitionSchema } from "@takeboard/contracts";
+import { executionPolicySchema, workerDefinitionSchema } from "@yoyotv/contracts";
 import type { FastifyInstance } from "fastify";
 import { completionFor } from "./background-completion.js";
 import {
@@ -13,6 +13,7 @@ import {
   launcherConfigFromEnvironment,
 } from "./comfy-launcher.js";
 import { assertComfyIdle, recordInterruptedExit, stopOwnedIdleComfy } from "./comfy-lifecycle.js";
+import { getEnv } from "./env.js";
 import { atomicGpuJson } from "./same-gpu-pool.js";
 import { WorkerPool, WorkerSelectionError } from "./worker-pool.js";
 
@@ -512,7 +513,7 @@ export function registerWorkerRoutes(
     }
     if (
       candidate.data.transport === "direct_http" &&
-      process.env.TAKEBOARD_ALLOW_INSECURE_REMOTE_WORKER !== "1"
+      getEnv("ALLOW_INSECURE_REMOTE_WORKER") !== "1"
     ) {
       return await reply.code(400).send({
         error: "远程执行端必须使用 HTTPS；普通 HTTP 请先通过 SSH 映射到本机回环地址",
@@ -555,7 +556,7 @@ export function registerWorkerRoutes(
       if (
         (body.endpoint !== undefined || body.transport !== undefined) &&
         resultingTransport === "direct_http" &&
-        process.env.TAKEBOARD_ALLOW_INSECURE_REMOTE_WORKER !== "1"
+        getEnv("ALLOW_INSECURE_REMOTE_WORKER") !== "1"
       ) {
         return await reply.code(400).send({
           error: "远程执行端必须使用 HTTPS；普通 HTTP 请先通过 SSH 映射到本机回环地址",

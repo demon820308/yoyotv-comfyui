@@ -55,10 +55,10 @@ importers:
       '@fastify/static':
         specifier: 10.1.3
         version: 10.1.3
-      '@takeboard/identity':
+      '@yoyotv/identity':
         specifier: workspace:*
         version: link:../../packages/identity
-      '@takeboard/portal-protocol':
+      '@yoyotv/portal-protocol':
         specifier: workspace:*
         version: link:../../packages/portal-protocol
       better-sqlite3:
@@ -86,19 +86,19 @@ importers:
       '@fastify/static':
         specifier: 10.1.3
         version: 10.1.3
-      '@takeboard/contracts':
+      '@yoyotv/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@takeboard/domain':
+      '@yoyotv/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@takeboard/executor-comfy':
+      '@yoyotv/executor-comfy':
         specifier: workspace:*
         version: link:../../packages/executor-comfy
-      '@takeboard/identity':
+      '@yoyotv/identity':
         specifier: workspace:*
         version: link:../../packages/identity
-      '@takeboard/portal-protocol':
+      '@yoyotv/portal-protocol':
         specifier: workspace:*
         version: link:../../packages/portal-protocol
       better-sqlite3:
@@ -132,12 +132,12 @@ importers:
       '@react-three/fiber':
         specifier: 9.7.0
         version: 9.7.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(three@0.185.1)
-      '@takeboard/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       '@xyflow/react':
         specifier: 12.11.3
         version: 12.11.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@yoyotv/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -172,13 +172,13 @@ importers:
 
   packages/domain:
     dependencies:
-      '@takeboard/contracts':
+      '@yoyotv/contracts':
         specifier: workspace:*
         version: link:../contracts
 
   packages/executor-comfy:
     dependencies:
-      '@takeboard/contracts':
+      '@yoyotv/contracts':
         specifier: workspace:*
         version: link:../contracts
 

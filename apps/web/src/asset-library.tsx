@@ -1,4 +1,4 @@
-import type { Asset, CanvasItem, Entity, Shot, Take } from "@takeboard/contracts";
+import type { Asset, CanvasItem, Entity, Shot, Take } from "@yoyotv/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { projectApi } from "./api";
 import { assetDisplayNames, locateAsset } from "./asset-navigation";
@@ -1460,9 +1460,7 @@ export function AssetLibrary({
               <h3 id="asset-delete-dialog-title">从资产库移除素材</h3>
               <p>
                 确定要从项目资产库中移除“
-                <strong>
-                  {displayNames.get(assetToDelete.id) ?? assetToDelete.originalName}
-                </strong>
+                <strong>{displayNames.get(assetToDelete.id) ?? assetToDelete.originalName}</strong>
                 ”吗？
               </p>
               {locations.get(assetToDelete.id)?.state === "canvas" ? (
@@ -1471,11 +1469,7 @@ export function AssetLibrary({
                 </p>
               ) : null}
               <div className="asset-delete-dialog-actions">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setAssetToDelete(null)}
-                >
+                <button type="button" disabled={busy} onClick={() => setAssetToDelete(null)}>
                   取消
                 </button>
                 <button

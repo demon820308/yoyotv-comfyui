@@ -1,4 +1,4 @@
-import type { ProjectCommandPreview } from "@takeboard/contracts";
+import type { ProjectCommandPreview } from "@yoyotv/contracts";
 import { useEffect, useRef } from "react";
 
 export function CommandConfirmation({

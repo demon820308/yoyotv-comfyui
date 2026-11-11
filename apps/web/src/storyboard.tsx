@@ -7,7 +7,7 @@ import type {
   ProjectSnapshot,
   Shot,
   Take,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { extensionApi, projectApi } from "./api";
 import { LayerBackdrop } from "./layer-backdrop";

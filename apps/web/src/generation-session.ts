@@ -1,4 +1,4 @@
-import type { Run } from "@takeboard/contracts";
+import type { Run } from "@yoyotv/contracts";
 import type { GenerationProgress } from "./generation-model";
 
 type ProgressRun = Pick<Run, "id" | "shotId" | "status" | "parameters" | "createdAt">;

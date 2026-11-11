@@ -85,7 +85,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm desktop:prepare
       - name: Build preview installer (not a signed production release)
-        run: pnpm --filter @takeboard/desktop exec tauri build --bundles ${{ matrix.bundles }} --ci -- --locked
+        run: pnpm --filter @yoyotv/desktop exec tauri build --bundles ${{ matrix.bundles }} --ci -- --locked
         env:
           APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
       - name: Mount final DMG and verify runtime restart persistence
@@ -148,7 +148,7 @@ jobs:
       - name: Compile desktop host
         run: pnpm desktop:check
       - name: Build Debian installer
-        run: pnpm --filter @takeboard/desktop exec tauri build --bundles deb --ci -- --locked
+        run: pnpm --filter @yoyotv/desktop exec tauri build --bundles deb --ci -- --locked
       - name: Install the actual package
         run: sudo apt-get install -y ./apps/desktop/src-tauri/target/release/bundle/deb/*.deb
       - name: Verify native window and process ownership

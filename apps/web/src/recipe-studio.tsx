@@ -599,16 +599,23 @@ export function RecipeStudio({
                           borderRadius: "3px",
                           fontSize: "11px",
                           fontWeight: 600,
-                          backgroundColor: (workflow.trustSnapshot || workflow.origin === "built_in")
-                            ? "rgba(46, 160, 67, 0.15)"
-                            : "rgba(110, 118, 129, 0.15)",
-                          color: (workflow.trustSnapshot || workflow.origin === "built_in") ? "#3fb950" : "var(--muted)",
-                          border: (workflow.trustSnapshot || workflow.origin === "built_in")
-                            ? "1px solid rgba(46, 160, 67, 0.4)"
-                            : "1px solid var(--line)",
+                          backgroundColor:
+                            workflow.trustSnapshot || workflow.origin === "built_in"
+                              ? "rgba(46, 160, 67, 0.15)"
+                              : "rgba(110, 118, 129, 0.15)",
+                          color:
+                            workflow.trustSnapshot || workflow.origin === "built_in"
+                              ? "#3fb950"
+                              : "var(--muted)",
+                          border:
+                            workflow.trustSnapshot || workflow.origin === "built_in"
+                              ? "1px solid rgba(46, 160, 67, 0.4)"
+                              : "1px solid var(--line)",
                         }}
                       >
-                        {(workflow.trustSnapshot || workflow.origin === "built_in") ? "[内置]" : "[ComfyUI]"}
+                        {workflow.trustSnapshot || workflow.origin === "built_in"
+                          ? "[内置]"
+                          : "[ComfyUI]"}
                       </span>
                     </small>
                   </span>
@@ -818,32 +825,35 @@ export function RecipeStudio({
                         fontSize: "12px",
                         fontWeight: 600,
                         backgroundColor:
-                          (inspection.trustSnapshot ||
+                          inspection.trustSnapshot ||
                           inspection.status === "built_in" ||
                           workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
-                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
+                          workflows.find((item) => item.path === inspection.path)?.origin ===
+                            "built_in"
                             ? "rgba(46, 160, 67, 0.15)"
                             : "rgba(110, 118, 129, 0.15)",
                         color:
-                          (inspection.trustSnapshot ||
+                          inspection.trustSnapshot ||
                           inspection.status === "built_in" ||
                           workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
-                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
+                          workflows.find((item) => item.path === inspection.path)?.origin ===
+                            "built_in"
                             ? "#3fb950"
                             : "var(--muted)",
                         border:
-                          (inspection.trustSnapshot ||
+                          inspection.trustSnapshot ||
                           inspection.status === "built_in" ||
                           workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
-                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
+                          workflows.find((item) => item.path === inspection.path)?.origin ===
+                            "built_in"
                             ? "1px solid rgba(46, 160, 67, 0.4)"
                             : "1px solid var(--line)",
                       }}
                     >
-                      {(inspection.trustSnapshot ||
+                      {inspection.trustSnapshot ||
                       inspection.status === "built_in" ||
                       workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
-                      workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
+                      workflows.find((item) => item.path === inspection.path)?.origin === "built_in"
                         ? "[内置]"
                         : "[ComfyUI]"}
                     </span>

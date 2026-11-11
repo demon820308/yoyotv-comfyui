@@ -1,4 +1,4 @@
-import type { ProjectCommand, ProjectCommandPreview } from "@takeboard/contracts";
+import type { ProjectCommand, ProjectCommandPreview } from "@yoyotv/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type CommandResponse, projectApi } from "./api";
 

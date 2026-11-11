@@ -1,4 +1,4 @@
-import type { Asset, Run } from "@takeboard/contracts";
+import type { Asset, Run } from "@yoyotv/contracts";
 
 export function recordedInputLabel(slot: string, outputType?: Asset["mediaType"]) {
   if (slot === "first_frame" || slot === "start_image")

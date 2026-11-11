@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { useEffect, useMemo, useReducer } from "react";
 import type { DemoPayload } from "./api";
 import {

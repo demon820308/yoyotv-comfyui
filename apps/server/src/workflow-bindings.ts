@@ -7,7 +7,8 @@ import {
   convertUiWorkflowToPrompt,
   inspectPromptInputs,
   type UiWorkflow,
-} from "@takeboard/executor-comfy";
+} from "@yoyotv/executor-comfy";
+import { getEnv } from "./env.js";
 import { WorkflowExecutionError } from "./workflow-errors.js";
 
 export const workflowBindingVersion = 1 as const;
@@ -114,8 +115,9 @@ const legacyBindingProposalPath = (path: string) =>
   `takeboard/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
 
 export function findTrustWorkflowDir(startDir: string = process.cwd()): string | null {
-  if (process.env.TAKEBOARD_TRUST_WORKFLOW_DIR) {
-    return resolve(process.env.TAKEBOARD_TRUST_WORKFLOW_DIR);
+  const configuredTrust = getEnv("TRUST_WORKFLOW_DIR");
+  if (configuredTrust) {
+    return resolve(configuredTrust);
   }
   if (process.env.NODE_ENV === "test" || process.env.VITEST) {
     return null;
@@ -128,8 +130,9 @@ export function findTrustWorkflowDir(startDir: string = process.cwd()): string |
     if (parent === current) break;
     current = parent;
   }
-  if (process.env.TAKEBOARD_DATA_ROOT) {
-    const dataRoot = resolve(process.env.TAKEBOARD_DATA_ROOT);
+  const configuredData = getEnv("DATA_ROOT");
+  if (configuredData) {
+    const dataRoot = resolve(configuredData);
     const base = basename(dataRoot).toLowerCase() === "projects" ? dirname(dataRoot) : dataRoot;
     return join(base, "Trust-Workflow");
   }

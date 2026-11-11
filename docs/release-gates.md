@@ -77,7 +77,7 @@ pnpm compatibility:matrix -- --check
 ```bash
 pnpm desktop:prepare
 pnpm desktop:check
-pnpm --filter @takeboard/desktop exec tauri build --bundles deb --ci -- --locked
+pnpm --filter @yoyotv/desktop exec tauri build --bundles deb --ci -- --locked
 sudo apt-get install -y ./apps/desktop/src-tauri/target/release/bundle/deb/*.deb
 TAKEBOARD_DESKTOP_SMOKE=1 xvfb-run -a -s '-screen 0 1600x1000x24' \
   dbus-run-session -- node scripts/verify-linux-desktop.mjs

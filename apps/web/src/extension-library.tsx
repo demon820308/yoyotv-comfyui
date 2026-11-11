@@ -3,7 +3,7 @@ import type {
   ExtensionManifest,
   ExtensionQcIssue,
   InstalledExtension,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extensionApi } from "./api";
 

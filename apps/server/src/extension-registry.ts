@@ -10,8 +10,8 @@ import {
   type InstalledExtension,
   installedExtensionSchema,
   type ProjectSnapshot,
-} from "@takeboard/contracts";
-import { toIsoTimestamp } from "@takeboard/domain";
+} from "@yoyotv/contracts";
+import { toIsoTimestamp } from "@yoyotv/domain";
 
 type ExtensionFile = { version: 1; extensions: InstalledExtension[] };
 

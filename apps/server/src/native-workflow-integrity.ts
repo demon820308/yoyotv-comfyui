@@ -1,4 +1,4 @@
-import { nativeRecipePrompt } from "@takeboard/executor-comfy";
+import { nativeRecipePrompt } from "@yoyotv/executor-comfy";
 import { workflowHash } from "./workflow-bindings.js";
 import { WorkflowExecutionError } from "./workflow-errors.js";
 

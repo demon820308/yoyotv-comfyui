@@ -35,8 +35,12 @@ const webBuild = join(repoDir, "apps", "web", "dist", "index.html");
 if (platform() !== "win32") process.umask(0o077);
 
 function readUserConfiguration() {
+  const defaultYoyoConfig = join(homedir(), ".config", "yoyotv", "env");
+  const defaultTakeboardConfig = join(homedir(), ".config", "takeboard", "env");
   const configFile =
-    process.env.TAKEBOARD_CONFIG_FILE || join(homedir(), ".config", "takeboard", "env");
+    process.env.YOYOTV_CONFIG_FILE ||
+    process.env.TAKEBOARD_CONFIG_FILE ||
+    (existsSync(defaultYoyoConfig) ? defaultYoyoConfig : defaultTakeboardConfig);
   try {
     const values = {};
     for (const sourceLine of readFileSync(configFile, "utf8").split(/\r?\n/)) {
@@ -60,8 +64,12 @@ function readUserConfiguration() {
 const userConfiguration = readUserConfiguration();
 const runtimeEnvironment = { ...userConfiguration, ...process.env };
 
+function getRuntimeEnv(key, fallback = undefined) {
+  return runtimeEnvironment[`YOYOTV_${key}`] ?? runtimeEnvironment[`TAKEBOARD_${key}`] ?? fallback;
+}
+
 function dataRoot() {
-  const configured = runtimeEnvironment.TAKEBOARD_DATA_ROOT || defaultDataRoot;
+  const configured = getRuntimeEnv("DATA_ROOT", defaultDataRoot);
   if (configured === "~") return homedir();
   if (configured.startsWith("~/") || configured.startsWith("~\\")) {
     return resolve(homedir(), configured.slice(2));
@@ -214,7 +222,7 @@ async function healthPayload(port, timeout = 1_500) {
 async function health(port, timeout = 1_500, expectedInstanceId = null) {
   const payload = await healthPayload(port, timeout);
   return (
-    payload?.service === "takeboard-server" &&
+    (payload?.service === "yoyotv-server" || payload?.service === "takeboard-server") &&
     (!expectedInstanceId || payload?.instanceId === expectedInstanceId)
   );
 }
@@ -298,7 +306,7 @@ async function setup(lockHeld = false) {
 
 async function startUnlocked() {
   if (!(await dataRootWritable())) {
-    throw new Error(`项目目录不可写：${dataRoot()}。请检查目录权限或修改 TAKEBOARD_DATA_ROOT`);
+    throw new Error(`项目目录不可写：${dataRoot()}。请检查目录权限或修改 YOYOTV_DATA_ROOT`);
   }
   const instanceId = persistentInstanceId();
   const existing = readState();
@@ -308,7 +316,8 @@ async function startUnlocked() {
       : null;
   const ownedInstanceRunning = Boolean(
     existing?.instanceId &&
-      existingHealth?.service === "takeboard-server" &&
+      (existingHealth?.service === "yoyotv-server" ||
+        existingHealth?.service === "takeboard-server") &&
       existingHealth.instanceId === existing.instanceId,
   );
   if (existing && processAlive(existing.pid) && !ownedInstanceRunning) {
@@ -318,7 +327,7 @@ async function startUnlocked() {
   }
   if (ownedInstanceRunning && existing?.instanceId !== instanceId) {
     throw new Error(
-      "简易启动器正在管理另一个项目目录。请先运行 npm run easy:stop，再切换 TAKEBOARD_DATA_ROOT。",
+      "简易启动器正在管理另一个项目目录。请先运行 npm run easy:stop，再切换 YOYOTV_DATA_ROOT。",
     );
   }
   const needsInstall = installOutdated();
@@ -354,7 +363,7 @@ async function startUnlocked() {
     console.log("检测到代码更新，正在自动构建最新版本…");
     run(manager.command, [...manager.prefix, "build"]);
   }
-  const configuredPort = runtimeEnvironment.TAKEBOARD_PORT;
+  const configuredPort = getRuntimeEnv("PORT");
   const portCandidates = configuredPort
     ? [Number(configuredPort)]
     : Array.from({ length: 20 }, (_, index) => 48120 + index);
@@ -363,7 +372,7 @@ async function startUnlocked() {
       (candidate) => !Number.isSafeInteger(candidate) || candidate < 1 || candidate > 65535,
     )
   ) {
-    throw new Error("TAKEBOARD_PORT 必须是 1–65535 的有效端口");
+    throw new Error("YOYOTV_PORT 必须是 1–65535 的有效端口");
   }
   let port = null;
   try {
@@ -380,7 +389,10 @@ async function startUnlocked() {
   }
   for (const candidate of portCandidates) {
     const running = await healthPayload(candidate);
-    if (running?.service === "takeboard-server" && running?.instanceId === instanceId) {
+    if (
+      (running?.service === "yoyotv-server" || running?.service === "takeboard-server") &&
+      running?.instanceId === instanceId
+    ) {
       if (running.version !== applicationVersion) {
         throw new Error(
           `同一项目目录已有 YoYoTV ${running.version ?? "未知版本"} 在 ${candidate} 端口运行；请先从原启动方式停止，再启动 ${applicationVersion}`,
@@ -418,10 +430,15 @@ async function startUnlocked() {
     stdio: ["ignore", log, log],
     env: {
       ...runtimeEnvironment,
+      YOYOTV_HOST: "127.0.0.1",
       TAKEBOARD_HOST: "127.0.0.1",
+      YOYOTV_PORT: String(port),
       TAKEBOARD_PORT: String(port),
+      YOYOTV_INSTANCE_ID: instanceId,
       TAKEBOARD_INSTANCE_ID: instanceId,
+      YOYOTV_DATA_ROOT: dataRoot(),
       TAKEBOARD_DATA_ROOT: dataRoot(),
+      YOYOTV_WEB_ROOT: join(repoDir, "apps", "web", "dist"),
       TAKEBOARD_WEB_ROOT: join(repoDir, "apps", "web", "dist"),
     },
   });
@@ -523,13 +540,14 @@ async function doctor() {
   checks.push([
     await dataRootWritable(),
     `项目目录 ${dataRoot()}`,
-    "检查目录权限，或在配置中修改 TAKEBOARD_DATA_ROOT",
+    "检查目录权限，或在配置中修改 YOYOTV_DATA_ROOT",
   ]);
   const state = readState();
   const instanceId = persistentInstanceId();
   const defaultPorts = Array.from({ length: 20 }, (_, index) => 48120 + index);
+  const configuredPort = getRuntimeEnv("PORT");
   const discoveredPort = await findTakeBoard(
-    runtimeEnvironment.TAKEBOARD_PORT ? [Number(runtimeEnvironment.TAKEBOARD_PORT)] : defaultPorts,
+    configuredPort ? [Number(configuredPort)] : defaultPorts,
     instanceId,
   );
   checks.push([
@@ -565,7 +583,7 @@ async function remote(host) {
   }
   const target = validateRemoteHost(host || profiles[0]?.host);
   const previous = profiles.find((entry) => entry.host === target);
-  const configuredRemotePort = runtimeEnvironment.TAKEBOARD_REMOTE_PORT;
+  const configuredRemotePort = getRuntimeEnv("REMOTE_PORT");
   const remoteTakeBoardPorts = configuredRemotePort
     ? [Number(configuredRemotePort)]
     : Array.from({ length: 20 }, (_, index) => 48120 + index);
@@ -661,7 +679,7 @@ async function restore(archive, confirmation) {
   ) {
     throw new Error("YoYoTV 仍在运行。请先执行 npm run easy:stop，再进行离线恢复");
   }
-  const configuredPort = Number(runtimeEnvironment.TAKEBOARD_PORT);
+  const configuredPort = Number(getRuntimeEnv("PORT"));
   const candidatePorts = Number.isSafeInteger(configuredPort)
     ? [configuredPort]
     : Array.from({ length: 20 }, (_, index) => 48120 + index);
@@ -683,10 +701,7 @@ async function restore(archive, confirmation) {
   const { resolveAuthDatabasePath } = await import(
     pathToFileURL(join(repoDir, "apps", "server", "dist", "auth-database-path.js")).href
   );
-  const authDatabase = resolveAuthDatabasePath(
-    dataRoot(),
-    runtimeEnvironment.TAKEBOARD_AUTH_DATABASE,
-  );
+  const authDatabase = resolveAuthDatabasePath(dataRoot(), getRuntimeEnv("AUTH_DATABASE"));
   console.log("正在隔离解包并验证所有哈希、身份数据库和项目数据库…");
   const receipt = await module.restoreInstanceOffline(dataRoot(), source, authDatabase);
   console.log(`恢复完成：${receipt.projects} 个项目、${receipt.users} 个账号。`);

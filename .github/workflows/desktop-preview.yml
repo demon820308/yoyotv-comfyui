@@ -58,7 +58,7 @@ jobs:
         env:
           TAKEBOARD_DESKTOP_TARGET: ${{ matrix.rust_target }}
       - name: Compile and bundle desktop app
-        run: pnpm --filter @takeboard/desktop exec tauri build --verbose --target ${{ matrix.rust_target }} --bundles ${{ matrix.bundles }} --ci -- --locked
+        run: pnpm --filter @yoyotv/desktop exec tauri build --verbose --target ${{ matrix.rust_target }} --bundles ${{ matrix.bundles }} --ci -- --locked
         env:
           APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
       - name: Verify runtime from the final macOS disk image

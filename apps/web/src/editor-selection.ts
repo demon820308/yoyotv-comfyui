@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 
 export type EdgeIdentity = Pick<
   ProjectSnapshot["canvasEdges"][number],

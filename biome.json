@@ -17,7 +17,8 @@
       "!**/*.yoyotv",
       "!**/*.takeboard",
       "!**/.yoyotv-data",
-      "!**/.takeboard-data"
+      "!**/.takeboard-data",
+      "!Trust-Workflow"
     ]
   },
   "formatter": {

@@ -1,4 +1,4 @@
-import type { PortalConnectorStatus, RemoteAccessStatus } from "@takeboard/contracts";
+import type { PortalConnectorStatus, RemoteAccessStatus } from "@yoyotv/contracts";
 import { useCallback, useEffect, useState } from "react";
 import { authApi } from "./api";
 

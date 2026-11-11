@@ -1,4 +1,4 @@
-import type { Asset, ProjectSnapshot, Run } from "@takeboard/contracts";
+import type { Asset, ProjectSnapshot, Run } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import { assetDisplayNames, locateAsset } from "./asset-navigation";
 import { recordedPromptParts } from "./recorded-prompt";

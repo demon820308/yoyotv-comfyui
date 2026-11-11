@@ -12,7 +12,11 @@ import { verifyNativeSettings } from "./verify-linux-settings.mjs";
 
 assert.equal(process.platform, "linux");
 assert.notEqual(process.getuid(), 0, "Desktop smoke must run as an ordinary user");
-assert.equal(process.env.TAKEBOARD_DESKTOP_SMOKE, "1", "Requires an explicitly disposable session");
+assert.equal(
+  process.env.YOYOTV_DESKTOP_SMOKE || process.env.TAKEBOARD_DESKTOP_SMOKE,
+  "1",
+  "Requires an explicitly disposable session",
+);
 // Xlib cannot match Chinese window titles under the minimal container's C locale.
 process.env.LC_ALL = "C.UTF-8";
 assert.ok(
@@ -22,7 +26,7 @@ assert.ok(
 for (const command of ["openbox", "xprop", "xdotool", "import", "convert"]) {
   execFileSync("which", [command], { stdio: "pipe" });
 }
-const dataRoot = join(homedir(), "TakeBoardData");
+const dataRoot = join(homedir(), "YoYoTVData");
 assert.ok(!existsSync(dataRoot), "Refusing to touch an existing TakeBoardData directory");
 const executable = resolve(process.argv[2] ?? "/usr/bin/takeboard-desktop");
 const launcher = resolve(process.argv[3] ?? "/usr/lib/TakeBoard/TakeBoard/launcher.mjs");
@@ -87,7 +91,8 @@ async function ready(entry) {
     assert.ok(running(entry), entry.log || String(entry.error));
     const record = JSON.parse(await readFile(join(dataRoot, ".system/instance.json"), "utf8"));
     const status = await health(record.port);
-    return status?.service === "takeboard-server" && status.instanceId === record.instanceId
+    return (status?.service === "yoyotv-server" || status?.service === "takeboard-server") &&
+      status.instanceId === record.instanceId
       ? record
       : null;
   });
@@ -207,7 +212,9 @@ try {
     join(dirname(executable), "takeboard-node"),
     [launcher, "start", "--no-open"],
     {
+      YOYOTV_DATA_ROOT: dataRoot,
       TAKEBOARD_DATA_ROOT: dataRoot,
+      YOYOTV_PORT: String(await vacantPort()),
       TAKEBOARD_PORT: String(await vacantPort()),
     },
   );
@@ -257,7 +264,12 @@ try {
   const crashedLauncher = start(
     join(dirname(executable), "takeboard-node"),
     [launcher, "start", "--no-open"],
-    { TAKEBOARD_DATA_ROOT: dataRoot, TAKEBOARD_PORT: String(await vacantPort()) },
+    {
+      YOYOTV_DATA_ROOT: dataRoot,
+      TAKEBOARD_DATA_ROOT: dataRoot,
+      YOYOTV_PORT: String(await vacantPort()),
+      TAKEBOARD_PORT: String(await vacantPort()),
+    },
   );
   const orphanRecord = await ready(crashedLauncher);
   crashedLauncher.child.kill("SIGKILL");

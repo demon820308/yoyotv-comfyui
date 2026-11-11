@@ -8,7 +8,7 @@ import {
   portalProtocolVersion,
   portalToConnectorSchema,
   relayHeaders,
-} from "@takeboard/portal-protocol";
+} from "@yoyotv/portal-protocol";
 import WebSocket from "ws";
 import type { AuthService } from "./auth-service.js";
 

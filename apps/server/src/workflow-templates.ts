@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
-import type { RecommendedWorkflowTemplate, WorkflowDiagnostic } from "@takeboard/contracts";
+import type { RecommendedWorkflowTemplate, WorkflowDiagnostic } from "@yoyotv/contracts";
 import {
   type ComfyObjectInfo,
   type ComfyPrompt,
   nativeRecipePrompt,
   nativeRecipes,
-} from "@takeboard/executor-comfy";
+} from "@yoyotv/executor-comfy";
 import type { FastifyInstance } from "fastify";
 import { fetchComfyObjectInfo, workflowHash } from "./workflow-bindings.js";
 import { readWorkflowLibraryEntry, updateWorkflowLibraryEntry } from "./workflow-library.js";

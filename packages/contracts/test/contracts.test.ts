@@ -39,6 +39,13 @@ describe("healthResponseSchema", () => {
   it("accepts a valid local service response", () => {
     expect(
       healthResponseSchema.parse({
+        service: "yoyotv-server",
+        status: "ok",
+        version: schemaVersion,
+      }),
+    ).toEqual({ service: "yoyotv-server", status: "ok", version: schemaVersion });
+    expect(
+      healthResponseSchema.parse({
         service: "takeboard-server",
         status: "ok",
         version: schemaVersion,

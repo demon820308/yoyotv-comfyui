@@ -6,7 +6,7 @@ import {
   type ComfyPrompt,
   nativeRecipeForPath,
   nativeRecipePrompt,
-} from "@takeboard/executor-comfy";
+} from "@yoyotv/executor-comfy";
 import type { FastifyInstance } from "fastify";
 import { projectDirectory } from "./project-locations.js";
 import { ProjectStore } from "./storage/project-store.js";
@@ -187,9 +187,7 @@ function detectInputs(capability: Capability, nodes: WorkflowNode[]) {
         node.type === "VAEEncodeForInpaint" ||
         node.outputs?.some(
           (output) =>
-            output.name === "MASK" &&
-            Array.isArray(output.links) &&
-            output.links.length > 0,
+            output.name === "MASK" && Array.isArray(output.links) && output.links.length > 0,
         ),
     )
   ) {
@@ -362,9 +360,7 @@ function workflowSummary(
       node.type === "VAEEncodeForInpaint" ||
       node.outputs?.some(
         (output) =>
-          output.name === "MASK" &&
-          Array.isArray(output.links) &&
-          output.links.length > 0,
+          output.name === "MASK" && Array.isArray(output.links) && output.links.length > 0,
       ),
   );
   if (usesMask && inputs.includes("first_frame") && !inputs.includes("mask")) {
@@ -430,19 +426,20 @@ function workflowSummary(
       : activeBinding
         ? ("bound" as const)
         : ("comfy_only" as const),
-    bindingStatus: native || Boolean(trustSnapshot)
-      ? ("built_in" as const)
-      : activeBinding
-        ? ("ready" as const)
-        : binding
-          ? ("stale" as const)
-          : ("needs_binding" as const),
+    bindingStatus:
+      native || trustSnapshot
+        ? ("built_in" as const)
+        : activeBinding
+          ? ("ready" as const)
+          : binding
+            ? ("stale" as const)
+            : ("needs_binding" as const),
     workflowHash: hash,
     origin:
       path.startsWith("Kino/") ||
       path.startsWith("Trust-Workflow/") ||
       path.startsWith("YoYo/") ||
-      Boolean(trustSnapshot)
+      trustSnapshot
         ? ("built_in" as const)
         : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
           ? ("imported" as const)
@@ -741,7 +738,7 @@ export function registerWorkflowRoutes(
           ]);
           let libraryError: string | undefined;
           const library = await readWorkflowLibraryEntry(endpoint, path).catch(
-            (error: unknown): import("@takeboard/contracts").WorkflowLibraryEntry => {
+            (error: unknown): import("@yoyotv/contracts").WorkflowLibraryEntry => {
               libraryError = error instanceof Error ? error.message : "列表偏好读取失败";
               return { included: false };
             },

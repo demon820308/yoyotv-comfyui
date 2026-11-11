@@ -1,7 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { bundledExtensionIds, ExtensionRegistry } from "../src/extension-registry.js";
 

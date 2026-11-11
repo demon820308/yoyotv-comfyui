@@ -1,4 +1,4 @@
-import type { ProjectSnapshot, Run, Shot } from "@takeboard/contracts";
+import type { ProjectSnapshot, Run, Shot } from "@yoyotv/contracts";
 import { describe, expect, it } from "vitest";
 import { compileMiniMaxH3Mentions } from "./canvas-projection";
 import {
@@ -144,9 +144,9 @@ describe("generation input and ownership boundaries", () => {
     expect(togglePromptMention("女孩在海边", "亚也-三视图")).toBe("女孩在海边 @亚也-三视图 ");
 
     // Toggle inserts at cursor if provided
-    expect(
-      togglePromptMention("【角色】(含面部立绘)", "亚也-三视图", 4),
-    ).toBe("【角色】 @亚也-三视图 (含面部立绘)");
+    expect(togglePromptMention("【角色】(含面部立绘)", "亚也-三视图", 4)).toBe(
+      "【角色】 @亚也-三视图 (含面部立绘)",
+    );
 
     // Splits into highlighted mention segments
     expect(splitPromptMentionSegments(original, ["亚也-三视图", "公交车进站"])).toEqual([

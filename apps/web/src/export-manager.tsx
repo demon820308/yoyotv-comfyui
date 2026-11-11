@@ -1,4 +1,4 @@
-import type { Asset, ProjectSnapshot, Shot, Take } from "@takeboard/contracts";
+import type { Asset, ProjectSnapshot, Shot, Take } from "@yoyotv/contracts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { projectApi } from "./api";
 import { LayerBackdrop } from "./layer-backdrop";

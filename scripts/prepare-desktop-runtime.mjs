@@ -102,7 +102,7 @@ async function main() {
   runPnpm([
     "--config.node-linker=hoisted",
     "--filter",
-    "@takeboard/server",
+    "@yoyotv/server",
     "deploy",
     "--prod",
     serverRoot,

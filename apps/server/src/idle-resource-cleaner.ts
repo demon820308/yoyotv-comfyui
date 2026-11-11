@@ -1,4 +1,4 @@
-import type { ComfyClient } from "@takeboard/executor-comfy";
+import type { ComfyClient } from "@yoyotv/executor-comfy";
 
 /** Only watch endpoints on which TakeBoard just finished work. Never stop processes. */
 export class IdleResourceCleaner {

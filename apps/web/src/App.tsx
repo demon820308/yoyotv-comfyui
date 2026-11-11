@@ -18,7 +18,7 @@ import type {
   ProjectCommand,
   ProjectCommandPreview,
   Shot,
-} from "@takeboard/contracts";
+} from "@yoyotv/contracts";
 import {
   lazy,
   type MouseEvent as ReactMouseEvent,
@@ -94,7 +94,9 @@ const ExtensionLibrary = lazy(() =>
 const OperationsCenter = lazy(() =>
   import("./operations-center").then((module) => ({ default: module.OperationsCenter })),
 );
+
 import { MaskEditor } from "./mask-editor";
+
 const ProjectHub = lazy(() =>
   import("./project-hub").then((module) => ({ default: module.ProjectHub })),
 );
@@ -1591,9 +1593,7 @@ export function App() {
           return {
             ...current,
             assets: current.assets.filter((candidate) => candidate.id !== assetId),
-            canvasItems: current.canvasItems.filter(
-              (item) => !canvasItemIdsToRemove.has(item.id),
-            ),
+            canvasItems: current.canvasItems.filter((item) => !canvasItemIdsToRemove.has(item.id)),
             canvasEdges: current.canvasEdges.filter(
               (edge) =>
                 !canvasItemIdsToRemove.has(edge.sourceItemId) &&
@@ -3598,11 +3598,7 @@ export function App() {
             imageName={maskEditorAsset.originalName}
             maskUrl={
               maskEditorAsset.maskPath
-                ? projectApi.assetMaskUrl(
-                    projectKey,
-                    maskEditorAsset.id,
-                    maskEditorAsset.updatedAt,
-                  )
+                ? projectApi.assetMaskUrl(projectKey, maskEditorAsset.id, maskEditorAsset.updatedAt)
                 : undefined
             }
             onClose={() => setMaskEditorAsset(null)}

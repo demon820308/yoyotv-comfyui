@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import { expect, test } from "./fixtures";
 
 test("canvas shortcuts preserve input composition, duplicate, undo, redo and cut without losing content", async ({

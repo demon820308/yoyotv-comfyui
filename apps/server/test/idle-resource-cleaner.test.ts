@@ -1,4 +1,4 @@
-import { ComfyClient } from "@takeboard/executor-comfy";
+import { ComfyClient } from "@yoyotv/executor-comfy";
 import { describe, expect, it, vi } from "vitest";
 import { IdleResourceCleaner } from "../src/idle-resource-cleaner.js";
 

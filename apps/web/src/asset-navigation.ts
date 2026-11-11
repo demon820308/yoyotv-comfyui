@@ -1,4 +1,4 @@
-import type { Asset, ProjectSnapshot } from "@takeboard/contracts";
+import type { Asset, ProjectSnapshot } from "@yoyotv/contracts";
 
 type AssetContext = Pick<ProjectSnapshot, "canvasItems" | "entities" | "shots" | "takes">;
 export type AssetLocation = { itemId: string; takeId?: string; state: "canvas" | "result" };

@@ -1,4 +1,4 @@
-import type { Asset, Run, Take } from "@takeboard/contracts";
+import type { Asset, Run, Take } from "@yoyotv/contracts";
 import { useState } from "react";
 import { projectApi } from "./api";
 import { DetailMedia } from "./detail-media";

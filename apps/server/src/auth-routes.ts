@@ -3,9 +3,10 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
-import type { Account, AuthStatus, InstanceRole, ProjectRole } from "@takeboard/contracts";
+import type { Account, AuthStatus, InstanceRole, ProjectRole } from "@yoyotv/contracts";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { type AuthMode, AuthService } from "./auth-service.js";
+import { getEnv } from "./env.js";
 import {
   applyStagedProjectRestore,
   createInstanceBackup,
@@ -169,7 +170,7 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions) {
     options.mode === "off" ? ":memory:" : options.databasePath,
     options.mode,
   );
-  const secureCookies = options.secureCookies ?? process.env.TAKEBOARD_SECURE_COOKIES === "1";
+  const secureCookies = options.secureCookies ?? getEnv("SECURE_COOKIES") === "1";
   const sessionCookieName = auth.sessionCookieName;
   const accountsEnabled = options.mode === "required" || options.mode === "optional";
   function localAvailable(request: FastifyRequest) {

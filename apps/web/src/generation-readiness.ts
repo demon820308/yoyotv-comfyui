@@ -1,4 +1,4 @@
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import type { WorkflowSummary } from "./api";
 import type { GenerationSettings } from "./generation-model";
 import { generationStepPolicy, type modelProfile } from "./model-profiles";
@@ -36,7 +36,8 @@ export function generationProblem({
   if (!availability.ready) return `工作流${availability.label}：${availability.reason}`;
   const isUpscale = ["upscale_image", "upscale_video"].includes(selectedWorkflow.capability);
   const isMaskWorkflow = selectedWorkflow.inputs.includes("mask");
-  if (!isUpscale && !isMaskWorkflow && !generationSettings.prompt.trim()) return "请先输入镜头提示词";
+  if (!isUpscale && !isMaskWorkflow && !generationSettings.prompt.trim())
+    return "请先输入镜头提示词";
   if (selectedWorkflow.inputs.includes("first_frame") && !firstFrameAvailable) {
     return ["image_to_image", "upscale_image"].includes(selectedWorkflow.capability)
       ? "请连接一张源图"

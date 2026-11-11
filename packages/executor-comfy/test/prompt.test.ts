@@ -46,7 +46,12 @@ describe("generic ComfyUI workflow conversion", () => {
     const prompt = convertUiWorkflowToPrompt({
       nodes: [
         { id: 1, type: "LoadImage", inputs: [], widgets_values: ["source.png"] },
-        { id: 2, type: "SetNode", inputs: [{ name: "IMAGE", link: 10 }], widgets_values: ["image"] },
+        {
+          id: 2,
+          type: "SetNode",
+          inputs: [{ name: "IMAGE", link: 10 }],
+          widgets_values: ["image"],
+        },
         { id: 3, type: "GetNode", inputs: [], widgets_values: ["image"] },
         { id: 4, type: "PreviewImage", inputs: [{ name: "images", link: 11 }] },
         { id: 5, type: "孤海注释", inputs: [], widgets_values: null },

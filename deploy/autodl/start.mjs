@@ -56,7 +56,8 @@ export function cloudEnvironment(config, inherited = process.env) {
   // Do not inherit desktop/dev-machine bindings or credentials into a cloud instance.
   const env = Object.fromEntries(
     Object.entries(inherited).filter(
-      ([key]) => !key.startsWith("TAKEBOARD_") && !key.startsWith("COMFY_"),
+      ([key]) =>
+        !key.startsWith("TAKEBOARD_") && !key.startsWith("YOYOTV_") && !key.startsWith("COMFY_"),
     ),
   );
   const loopback = (value) =>
@@ -68,17 +69,29 @@ export function cloudEnvironment(config, inherited = process.env) {
     NODE_ENV: "production",
     NO_PROXY: loopback(inherited.NO_PROXY),
     no_proxy: loopback(inherited.no_proxy),
+    YOYOTV_HOST: mode === "https" ? "0.0.0.0" : "127.0.0.1",
     TAKEBOARD_HOST: mode === "https" ? "0.0.0.0" : "127.0.0.1",
+    YOYOTV_PORT: String(port),
     TAKEBOARD_PORT: String(port),
+    YOYOTV_AUTH_MODE: "required",
     TAKEBOARD_AUTH_MODE: "required",
+    YOYOTV_ALLOW_NON_LOOPBACK: mode === "https" ? "1" : "0",
     TAKEBOARD_ALLOW_NON_LOOPBACK: mode === "https" ? "1" : "0",
+    YOYOTV_SECURE_COOKIES: mode === "https" ? "1" : "0",
     TAKEBOARD_SECURE_COOKIES: mode === "https" ? "1" : "0",
+    YOYOTV_ALLOWED_HOSTS: publicUrl?.host ?? "",
     TAKEBOARD_ALLOWED_HOSTS: publicUrl?.host ?? "",
+    YOYOTV_ALLOWED_ORIGINS: publicUrl?.origin ?? "",
     TAKEBOARD_ALLOWED_ORIGINS: publicUrl?.origin ?? "",
+    YOYOTV_PUBLIC_URL: publicUrl?.origin ?? "",
     TAKEBOARD_PUBLIC_URL: publicUrl?.origin ?? "",
-    TAKEBOARD_INSTANCE_NAME: "TakeBoard · AutoDL",
+    YOYOTV_INSTANCE_NAME: "YoYoTV · AutoDL",
+    TAKEBOARD_INSTANCE_NAME: "YoYoTV · AutoDL",
+    YOYOTV_DATA_ROOT: join(dataRoot, "projects"),
     TAKEBOARD_DATA_ROOT: join(dataRoot, "projects"),
+    YOYOTV_AUTH_DATABASE: join(dataRoot, "identity", "auth.db"),
     TAKEBOARD_AUTH_DATABASE: join(dataRoot, "identity", "auth.db"),
+    YOYOTV_WEB_ROOT: resolve(config.webRoot),
     TAKEBOARD_WEB_ROOT: resolve(config.webRoot),
     COMFY_URL: "http://127.0.0.1:8188",
     COMFY_EDITOR_URL: "",
@@ -163,7 +176,8 @@ export async function start(configFile) {
     await mkdir(join(config.dataRoot, suffix), { recursive: true, mode: 0o700 });
   await seedWorkflows(config.dataRoot);
   for (const key of Object.keys(process.env))
-    if (key.startsWith("TAKEBOARD_") || key.startsWith("COMFY_")) delete process.env[key];
+    if (key.startsWith("TAKEBOARD_") || key.startsWith("YOYOTV_") || key.startsWith("COMFY_"))
+      delete process.env[key];
   Object.assign(process.env, env);
   await import(pathToFileURL(join(config.appRoot, "dist/index.js")).href);
 }

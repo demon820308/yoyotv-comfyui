@@ -129,11 +129,14 @@ export async function verifyConnection(input, signal) {
       await reader.cancel();
     }
     const health = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    const service = target.kind === "portal" ? "takeboard-portal" : "takeboard-server";
-    if (health.service !== service || health.status !== "ok")
-      throw new Error("此地址不是所选类型的 TakeBoard 服务");
+    const isPortal = target.kind === "portal";
+    const serviceValid = isPortal
+      ? health.service === "yoyotv-portal" || health.service === "takeboard-portal"
+      : health.service === "yoyotv-server" || health.service === "takeboard-server";
+    if (!serviceValid || health.status !== "ok")
+      throw new Error("此地址不是所选类型的 YoYoTV 服务");
     if (target.kind !== "portal" && (typeof health.instanceId !== "string" || !health.instanceId))
-      throw new Error("服务器缺少持久实例标识，请先更新并通过 TakeBoard 启动器运行");
+      throw new Error("服务器缺少持久实例标识，请先更新并通过 YoYoTV 启动器运行");
     connection = {
       url: target.address,
       instanceId: target.kind === "portal" ? target.address : health.instanceId,

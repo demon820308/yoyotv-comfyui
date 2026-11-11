@@ -1,4 +1,4 @@
-import type { RecommendedWorkflowTemplate } from "@takeboard/contracts";
+import type { RecommendedWorkflowTemplate } from "@yoyotv/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { workflowApi } from "./api";
 import { workflowCheckGuidance } from "./workflow-library";

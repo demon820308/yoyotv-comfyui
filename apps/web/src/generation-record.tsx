@@ -1,4 +1,4 @@
-import type { Asset, Run } from "@takeboard/contracts";
+import type { Asset, Run } from "@yoyotv/contracts";
 import { lazy, Suspense } from "react";
 import type { WorkflowSummary } from "./api";
 import { projectApi } from "./api";

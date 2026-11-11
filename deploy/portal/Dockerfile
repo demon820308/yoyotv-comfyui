@@ -13,13 +13,13 @@ COPY patches/ patches/
 COPY apps/portal/package.json apps/portal/package.json
 COPY packages/identity/package.json packages/identity/package.json
 COPY packages/portal-protocol/package.json packages/portal-protocol/package.json
-RUN pnpm install --frozen-lockfile --filter @takeboard/portal...
+RUN pnpm install --frozen-lockfile --filter @yoyotv/portal...
 COPY tsconfig.base.json ./
 COPY apps/portal apps/portal
 COPY packages/identity packages/identity
 COPY packages/portal-protocol packages/portal-protocol
 RUN pnpm portal:build \
-  && pnpm --filter @takeboard/portal deploy --prod /opt/takeboard-portal
+  && pnpm --filter @yoyotv/portal deploy --prod /opt/takeboard-portal
 
 FROM node:24-bookworm-slim AS runtime
 

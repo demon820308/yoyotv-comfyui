@@ -1,4 +1,4 @@
-import type { Approval, Shot, Take } from "@takeboard/contracts";
+import type { Approval, Shot, Take } from "@yoyotv/contracts";
 import { DomainError } from "./errors.js";
 
 export type ApproveTakeInput = {

@@ -91,7 +91,8 @@ fn health_matches(port: u16, instance_id: Option<&str>) -> bool {
     let mut response = String::new();
     stream.read_to_string(&mut response).is_ok()
         && response.starts_with("HTTP/1.1 200")
-        && response.contains("\"service\":\"takeboard-server\"")
+        && (response.contains("\"service\":\"yoyotv-server\"")
+            || response.contains("\"service\":\"takeboard-server\""))
         && response.contains("\"status\":\"ok\"")
         && instance_id.map_or(true, |id| {
             response.contains(&format!("\"instanceId\":\"{id}\""))
@@ -218,14 +219,18 @@ fn start_server(app: &tauri::AppHandle) -> Result<(u16, u64), String> {
             "start".into(),
             "--no-open".into(),
         ])
-        .env("TAKEBOARD_DATA_ROOT", data_root)
+        .env("YOYOTV_DATA_ROOT", &data_root)
+        .env("TAKEBOARD_DATA_ROOT", &data_root)
+        .env("YOYOTV_TRUST_WORKFLOW_DIR", trust_workflow_dir.to_string_lossy().to_string())
         .env("TAKEBOARD_TRUST_WORKFLOW_DIR", trust_workflow_dir.to_string_lossy().to_string())
+        .env("YOYOTV_PORT", port.to_string())
         .env("TAKEBOARD_PORT", port.to_string())
+        .env("YOYOTV_DESKTOP", "1")
         .env("TAKEBOARD_DESKTOP", "1")
         .current_dir(resource_root);
     let (mut events, child) = command
         .spawn()
-        .map_err(|error| format!("无法启动 TakeBoard 服务：{error}"))?;
+        .map_err(|error| format!("无法启动 YoYoTV 服务：{error}"))?;
     let runtime = app.state::<DesktopRuntime>();
     let generation = runtime.generation.fetch_add(1, Ordering::SeqCst) + 1;
     let exited = Arc::new(AtomicBool::new(false));

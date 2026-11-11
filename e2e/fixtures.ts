@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { type APIRequestContext, test as base, expect } from "@playwright/test";
-import type { WorkerDefinition } from "@takeboard/contracts";
+import type { WorkerDefinition } from "@yoyotv/contracts";
 
 /** Explicit UI fixture; never depends on discovered hardware or earlier test mutations. */
 export function workerFixture(): WorkerDefinition {

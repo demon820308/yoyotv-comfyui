@@ -1,4 +1,4 @@
-import type { CommandAuditEntry } from "@takeboard/contracts";
+import type { CommandAuditEntry } from "@yoyotv/contracts";
 
 type CommandHistoryProps = {
   busy: boolean;

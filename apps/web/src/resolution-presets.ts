@@ -1,7 +1,4 @@
-import {
-  type ResolutionPolicy,
-  resolveGenerationResolution,
-} from "@takeboard/contracts/generation";
+import { type ResolutionPolicy, resolveGenerationResolution } from "@yoyotv/contracts/generation";
 
 export function generationResolutionPolicy(native: boolean, family: string): ResolutionPolicy {
   if (!native) return "exact";

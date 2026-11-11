@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import Database from "better-sqlite3";
 import type { FastifyInstance } from "fastify";
 import { completionFor } from "./background-completion.js";
+import { getEnv } from "./env.js";
 import { createGpuGateway } from "./same-gpu-gateway.js";
 import { SameGpuPool } from "./same-gpu-pool.js";
 import {
@@ -20,21 +21,29 @@ export function registerSameGpuPool(
   options?: { config: GpuPoolConfig; runtime?: GpuRuntime },
   selectedEndpoint?: () => string,
 ) {
-  const file = process.env.TAKEBOARD_GPU_POOL_CONFIG;
+  const file = getEnv("GPU_POOL_CONFIG");
   const raw =
     options?.config ?? (file && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null);
-  if (file && !raw) throw new Error("TAKEBOARD_GPU_POOL_CONFIG 不存在");
+  if (file && !raw) throw new Error("YOYOTV_GPU_POOL_CONFIG 不存在");
   if (!raw) {
     const remote = async () => {
       const endpoint = selectedEndpoint?.();
       if (!endpoint) return null;
-      const response = await fetch(`${endpoint}/takeboard/pool`, {
+      let response = await fetch(`${endpoint}/yoyotv/pool`, {
         signal: AbortSignal.timeout(3000),
         redirect: "error",
-      });
-      if (!response.ok) return null;
+      }).catch(() => null);
+      if (!response || !response.ok) {
+        response = await fetch(`${endpoint}/takeboard/pool`, {
+          signal: AbortSignal.timeout(3000),
+          redirect: "error",
+        }).catch(() => null);
+      }
+      if (!response || !response.ok) return null;
       const status = (await response.json()) as Record<string, unknown>;
-      return status.service === "takeboard-gpu-pool" ? { endpoint, status } : null;
+      return status.service === "yoyotv-gpu-pool" || status.service === "takeboard-gpu-pool"
+        ? { endpoint, status }
+        : null;
     };
     app.get("/api/workers/gpu-pool", async () => {
       const result = await remote().catch(() => null);
@@ -45,11 +54,19 @@ export function registerSameGpuPool(
         try {
           const result = await remote();
           if (!result) return reply.code(409).send({ error: "当前设备不是已配置的单卡执行池" });
-          const response = await fetch(`${result.endpoint}/takeboard/pool/${action}`, {
+          let response = await fetch(`${result.endpoint}/yoyotv/pool/${action}`, {
             method: "POST",
             signal: AbortSignal.timeout(5 * 60_000),
             redirect: "error",
-          });
+          }).catch(() => null);
+          if (!response || !response.ok) {
+            response = await fetch(`${result.endpoint}/takeboard/pool/${action}`, {
+              method: "POST",
+              signal: AbortSignal.timeout(5 * 60_000),
+              redirect: "error",
+            }).catch(() => null);
+          }
+          if (!response) return reply.code(502).send({ error: "无法连接单卡执行池" });
           if (response.status === 401 || response.status === 403)
             return reply
               .code(502)

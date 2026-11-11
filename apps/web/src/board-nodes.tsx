@@ -12,8 +12,8 @@ import {
   splitPromptMentionSegments,
   togglePromptMention,
 } from "./generation-draft";
-import { NumericInput } from "./numeric-input";
 import type { PromptMention } from "./generation-model";
+import { NumericInput } from "./numeric-input";
 import {
   closestAspectRatio,
   megapixelsFromResolution,
@@ -77,7 +77,7 @@ export type BoardNodeData = {
     outputLabel: "图片" | "视频";
     minDurationSeconds: number;
     resolutionOptions?: Array<{ label: string; width: number; height: number }>;
-    resolutionPolicy?: import("@takeboard/contracts").ResolutionPolicy;
+    resolutionPolicy?: import("@yoyotv/contracts").ResolutionPolicy;
     supportsDuration?: boolean;
     supportsFps?: boolean;
     supportsResolution?: boolean;
@@ -563,9 +563,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
         !Number.isFinite(settingsDraft.denoise) ||
         settingsDraft.denoise < (data.inlineControls?.denoiseMin ?? 0.05) ||
         settingsDraft.denoise > (data.inlineControls?.denoiseMax ?? 16)));
-  const isMaskWorkflow = Boolean(
-    (data.inputSlots ?? []).some((slot) => slot.id === "mask"),
-  );
+  const isMaskWorkflow = Boolean((data.inputSlots ?? []).some((slot) => slot.id === "mask"));
   const draftDisabledReason =
     !isUpscale && !isMaskWorkflow && !settingsDraft.prompt.trim()
       ? "请先输入镜头提示词"
@@ -574,7 +572,9 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
           ? "请检查参数设置"
           : "请检查分辨率、时长、帧率和 Seed"
         : data.inlineControls?.disabledReason === "请先输入镜头提示词"
-          ? (isMaskWorkflow ? null : "请先输入镜头提示词")
+          ? isMaskWorkflow
+            ? null
+            : "请先输入镜头提示词"
           : data.inlineControls?.disabledReason;
   return (
     <NodeShell selected={data.selected}>
@@ -835,7 +835,10 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                           aria-label={`移除 @${mention.alias}`}
                           onClick={() =>
                             updateSettingsDraft({
-                              prompt: removePromptMention(settingsDraftRef.current.prompt, mention.alias),
+                              prompt: removePromptMention(
+                                settingsDraftRef.current.prompt,
+                                mention.alias,
+                              ),
                             })
                           }
                         >

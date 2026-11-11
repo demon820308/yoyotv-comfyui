@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createTakeBoardId, toIsoTimestamp } from "@takeboard/domain";
+import { createTakeBoardId, toIsoTimestamp } from "@yoyotv/domain";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { ProjectStore } from "../src/storage/project-store.js";

@@ -1,5 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
-import type { ProjectSnapshot } from "@takeboard/contracts";
+import type { ProjectSnapshot } from "@yoyotv/contracts";
 import type { FastifyInstance } from "fastify";
 import { expect } from "vitest";
 

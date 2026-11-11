@@ -28,6 +28,7 @@ async function inspectPackagedService(action = "inspect", instanceId = "") {
     {
       env: {
         ...process.env,
+        YOYOTV_DATA_ROOT: root,
         TAKEBOARD_DATA_ROOT: root,
         NO_PROXY: "127.0.0.1,localhost",
         no_proxy: "127.0.0.1,localhost",
@@ -60,11 +61,17 @@ async function start() {
     cwd: resources,
     env: {
       ...process.env,
+      YOYOTV_DATA_ROOT: root,
       TAKEBOARD_DATA_ROOT: root,
+      YOYOTV_PORT: "",
       TAKEBOARD_PORT: "",
+      YOYOTV_AUTH_MODE: "optional",
       TAKEBOARD_AUTH_MODE: "optional",
+      YOYOTV_SECURE_COOKIES: "0",
       TAKEBOARD_SECURE_COOKIES: "0",
+      YOYOTV_BACKUP_DESTINATION: "",
       TAKEBOARD_BACKUP_DESTINATION: "",
+      YOYOTV_DESKTOP: "1",
       TAKEBOARD_DESKTOP: "1",
       COMFY_URL: "http://127.0.0.1:1",
       NO_PROXY: "127.0.0.1,localhost",
@@ -94,14 +101,15 @@ async function start() {
     const health = await fetch(`${origin}/api/health`, { signal: AbortSignal.timeout(1000) }).then(
       (r) => r.json(),
     );
-    return health.service === "takeboard-server" && health.instanceId === record.instanceId
+    return (health.service === "yoyotv-server" || health.service === "takeboard-server") &&
+      health.instanceId === record.instanceId
       ? { origin, instanceId: record.instanceId }
       : null;
   });
 }
 async function stop() {
   if (!child || ended) return;
-  child.stdin.write("takeboard.launcher.shutdown\n");
+  child.stdin.write("yoyotv.launcher.shutdown\ntakeboard.launcher.shutdown\n");
   await until("packaged launcher shutdown", () => ended);
   assert.equal(await exited, 0, log);
   await until("owned lease released", () => !existsSync(lease));

@@ -13,8 +13,8 @@ import type {
   ProjectSnapshot,
   Shot,
   TextItem,
-} from "@takeboard/contracts";
-import { createTakeBoardId, toIsoTimestamp } from "@takeboard/domain";
+} from "@yoyotv/contracts";
+import { createTakeBoardId, toIsoTimestamp } from "@yoyotv/domain";
 import { gentlyArrange } from "./gentle-arrange.js";
 import type { ProjectStore, StoredProjectCommand } from "./storage/project-store.js";
 

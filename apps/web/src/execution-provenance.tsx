@@ -1,4 +1,4 @@
-import type { Run } from "@takeboard/contracts";
+import type { Run } from "@yoyotv/contracts";
 
 const executionProvenanceCss = `.execution-provenance {
   margin-top: 8px;

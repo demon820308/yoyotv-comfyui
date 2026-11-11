@@ -1,4 +1,4 @@
-import { type WorkflowLibraryEntry, workflowLibrarySchema } from "@takeboard/contracts";
+import { type WorkflowLibraryEntry, workflowLibrarySchema } from "@yoyotv/contracts";
 
 // Presentation preferences only: never move workflow files or grant execution trust.
 export { workflowLibrarySchema };
