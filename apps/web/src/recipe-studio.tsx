@@ -195,7 +195,7 @@ export function RecipeStudio({
     [group, origin, onlyReady, query, workflows],
   );
   const selectedEditorUrl = selectedPath
-    ? `${editorUrl}/?takeboard_workflow=${encodeURIComponent(selectedPath)}`
+    ? `${editorUrl}/?yoyotv_workflow=${encodeURIComponent(selectedPath)}`
     : editorUrl;
 
   const configureBinding = async (workflow: Pick<WorkflowSummary, "path" | "bindingStatus">) => {
@@ -724,7 +724,7 @@ export function RecipeStudio({
               <input
                 ref={fileInput}
                 type="file"
-                accept="application/json,.json,image/png,.png,application/gzip,.tgz,.takeboard-recipe.tgz"
+                accept="application/json,.json,image/png,.png,application/gzip,.tgz,.yoyotv-recipe.tgz,.takeboard-recipe.tgz"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (file) {
@@ -876,7 +876,7 @@ export function RecipeStudio({
                   重新检查
                 </button>
                 <ExternalLink
-                  href={`${editorUrl}/?takeboard_workflow=${encodeURIComponent(inspection.path)}`}
+                  href={`${editorUrl}/?yoyotv_workflow=${encodeURIComponent(inspection.path)}`}
                   onError={setBindingError}
                 >
                   在 ComfyUI 编辑 ↗

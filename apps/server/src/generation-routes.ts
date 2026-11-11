@@ -890,7 +890,9 @@ export function registerGenerationRoutes(
           miniMaxImage ||
           ltxImage ||
           qwenImage ||
-          ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(boundCapability ?? "");
+          ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(
+            boundCapability ?? "",
+          );
         const inputAsset = requiresInputImage
           ? requestedAssetId
             ? current.snapshot.assets.find((asset) => asset.id === requestedAssetId)
@@ -899,8 +901,12 @@ export function registerGenerationRoutes(
         if (requiresInputImage && inputAsset?.mediaType !== "image") {
           return await reply.code(409).send({
             error: requestedAssetId
-              ? (boundCapability === "upscale_image" ? "选择的源图不是可用图片" : "选择的首帧不是可用图片")
-              : (boundCapability === "upscale_image" ? "请先上传或连接待放大的图片" : "请先上传一张首帧图片"),
+              ? boundCapability === "upscale_image"
+                ? "选择的源图不是可用图片"
+                : "选择的首帧不是可用图片"
+              : boundCapability === "upscale_image"
+                ? "请先上传或连接待放大的图片"
+                : "请先上传一张首帧图片",
           });
         }
 
@@ -970,11 +976,15 @@ export function registerGenerationRoutes(
           return await reply.code(409).send({ error: "参考素材不存在或类型与输入端口不匹配" });
         }
         if (
-          (miniMaxReference || ["reference_video", "upscale_video"].includes(boundCapability ?? "")) &&
+          (miniMaxReference ||
+            ["reference_video", "upscale_video"].includes(boundCapability ?? "")) &&
           referenceImages.length + referenceVideos.length + referenceAudios.length === 0
         ) {
           return await reply.code(409).send({
-            error: boundCapability === "upscale_video" ? "视频放大工作流至少需要连接一个待放大视频素材" : "参考生成工作流至少需要一个参考素材",
+            error:
+              boundCapability === "upscale_video"
+                ? "视频放大工作流至少需要连接一个待放大视频素材"
+                : "参考生成工作流至少需要一个参考素材",
           });
         }
         if (
@@ -1065,7 +1075,9 @@ export function registerGenerationRoutes(
         const isUpscaleVideo = boundCapability === "upscale_video";
         const isUpscale = isUpscaleImage || isUpscaleVideo;
         const denoise =
-          typeof body.denoise === "number" && body.denoise >= 0.05 && body.denoise <= (isUpscale ? 16 : 1)
+          typeof body.denoise === "number" &&
+          body.denoise >= 0.05 &&
+          body.denoise <= (isUpscale ? 16 : 1)
             ? body.denoise
             : isUpscaleImage
               ? 2
@@ -1171,7 +1183,7 @@ export function registerGenerationRoutes(
           const extension = extname(inputAsset.originalName) || ".png";
           comfyImage = await comfy.uploadImage(
             new Uint8Array(bytes),
-            `takeboard_${current.snapshot.project.id}_${runId}_${inputAsset.id}${extension}`,
+            `yoyotv_${current.snapshot.project.id}_${runId}_${inputAsset.id}${extension}`,
             inputAsset.mimeType,
           );
         }
@@ -1180,7 +1192,7 @@ export function registerGenerationRoutes(
           const lastBytes = await readFile(join(directory, lastAsset.storagePath));
           lastComfyImage = await comfy.uploadImage(
             new Uint8Array(lastBytes),
-            `takeboard_${current.snapshot.project.id}_${runId}_${lastAsset.id}${extname(lastAsset.originalName) || ".png"}`,
+            `yoyotv_${current.snapshot.project.id}_${runId}_${lastAsset.id}${extname(lastAsset.originalName) || ".png"}`,
             lastAsset.mimeType,
           );
         }
@@ -1191,7 +1203,7 @@ export function registerGenerationRoutes(
             (asset.mediaType === "video" ? ".mp4" : asset.mediaType === "audio" ? ".wav" : ".png");
           return await selectedComfy.uploadImage(
             new Uint8Array(bytes),
-            `takeboard_${current.snapshot.project.id}_${runId}_${asset.id}${extension}`,
+            `yoyotv_${current.snapshot.project.id}_${runId}_${asset.id}${extension}`,
             asset.mimeType,
           );
         };
@@ -1726,7 +1738,9 @@ export function registerGenerationRoutes(
         ...(item.images ?? []),
       ]);
       const candidateVideos = allFiles.filter((file) => /\.(?:mp4|webm)$/i.test(file.filename));
-      const candidateImages = allFiles.filter((file) => /\.(?:png|jpe?g|webp)$/i.test(file.filename));
+      const candidateImages = allFiles.filter((file) =>
+        /\.(?:png|jpe?g|webp)$/i.test(file.filename),
+      );
       const videoOutput =
         candidateVideos.find((file) => file.type === "output") ??
         candidateVideos.find((file) => file.type !== "input") ??

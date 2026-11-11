@@ -7,6 +7,11 @@ import {
   useUpdateNodeInternals,
 } from "@xyflow/react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  removePromptMention,
+  splitPromptMentionSegments,
+  togglePromptMention,
+} from "./generation-draft";
 import { NumericInput } from "./numeric-input";
 import {
   closestAspectRatio,
@@ -15,11 +20,6 @@ import {
   scaleResolutionToMegapixels,
 } from "./resolution-presets";
 import { CanvasVideo } from "./video-preview";
-import {
-  removePromptMention,
-  splitPromptMentionSegments,
-  togglePromptMention,
-} from "./generation-draft";
 
 export type BoardNodeData = {
   kind: "text" | "entity" | "asset" | "shot" | "take_stack";
@@ -831,8 +831,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                       })
                     }
                   >
-                    {isActive ? <span className="shot-inline-mention-check">✓</span> : null}
-                    @{alias}
+                    {isActive ? <span className="shot-inline-mention-check">✓</span> : null}@{alias}
                   </button>
                 );
               })}
@@ -895,8 +894,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 />
               </label>
             ) : null}
-            {data.inlineControls.outputLabel === "视频" &&
-            Boolean(data.inlineControls.supportsDuration) ? (
+            {data.inlineControls.outputLabel === "视频" && data.inlineControls.supportsDuration ? (
               <label className="shot-inline-duration" htmlFor={`${quickSettingsId}-duration`}>
                 <span>时长</span>
                 <NumericInput
@@ -913,8 +911,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 />
               </label>
             ) : null}
-            {data.inlineControls.outputLabel === "视频" &&
-            Boolean(data.inlineControls.supportsFps) ? (
+            {data.inlineControls.outputLabel === "视频" && data.inlineControls.supportsFps ? (
               <label className="shot-inline-fps" htmlFor={`${quickSettingsId}-fps`}>
                 <span>帧率</span>
                 <NumericInput
@@ -953,7 +950,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                 />
               </label>
             ) : null}
-            {Boolean(data.inlineControls.supportsDenoise) ? (
+            {data.inlineControls.supportsDenoise ? (
               <label
                 className="shot-inline-denoise"
                 htmlFor={`${quickSettingsId}-denoise`}

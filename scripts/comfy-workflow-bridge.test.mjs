@@ -5,7 +5,7 @@ import { runInNewContext } from "node:vm";
 
 const source = (
   await readFile(
-    new URL("../deploy/comfyui-takeboard-bridge/js/takeboard-workflow-bridge.js", import.meta.url),
+    new URL("../deploy/comfyui-yoyotv-bridge/js/yoyotv-workflow-bridge.js", import.meta.url),
     "utf8",
   )
 ).replace(/^import .+;\n/gm, "");
@@ -14,6 +14,7 @@ async function open(
   document,
   path = "Kino/TakeBoard/version/Kino_MinimaxH3_T2V.json",
   apiSupported = true,
+  param = "yoyotv_workflow",
 ) {
   let extension;
   const calls = [];
@@ -42,7 +43,7 @@ async function open(
       },
     },
     window: {
-      location: { href: `http://comfy.test/?takeboard_workflow=${encodeURIComponent(path)}` },
+      location: { href: `http://comfy.test/?${param}=${encodeURIComponent(path)}` },
       history: { replaceState() {} },
       alert(message) {
         calls.push(["alert", message]);
@@ -64,6 +65,10 @@ test("ComfyUI bridge opens maintained API templates through the API loader, not 
   assert.deepEqual(calls[1], ["prompt", prompt]);
   const workflow = { nodes: [], links: [] };
   assert.deepEqual((await open(workflow))[1], ["graph", workflow]);
+  assert.deepEqual((await open(workflow, "YoYoTV/legacy.json", true, "takeboard_workflow"))[1], [
+    "graph",
+    workflow,
+  ]);
 });
 
 test("ComfyUI bridge refuses traversal and reports unsupported API loaders without pretending success", async () => {

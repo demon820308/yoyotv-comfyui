@@ -104,8 +104,13 @@ export function isWorkflowPath(path: unknown): path is string {
 }
 
 const bindingPath = (path: string) =>
+  `yoyotv/bindings/${Buffer.from(path).toString("base64url")}.json`;
+// shortcut: legacy takeboard/bindings and takeboard/binding-proposals read fallback, remove in v2.0.0
+const legacyBindingPath = (path: string) =>
   `takeboard/bindings/${Buffer.from(path).toString("base64url")}.json`;
 const bindingProposalPath = (path: string) =>
+  `yoyotv/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
+const legacyBindingProposalPath = (path: string) =>
   `takeboard/binding-proposals/${Buffer.from(path).toString("base64url")}.json`;
 
 export function findTrustWorkflowDir(startDir: string = process.cwd()): string | null {
@@ -269,19 +274,31 @@ export function parseWorkflowBinding(value: unknown, expectedPath?: string) {
 }
 
 export async function readWorkflowBinding(comfyUrl: string, path: string) {
+  let payload: unknown;
   try {
-    return parseWorkflowBinding(await fetchJson(comfyUrl, bindingPath(path)), path);
+    payload = await fetchJson(comfyUrl, bindingPath(path));
   } catch {
-    return null;
+    try {
+      payload = await fetchJson(comfyUrl, legacyBindingPath(path));
+    } catch {
+      return null;
+    }
   }
+  return parseWorkflowBinding(payload, path);
 }
 
 export async function readWorkflowBindingProposal(comfyUrl: string, path: string) {
+  let payload: unknown;
   try {
-    return parseWorkflowBinding(await fetchJson(comfyUrl, bindingProposalPath(path)), path);
+    payload = await fetchJson(comfyUrl, bindingProposalPath(path));
   } catch {
-    return null;
+    try {
+      payload = await fetchJson(comfyUrl, legacyBindingProposalPath(path));
+    } catch {
+      return null;
+    }
   }
+  return parseWorkflowBinding(payload, path);
 }
 
 export async function writeWorkflowBinding(
@@ -439,7 +456,9 @@ export function discoverBindingCandidates(prompt: ComfyPrompt): WorkflowBindingC
           /(?:^|_)denois(?:e|ing)(?:$|_)/.test(inputName) ||
           (genericNumericInput && /denoise|denoising|重绘强度|降噪/.test(titleHaystack)) ||
           (inputName === "detail" && /vsr|decode|upscale/.test(titleHaystack)) ||
-          ((inputName === "rescale_factor" || /scale_factor|upscale_by|放大倍数|缩放系数/.test(inputName)) && /upscale|rescale|放大/.test(titleHaystack))
+          ((inputName === "rescale_factor" ||
+            /scale_factor|upscale_by|放大倍数|缩放系数/.test(inputName)) &&
+            /upscale|rescale|放大/.test(titleHaystack))
         )
           candidates.parameters.denoise.push({
             ...candidate,
@@ -536,12 +555,12 @@ export function suggestedBinding(
   const scaleCandidate = candidates.parameters.denoise.find(
     (c) => c.input === "rescale_factor" || /scale|倍数|系数/i.test(c.label),
   );
-  const firstFrameCandidate = isReferenceVideo || isUpscaleVideo ? undefined : candidates.media.first_frame[0];
-  const refImageCandidates = isReferenceVideo || isUpscale
-    ? candidates.media.reference_image
-    : candidates.media.reference_image.filter(
-        (c) => c.nodeId !== firstFrameCandidate?.nodeId,
-      );
+  const firstFrameCandidate =
+    isReferenceVideo || isUpscaleVideo ? undefined : candidates.media.first_frame[0];
+  const refImageCandidates =
+    isReferenceVideo || isUpscale
+      ? candidates.media.reference_image
+      : candidates.media.reference_image.filter((c) => c.nodeId !== firstFrameCandidate?.nodeId);
   return {
     version: workflowBindingVersion,
     workflowPath: path,
@@ -554,9 +573,13 @@ export function suggestedBinding(
       seed: isUpscale ? undefined : all(candidates.parameters.seed),
       steps: isUpscale ? undefined : all(candidates.parameters.steps),
       denoise: isUpscaleVideo
-        ? (detailCandidate ? [target(detailCandidate)] : undefined)
+        ? detailCandidate
+          ? [target(detailCandidate)]
+          : undefined
         : isUpscaleImage
-          ? (scaleCandidate ? [target(scaleCandidate)] : undefined)
+          ? scaleCandidate
+            ? [target(scaleCandidate)]
+            : undefined
           : all(candidates.parameters.denoise),
       width: isUpscale ? undefined : all(candidates.parameters.width),
       height: isUpscale ? undefined : all(candidates.parameters.height),
@@ -564,12 +587,13 @@ export function suggestedBinding(
       fps: isUpscale ? undefined : all(candidates.parameters.fps),
     },
     media: {
-      first_frame: isReferenceVideo || isUpscaleVideo ? undefined : one(candidates.media.first_frame),
+      first_frame:
+        isReferenceVideo || isUpscaleVideo ? undefined : one(candidates.media.first_frame),
       last_frame: undefined,
       reference_image: isReferenceVideo
-        ? (candidates.media.reference_image.length > 0
-            ? candidates.media.reference_image.map(target)
-            : undefined)
+        ? candidates.media.reference_image.length > 0
+          ? candidates.media.reference_image.map(target)
+          : undefined
         : isUpscale
           ? undefined
           : one(
@@ -617,7 +641,9 @@ export function validateWorkflowBinding(prompt: ComfyPrompt, binding: WorkflowBi
   const requiresPrompt = !["upscale_image", "upscale_video"].includes(binding.capability);
   if (requiresPrompt && !(binding.parameters.prompt?.length ?? 0)) issues.push("缺少提示词绑定");
   if (
-    ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(binding.capability) &&
+    ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(
+      binding.capability,
+    ) &&
     !(binding.media.first_frame?.length ?? 0)
   ) {
     issues.push("该能力缺少起始图片绑定");
@@ -625,10 +651,7 @@ export function validateWorkflowBinding(prompt: ComfyPrompt, binding: WorkflowBi
   if (binding.capability === "first_last_video" && !(binding.media.last_frame?.length ?? 0)) {
     issues.push("首尾帧能力缺少结束图片绑定");
   }
-  if (
-    binding.capability === "upscale_video" &&
-    !(binding.media.reference_video?.length ?? 0)
-  ) {
+  if (binding.capability === "upscale_video" && !(binding.media.reference_video?.length ?? 0)) {
     issues.push("视频放大能力缺少待放大视频绑定");
   }
   if (
@@ -794,7 +817,11 @@ export function applyWorkflowBinding(
     });
   }
   for (const [nodeId, node] of Object.entries(prompt)) {
-    if (/loadimage/i.test(node.class_type) && typeof node.inputs.image === "string" && !node.inputs.image.trim()) {
+    if (
+      /loadimage/i.test(node.class_type) &&
+      typeof node.inputs.image === "string" &&
+      !node.inputs.image.trim()
+    ) {
       delete prompt[nodeId];
       for (const peer of Object.values(prompt)) {
         for (const [inputKey, inputValue] of Object.entries(peer.inputs)) {

@@ -256,7 +256,7 @@ function assertRevision(expectedRevision: number | undefined, currentRevision: n
 
 function confirmationToken(command: ProjectCommand, revision: number) {
   return createHash("sha256")
-    .update(JSON.stringify({ command, revision, purpose: "takeboard-command-confirmation-v1" }))
+    .update(JSON.stringify({ command, revision, purpose: "yoyotv-command-confirmation-v1" }))
     .digest("hex");
 }
 
@@ -1055,8 +1055,7 @@ function buildPlan(
     ),
   );
   snapshot.assets = snapshot.assets.filter(
-    (asset) =>
-      !asset.storagePath.startsWith(shotRenderPrefix) || referencedAssetIds.has(asset.id),
+    (asset) => !asset.storagePath.startsWith(shotRenderPrefix) || referencedAssetIds.has(asset.id),
   );
 
   snapshot.shots

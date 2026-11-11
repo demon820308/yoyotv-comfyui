@@ -302,7 +302,11 @@ function workflowSummary(
       ]
     : detectedInputs;
   const isUpscaleCapability = ["upscale_image", "upscale_video"].includes(capability);
-  if (effectiveBinding && !isUpscaleCapability && (boundInputs.includes("width") || boundInputs.includes("height")))
+  if (
+    effectiveBinding &&
+    !isUpscaleCapability &&
+    (boundInputs.includes("width") || boundInputs.includes("height"))
+  )
     boundInputs.push("resolution");
   const inputs = [...new Set(boundInputs)].filter((slot) => {
     if (isUpscaleCapability) {
@@ -336,7 +340,9 @@ function workflowSummary(
           ? 9
           : 0,
     reference_video: isUpscaleCapability
-      ? (capability === "upscale_video" ? (activeBinding?.media.reference_video?.length || 1) : 0)
+      ? capability === "upscale_video"
+        ? activeBinding?.media.reference_video?.length || 1
+        : 0
       : activeBinding
         ? (activeBinding.media.reference_video?.length ?? 0)
         : inputs.includes("reference_videos")
@@ -389,11 +395,12 @@ function workflowSummary(
           ? ("stale" as const)
           : ("needs_binding" as const),
     workflowHash: hash,
-    origin: path.startsWith("Kino/") || path.startsWith("Trust-Workflow/") || path.startsWith("YoYo/")
-      ? ("built_in" as const)
-      : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
-        ? ("imported" as const)
-        : ("comfyui" as const),
+    origin:
+      path.startsWith("Kino/") || path.startsWith("Trust-Workflow/") || path.startsWith("YoYo/")
+        ? ("built_in" as const)
+        : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
+          ? ("imported" as const)
+          : ("comfyui" as const),
     trustSnapshot: Boolean(trustSnapshot),
     trustPath: trustSnapshot ? trustSnapshot.wfPath : null,
   };
@@ -418,7 +425,13 @@ function detectedOutputMediaType(
   if (binding?.outputMediaType) return binding.outputMediaType;
   if (["text_to_image", "image_to_image", "upscale_image"].includes(capability)) return "image";
   if (
-    ["text_to_video", "image_to_video", "first_last_video", "reference_video", "upscale_video"].includes(capability)
+    [
+      "text_to_video",
+      "image_to_video",
+      "first_last_video",
+      "reference_video",
+      "upscale_video",
+    ].includes(capability)
   ) {
     return "video";
   }
@@ -436,21 +449,23 @@ type WorkflowReference = {
   runCount: number;
 };
 
+// shortcut: legacy TakeBoard/ and TakeBoard/.archive/ workflow path compatibility, remove in v2.0.0
 function importedWorkflowPath(path: unknown): path is string {
   return (
     typeof path === "string" &&
     isWorkflowPath(path) &&
-    path.startsWith("TakeBoard/") &&
+    (path.startsWith("YoYoTV/") || path.startsWith("TakeBoard/")) &&
+    !path.startsWith("YoYoTV/.archive/") &&
     !path.startsWith("TakeBoard/.archive/")
   );
 }
 
 function workflowArchivePath(path: string) {
-  return `TakeBoard/.archive/${Date.now()}-${Buffer.from(path).toString("base64url")}.json`;
+  return `YoYoTV/.archive/${Date.now()}-${Buffer.from(path).toString("base64url")}.json`;
 }
 
 function archivedWorkflow(path: string) {
-  const match = /^TakeBoard\/\.archive\/(\d+)-([A-Za-z0-9_-]+)\.json$/.exec(path);
+  const match = /^(?:YoYoTV|TakeBoard)\/\.archive\/(\d+)-([A-Za-z0-9_-]+)\.json$/.exec(path);
   if (!match) return null;
   try {
     const timestamp = Number(match[1]);
@@ -503,7 +518,9 @@ async function workflowReferences(projectsRoot: string, path: string) {
     for (const entry of entries) {
       if (
         !entry.isDirectory() ||
-        (source.location === "active" && !entry.name.endsWith(".takeboard"))
+        (source.location === "active" &&
+          !entry.name.endsWith(".yoyotv") &&
+          !entry.name.endsWith(".takeboard"))
       ) {
         continue;
       }
@@ -538,7 +555,7 @@ async function workflowReferences(projectsRoot: string, path: string) {
 
 function workflowArchiveToken(path: string, hash: string, references: WorkflowReference[]) {
   return createHash("sha256")
-    .update(JSON.stringify({ purpose: "takeboard-workflow-archive-v1", path, hash, references }))
+    .update(JSON.stringify({ purpose: "yoyotv-workflow-archive-v1", path, hash, references }))
     .digest("hex");
 }
 
@@ -560,7 +577,9 @@ export function registerWorkflowRoutes(
       objectInfo,
       workflowHash: summary.workflowHash,
       capability: summary.capability,
-      outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability)
+      outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(
+        summary.capability,
+      )
         ? "image"
         : "video",
       bindingStatus: "built_in",
@@ -608,7 +627,11 @@ export function registerWorkflowRoutes(
       objectInfo,
       trustSnapshot ? trustSnapshot.binding.workflowHash : summary.workflowHash,
     );
-    const outputMediaType = detectedOutputMediaType(summary.capability, inspected.prompt, effectiveBinding);
+    const outputMediaType = detectedOutputMediaType(
+      summary.capability,
+      inspected.prompt,
+      effectiveBinding,
+    );
     const activeProposal = proposal?.workflowHash === inspected.workflowHash ? proposal : null;
     const suggested = suggestedBinding(
       path,
@@ -656,7 +679,7 @@ export function registerWorkflowRoutes(
     const editorUrl = getEditorUrl();
     try {
       const paths = (await listComfyWorkflowPaths(endpoint)).filter(
-        (path) => !path.startsWith("TakeBoard/.archive/"),
+        (path) => !path.startsWith("YoYoTV/.archive/") && !path.startsWith("TakeBoard/.archive/"),
       );
       let objectInfoError: string | null = null;
       const objectInfo = await fetchComfyObjectInfo(endpoint).catch((error: unknown) => {
@@ -687,7 +710,9 @@ export function registerWorkflowRoutes(
           if (!objectInfo) return summary;
           const trustSnapshot = readTrustWorkflow(path);
           const effectiveBinding = trustSnapshot?.binding ?? binding;
-          const effectiveWorkflow = trustSnapshot ? trustSnapshot.workflow : (nativeRecipePrompt(path) ?? workflow);
+          const effectiveWorkflow = trustSnapshot
+            ? trustSnapshot.workflow
+            : (nativeRecipePrompt(path) ?? workflow);
           let inspected: ReturnType<typeof inspectWorkflowDocument>;
           try {
             inspected = inspectWorkflowDocument(
@@ -705,7 +730,9 @@ export function registerWorkflowRoutes(
                 executable: false,
                 nodeCount: summary.nodeCount,
                 capability: summary.capability,
-                outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability)
+                outputMediaType: ["text_to_image", "image_to_image", "upscale_image"].includes(
+                  summary.capability,
+                )
                   ? ("image" as const)
                   : ("video" as const),
                 bindingStatus: summary.bindingStatus,
@@ -824,7 +851,7 @@ export function registerWorkflowRoutes(
     const endpoint = getComfyUrl();
     try {
       const workflow = await fetchWorkflow(endpoint, path);
-      const destination = `TakeBoard/workflow-${randomUUID()}.json`;
+      const destination = `YoYoTV/workflow-${randomUUID()}.json`;
       const response = await fetch(
         `${endpoint}/api/userdata/${encodeURIComponent(`workflows/${destination}`)}`,
         {
@@ -1078,7 +1105,9 @@ export function registerWorkflowRoutes(
         const nodes = allNodes(workflow);
         const outputMediaType =
           activeBinding?.outputMediaType ??
-          (["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability) ? "image" : "video");
+          (["text_to_image", "image_to_image", "upscale_image"].includes(summary.capability)
+            ? "image"
+            : "video");
         const stream = createWorkflowRecipeArchive({
           name: summary.name,
           sourcePath: path,
@@ -1090,7 +1119,7 @@ export function registerWorkflowRoutes(
           workflow,
           binding: activeBinding,
         });
-        const filename = `${summary.name.replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, "-").slice(0, 80) || "workflow"}.takeboard-recipe.tgz`;
+        const filename = `${summary.name.replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, "-").slice(0, 80) || "workflow"}.yoyotv-recipe.tgz`;
         reply.header("content-type", "application/gzip");
         reply.header(
           "content-disposition",
@@ -1107,12 +1136,14 @@ export function registerWorkflowRoutes(
 
   app.post("/api/workflows/recipe-package/import", async (request, reply) => {
     const upload = await request.file();
+    const lowerFilename = upload?.filename.toLowerCase() ?? "";
     if (
       !upload ||
-      (!upload.filename.toLowerCase().endsWith(".takeboard-recipe.tgz") &&
-        !upload.filename.toLowerCase().endsWith(".tgz"))
+      (!lowerFilename.endsWith(".yoyotv-recipe.tgz") &&
+        !lowerFilename.endsWith(".takeboard-recipe.tgz") &&
+        !lowerFilename.endsWith(".tgz"))
     ) {
-      return await reply.code(400).send({ error: "请选择 .takeboard-recipe.tgz 文件" });
+      return await reply.code(400).send({ error: "请选择 .yoyotv-recipe.tgz 文件" });
     }
     try {
       const recipe = await parseWorkflowRecipeArchive(await upload.toBuffer());
@@ -1154,7 +1185,7 @@ export function registerWorkflowRoutes(
         .replace(/[^a-zA-Z0-9_-]+/g, "-")
         .replace(/^-+|-+$/g, "")
         .slice(0, 70);
-      const destination = `TakeBoard/${safeName || "workflow"}-${randomUUID().slice(0, 8)}.json`;
+      const destination = `YoYoTV/${safeName || "workflow"}-${randomUUID().slice(0, 8)}.json`;
       const proposal = packagedBinding
         ? {
             ...packagedBinding,
@@ -1265,7 +1296,7 @@ export function registerWorkflowRoutes(
       .replace(/[^a-zA-Z0-9_-]+/g, "-")
       .slice(0, 80);
     const suffix = randomUUID();
-    const path = `workflows/TakeBoard/${safeName || "workflow"}-${suffix}.json`;
+    const path = `workflows/YoYoTV/${safeName || "workflow"}-${suffix}.json`;
     const response = await fetch(`${endpoint}/api/userdata/${encodeURIComponent(path)}`, {
       method: "POST",
       headers: { "content-type": "application/json" },

@@ -73,12 +73,14 @@ export function registerProjectRequestLock(app: FastifyInstance, projectsRoot: s
   app.addHook("preHandler", async (request, reply) => {
     if (["GET", "HEAD", "OPTIONS"].includes(request.method)) return;
     const key = lockedProjectKey(request);
-    const supplied = request.headers["x-takeboard-revision"];
+    // shortcut: legacy x-takeboard-revision header and .takeboard key fallback, remove in v2.0.0
+    const supplied =
+      request.headers["x-yoyotv-revision"] ?? request.headers["x-takeboard-revision"];
     if (
       !key ||
       typeof supplied !== "string" ||
       !/^\d+$/.test(supplied) ||
-      !/^[a-z0-9][a-z0-9-]{0,80}\.takeboard$/.test(key)
+      !/^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(key)
     )
       return;
     const store = ProjectStore.openExisting(projectDirectory(root, key));

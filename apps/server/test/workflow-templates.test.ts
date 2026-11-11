@@ -30,7 +30,7 @@ function setup() {
       const path = decodeURIComponent(url.pathname.replace("/api/userdata/", ""));
       if (init?.method === "POST") {
         writes.push({ path, overwrite: url.searchParams.get("overwrite") });
-        if (path.startsWith("takeboard/library/") && state.metadataFails)
+        if (path.startsWith("yoyotv/library/") && state.metadataFails)
           return new Response("unavailable", { status: 503 });
         if (files.has(path) && url.searchParams.get("overwrite") === "false")
           return new Response("exists", { status: 409 });
@@ -198,7 +198,7 @@ describe("maintained template installation", () => {
     expect((await install(template)).statusCode).toBe(200);
     const installed = (await list())[0];
     expect(installed).toMatchObject({ installation: "installed", included: true });
-    const metadataPath = `takeboard/library/${Buffer.from(template.path).toString("base64url")}.json`;
+    const metadataPath = `yoyotv/library/${Buffer.from(template.path).toString("base64url")}.json`;
     files.set(metadataPath, { included: false, favorite: true, name: "我的常用模板" });
     expect((await install(installed)).statusCode).toBe(200);
     expect(files.get(metadataPath)).toEqual({
@@ -256,7 +256,7 @@ describe("maintained template installation", () => {
     const { list, install, state, writes } = setup();
     state.corruptWrite = true;
     expect((await install((await list())[0])).statusCode).toBe(409);
-    expect(writes.some((item) => item.path.startsWith("takeboard/library/"))).toBe(false);
+    expect(writes.some((item) => item.path.startsWith("yoyotv/library/"))).toBe(false);
   });
 
   it("keeps offline downloads accessible but prevents unchecked installation", async () => {

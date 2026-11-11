@@ -21,7 +21,7 @@ fn validate_report(text: &str) -> Result<String, String> {
 
 pub fn appearance_script(theme: Option<&str>) -> String {
     match theme.filter(|value| matches!(*value, "noir" | "light" | "chroma")) {
-        Some(theme) => format!("(() => {{ window.__takeboardTheme = '{theme}'; const apply = () => {{ if (document.documentElement) document.documentElement.dataset.theme = '{theme}'; try {{ localStorage.setItem('takeboard.desktop.theme', '{theme}'); }} catch {{}} }}; apply(); document.addEventListener('DOMContentLoaded', apply, {{ once: true }}); }})()"),
+        Some(theme) => format!("(() => {{ window.__takeboardTheme = '{theme}'; const apply = () => {{ if (document.documentElement) document.documentElement.dataset.theme = '{theme}'; try {{ localStorage.setItem('yoyotv.desktop.theme', '{theme}'); }} catch {{}} }}; apply(); document.addEventListener('DOMContentLoaded', apply, {{ once: true }}); }})()"),
         None => String::new(),
     }
 }
@@ -44,7 +44,7 @@ fn action_name(url: &tauri::Url) -> Option<&str> {
 fn acknowledge(app: &tauri::AppHandle, source: &str, action_id: &str, error: Option<String>) {
     if let Some(window) = app.get_webview_window(source) {
         let payload = serde_json::json!({"actionId": action_id, "error": error});
-        let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('takeboard:desktop-action',{{detail:{payload}}}));"));
+        let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('yoyotv:desktop-action',{{detail:{payload}}}));"));
     }
 }
 
@@ -172,7 +172,7 @@ pub fn navigation(app: &tauri::AppHandle, source: &str, url: &tauri::Url) -> boo
                 Ok(data) => serde_json::json!({"actionId":action_id,"data":data}),
                 Err(error) => serde_json::json!({"actionId":action_id,"error":error}),
             };
-            let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('takeboard:desktop-action',{{detail:{payload}}}));"));
+            let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('yoyotv:desktop-action',{{detail:{payload}}}));"));
         });
         return false;
     }
@@ -270,7 +270,7 @@ pub fn navigation(app: &tauri::AppHandle, source: &str, url: &tauri::Url) -> boo
                 if !is_local_workspace(&callback_app, &window) { return; }
                 let path = file.and_then(|file| file.into_path().ok()).map(|path| path.to_string_lossy().to_string());
                 let payload = serde_json::json!({"request": request, "path": path});
-                let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('takeboard:folder-picked',{{detail:{payload}}}));"));
+                let _ = window.eval(&format!("window.dispatchEvent(new CustomEvent('yoyotv:folder-picked',{{detail:{payload}}}));"));
             });
             acknowledge(app, source, &action_id, None);
         }
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn external_browser_accepts_only_web_links() {
         for value in [
-            "http://127.0.0.1:8188/?takeboard_workflow=Kino%2Fh3.json",
+            "http://127.0.0.1:8188/?yoyotv_workflow=Kino%2Fh3.json",
             "https://comfy.example.test/",
         ] {
             assert!(external_web_url(value).is_ok());

@@ -574,8 +574,9 @@ describe("real generation routes", () => {
     });
 
     expect(response.statusCode).toBe(422);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("takeboard%2Fbindings");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("yoyotv%2Fbindings");
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain("takeboard%2Fbindings");
   });
 
   it("cancels the remote prompt when persisting the submitted run fails", async () => {
@@ -1052,9 +1053,7 @@ describe("real generation routes", () => {
                 status: { status_str: "success", completed: true },
                 outputs: {
                   "107_load": {
-                    images: [
-                      { filename: "source_input.mp4", subfolder: "", type: "input" },
-                    ],
+                    images: [{ filename: "source_input.mp4", subfolder: "", type: "input" }],
                   },
                   save: {
                     [outputField]: [

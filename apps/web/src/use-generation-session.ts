@@ -146,7 +146,7 @@ export function useGenerationSession(
       try {
         if (selectedWorkflow?.execution === "comfy_only") {
           const opened = window.open(
-            `${comfyEditorUrl}/?takeboard_workflow=${encodeURIComponent(selectedWorkflow.path)}`,
+            `${comfyEditorUrl}/?yoyotv_workflow=${encodeURIComponent(selectedWorkflow.path)}`,
             "_blank",
           );
           if (!opened) throw new Error("浏览器阻止了新窗口，请允许弹窗后重试");

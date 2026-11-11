@@ -53,7 +53,11 @@ export function CanvasVideo({
   label: string;
   onLoaded?: () => void;
   onError?: () => void;
-  onDimensions?: (dimensions: { width: number; height: number; duration?: number | undefined }) => void;
+  onDimensions?: (dimensions: {
+    width: number;
+    height: number;
+    duration?: number | undefined;
+  }) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);

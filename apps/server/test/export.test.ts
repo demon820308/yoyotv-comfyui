@@ -50,8 +50,26 @@ describe("Export Service and Endpoints", () => {
     const out = join(tempDir, "out.mp4");
 
     // Generate 2 short test videos with ffmpeg
-    await execFileAsync("ffmpeg", ["-y", "-f", "lavfi", "-i", "color=c=blue:s=320x240:d=0.5", "-c:v", "libx264", v1]);
-    await execFileAsync("ffmpeg", ["-y", "-f", "lavfi", "-i", "color=c=red:s=320x240:d=0.5", "-c:v", "libx264", v2]);
+    await execFileAsync("ffmpeg", [
+      "-y",
+      "-f",
+      "lavfi",
+      "-i",
+      "color=c=blue:s=320x240:d=0.5",
+      "-c:v",
+      "libx264",
+      v1,
+    ]);
+    await execFileAsync("ffmpeg", [
+      "-y",
+      "-f",
+      "lavfi",
+      "-i",
+      "color=c=red:s=320x240:d=0.5",
+      "-c:v",
+      "libx264",
+      v2,
+    ]);
 
     await concatVideos([v1, v2], out);
     expect(out).toBeDefined();

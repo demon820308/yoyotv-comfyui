@@ -36,12 +36,14 @@ describe("workflow library preferences", () => {
         });
         expect(response.statusCode, response.body).toBe(200);
       }
-      expect(docs.get(`takeboard/library/${Buffer.from(path).toString("base64url")}.json`)).toEqual(
-        { included: false, favorite: true, name: "人物与宠物" },
-      );
+      expect(docs.get(`yoyotv/library/${Buffer.from(path).toString("base64url")}.json`)).toEqual({
+        included: false,
+        favorite: true,
+        name: "人物与宠物",
+      });
       expect(docs.get(`workflows/${path}`)).toEqual({ nodes: [] });
       expect(writes).toHaveLength(4);
-      expect(writes.every((file) => file.startsWith("takeboard/library/"))).toBe(true);
+      expect(writes.every((file) => file.startsWith("yoyotv/library/"))).toBe(true);
       const parallel = await Promise.all([
         app.inject({
           method: "PUT",
@@ -55,9 +57,11 @@ describe("workflow library preferences", () => {
         }),
       ]);
       expect(parallel.map((response) => response.statusCode)).toEqual([200, 200]);
-      expect(docs.get(`takeboard/library/${Buffer.from(path).toString("base64url")}.json`)).toEqual(
-        { included: true, favorite: true, name: "新的名称" },
-      );
+      expect(docs.get(`yoyotv/library/${Buffer.from(path).toString("base64url")}.json`)).toEqual({
+        included: true,
+        favorite: true,
+        name: "新的名称",
+      });
       const copy = await app.inject({
         method: "POST",
         url: "/api/workflows/copy",
@@ -70,7 +74,7 @@ describe("workflow library preferences", () => {
         origin: "imported",
       });
       expect(docs.get(`workflows/${copy.json().path}`)).toEqual({ nodes: [] });
-      expect(writes.some((file) => file.startsWith("takeboard/bindings/"))).toBe(false);
+      expect(writes.some((file) => file.startsWith("yoyotv/bindings/"))).toBe(false);
       expect(docs.get(`workflows/${path}`)).toEqual({ nodes: [] });
       const invalid = await app.inject({
         method: "PUT",

@@ -45,7 +45,7 @@ pub async fn open(app: tauri::AppHandle) -> tauri::Result<()> {
 }
 pub async fn open_with_theme(app: tauri::AppHandle, _theme: Option<&str>) -> tauri::Result<()> {
     if let Some(window) = app.get_webview_window("main") {
-        window.eval("window.__takeboardPendingSettings = 'remote-projects'; window.dispatchEvent(new CustomEvent('takeboard:open-settings',{detail:'remote-projects'}));")?;
+        window.eval("window.__takeboardPendingSettings = 'remote-projects'; window.dispatchEvent(new CustomEvent('yoyotv:open-settings',{detail:'remote-projects'}));")?;
         window.show()?;
         window.unminimize()?;
         window.set_focus()?;

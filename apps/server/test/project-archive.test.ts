@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createWriteStream, existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -79,7 +80,7 @@ describe("TakeBoard project packages", () => {
       projectId: created.snapshot.project.id,
       revision: created.revision,
       manifest: {
-        format: "takeboard.project-package",
+        format: "yoyotv.project-package",
         version: 1,
       },
     });
@@ -148,7 +149,7 @@ describe("TakeBoard project packages", () => {
       title: "Database title",
     });
     await writeFile(
-      join(sourceDirectory, "project.takeboard.json"),
+      join(sourceDirectory, "project.yoyotv.json"),
       `${JSON.stringify(
         {
           ...created.snapshot,
@@ -205,5 +206,46 @@ describe("TakeBoard project packages", () => {
       statusCode: 400,
       message: expect.stringMatching(/校验失败/),
     });
+  });
+
+  it("imports a legacy takeboard-package.json archive and migrates its database in place", async () => {
+    const sourceRoot = await temporaryRoot("takeboard-legacy-package-source-");
+    const destinationRoot = await temporaryRoot("takeboard-legacy-package-destination-");
+    const sourceKey = "legacy-film.takeboard";
+    const sourceDirectory = join(sourceRoot, sourceKey);
+    const created = await new ProjectService().create({
+      projectDirectory: sourceDirectory,
+      title: "旧版项目包",
+    });
+    const snapshotBytes = await readFile(join(sourceDirectory, "project.yoyotv.json"));
+    const dbBytes = await readFile(join(sourceDirectory, "yoyotv.db"));
+    const files = [
+      { path: "project.takeboard.json", value: snapshotBytes },
+      { path: "takeboard.db", value: dbBytes },
+    ];
+    const manifest = {
+      format: "takeboard.project-package",
+      version: 1,
+      exportedAt: "2026-08-29T12:00:00.000Z",
+      sourceKey,
+      projectId: created.snapshot.project.id,
+      title: created.snapshot.project.title,
+      revision: created.revision,
+      files: files.map((file) => ({
+        path: file.path,
+        size: file.value.byteLength,
+        sha256: createHash("sha256").update(file.value).digest("hex"),
+      })),
+    };
+    const archivePath = join(sourceRoot, "legacy-film.takeboard.tgz");
+    await writeTarGzip(archivePath, [
+      { name: "takeboard-package.json", value: JSON.stringify(manifest) },
+      ...files.map((file) => ({ name: `project/${file.path}`, value: file.value })),
+    ]);
+
+    const imported = await importProjectArchive(destinationRoot, archivePath);
+    expect(imported.title).toBe("旧版项目包");
+    expect(existsSync(join(destinationRoot, imported.key, "yoyotv.db"))).toBe(true);
+    expect(existsSync(join(destinationRoot, imported.key, "project.yoyotv.json"))).toBe(true);
   });
 });

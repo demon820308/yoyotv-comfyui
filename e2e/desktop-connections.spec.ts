@@ -23,14 +23,14 @@ test("remote projects stay in settings, preserve failed drafts and require confi
     if (operation === "forget") status = { ...status, recent: [] };
     await route.fulfill({ status: 204 });
     await page.evaluate(
-      (detail) => window.dispatchEvent(new CustomEvent("takeboard:desktop-action", { detail })),
+      (detail) => window.dispatchEvent(new CustomEvent("yoyotv:desktop-action", { detail })),
       { actionId: url.searchParams.get("actionId"), data: status },
     );
   });
   await page.goto("/");
   await expect(page.getByRole("button", { name: "打开工作区选项" })).toBeVisible();
   await page.evaluate(() =>
-    window.dispatchEvent(new CustomEvent("takeboard:open-settings", { detail: "remote-projects" })),
+    window.dispatchEvent(new CustomEvent("yoyotv:open-settings", { detail: "remote-projects" })),
   );
   const settings = page.getByRole("dialog", { name: "设置", exact: true });
   await expect(settings).toBeVisible();

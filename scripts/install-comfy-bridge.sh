@@ -17,15 +17,16 @@ if [[ ! -x $python_bin ]]; then
   echo "ComfyUI Python not found. Set COMFY_DIR or COMFY_PYTHON." >&2
   exit 1
 fi
-source_file="$repo_dir/deploy/comfyui-takeboard-bridge/js/takeboard-workflow-bridge.js"
+source_file="$repo_dir/deploy/comfyui-yoyotv-bridge/js/yoyotv-workflow-bridge.js"
 
 frontend_root=$(
   "$python_bin" -c 'from pathlib import Path; import comfyui_frontend_package; print(Path(comfyui_frontend_package.__file__).parent)'
 )
 extension_dir="$frontend_root/static/extensions/core"
-destination="$extension_dir/takeboard-workflow-bridge.js"
+destination="$extension_dir/yoyotv-workflow-bridge.js"
 
 test -f "$source_file"
 test -d "$extension_dir"
+rm -f "$extension_dir/takeboard-workflow-bridge.js"
 install -m 0644 "$source_file" "$destination"
-echo "Installed TakeBoard ComfyUI bridge: $destination"
+echo "Installed YoYoTV ComfyUI bridge: $destination"

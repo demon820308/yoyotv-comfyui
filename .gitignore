@@ -17,8 +17,10 @@ apps/desktop/src-tauri/gen/
 .env.*
 !.env.example
 
-# Local TakeBoard projects and generated media
+# Local YoYoTV / TakeBoard projects and generated media
+*.yoyotv/
 *.takeboard/
+.yoyotv-data/
 .takeboard-data/
 renders/
 deploy/portal/data/

@@ -57,7 +57,7 @@ describe("ProjectStore", () => {
     expect((await firstStore.save(snapshot("Renamed film"))).revision).toBe(2);
     firstStore.close();
     await writeFile(
-      join(projectDirectory, "project.takeboard.json"),
+      join(projectDirectory, "project.yoyotv.json"),
       `${JSON.stringify(snapshot("Interrupted newer snapshot"), null, 2)}\n`,
     );
 
@@ -75,11 +75,11 @@ describe("ProjectStore", () => {
         "backups",
         "exports",
         "logs",
-        "project.takeboard.json",
+        "project.yoyotv.json",
         "recipes",
         "renders",
         "runs",
-        "takeboard.db",
+        "yoyotv.db",
         "trash",
       ].sort(),
     );
@@ -94,7 +94,7 @@ describe("ProjectStore", () => {
     await store.save({ ...snapshot(), apiKey: "should-never-be-exported" });
     store.close();
 
-    const exported = await readFile(join(projectDirectory, "project.takeboard.json"), "utf8");
+    const exported = await readFile(join(projectDirectory, "project.yoyotv.json"), "utf8");
     expect(exported).not.toContain("should-never-be-exported");
     expect(exported).not.toContain(projectDirectory);
   });
@@ -140,7 +140,7 @@ describe("ProjectStore", () => {
     expect(store?.listCommands(projectId)).toEqual([]);
     store?.close();
 
-    const migrated = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
+    const migrated = new BetterSqlite3(join(projectDirectory, "yoyotv.db"));
     expect(
       migrated.prepare("SELECT 1 FROM schema_migrations WHERE id = '002_command_log'").get(),
     ).toBeTruthy();
@@ -160,11 +160,11 @@ describe("ProjectStore", () => {
       await readFile(join(backupDirectory, "migration-backup.json"), "utf8"),
     );
     expect(backupMetadata).toMatchObject({
-      format: "takeboard.migration-backup",
+      format: "yoyotv.migration-backup",
       version: 1,
       pendingMigrations: ["002_command_log"],
     });
-    const backupDatabase = new BetterSqlite3(join(backupDirectory, "takeboard.db"), {
+    const backupDatabase = new BetterSqlite3(join(backupDirectory, "yoyotv.db"), {
       readonly: true,
     });
     expect(
@@ -237,8 +237,10 @@ describe("ProjectStore", () => {
     await expect(store?.save(snapshot())).resolves.toMatchObject({ revision: 2 });
     store?.close();
 
-    const clientAfter = new BetterSqlite3(join(projectDirectory, "takeboard.db"));
-    const cols = clientAfter.prepare("PRAGMA table_info(event_log)").all() as Array<{ name: string }>;
+    const clientAfter = new BetterSqlite3(join(projectDirectory, "yoyotv.db"));
+    const cols = clientAfter.prepare("PRAGMA table_info(event_log)").all() as Array<{
+      name: string;
+    }>;
     expect(cols.some((c) => c.name === "created_at")).toBe(true);
     expect(cols.some((c) => c.name === "createdAt")).toBe(false);
     clientAfter.close();

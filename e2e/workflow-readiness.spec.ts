@@ -115,7 +115,7 @@ test("model picker excludes blockers; template remediation hides raw fields and 
     await expect(panel.getByRole("button", { name: "使用此工作流" })).toHaveCount(0);
     await expect(panel.getByRole("link", { name: "在 ComfyUI 编辑 ↗" })).toHaveAttribute(
       "href",
-      /takeboard_workflow=TakeBoard%2FCustomVideo.json/,
+      /yoyotv_workflow=TakeBoard%2FCustomVideo.json/,
     );
     await expect(panel.getByRole("link", { name: "下载 JSON" })).toHaveAttribute(
       "href",

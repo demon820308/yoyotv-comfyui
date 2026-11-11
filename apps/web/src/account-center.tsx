@@ -50,7 +50,7 @@ function SessionsPanel() {
             type="button"
             onClick={() =>
               void authApi.revokeSession(session.id).then((result) => {
-                if (result.current) window.dispatchEvent(new Event("takeboard:auth-required"));
+                if (result.current) window.dispatchEvent(new Event("yoyotv:auth-required"));
                 else setSessions((current) => current.filter((item) => item.id !== session.id));
               })
             }
@@ -791,7 +791,7 @@ function BackupPanel() {
       {!restore ? (
         <label className="backup-upload">
           <input
-            accept=".tgz,.takeboard-instance.tgz,application/gzip"
+            accept=".tgz,.yoyotv-instance.tgz,.takeboard-instance.tgz,application/gzip"
             disabled={busy}
             type="file"
             onChange={(event) => {

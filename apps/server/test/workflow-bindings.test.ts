@@ -145,7 +145,11 @@ describe("workflow binding execution", () => {
 
     const singleImageResult = applyWorkflowBinding(
       prompt,
-      { ...suggested, trusted: true, verifiedAt: "2026-11-08T00:00:00.000Z" } as unknown as WorkflowBinding,
+      {
+        ...suggested,
+        trusted: true,
+        verifiedAt: "2026-11-08T00:00:00.000Z",
+      } as unknown as WorkflowBinding,
       {
         prompt: "action",
         referenceImages: ["actual-char.png"],

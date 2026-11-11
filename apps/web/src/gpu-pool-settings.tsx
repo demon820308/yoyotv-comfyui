@@ -81,7 +81,7 @@ export default function GpuPoolSettings() {
                   url: status.endpoint,
                   name: "单卡执行池",
                 });
-                window.dispatchEvent(new Event("takeboard:generation-connection-changed"));
+                window.dispatchEvent(new Event("yoyotv:generation-connection-changed"));
               }, "已切换到单卡执行池")
             }
           >

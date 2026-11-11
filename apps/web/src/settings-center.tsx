@@ -26,8 +26,8 @@ export function SettingsButton() {
   );
   useEffect(() => {
     const notice = (event: Event) => setUpdate((event as CustomEvent<boolean>).detail === true);
-    window.addEventListener("takeboard:update-available", notice);
-    return () => window.removeEventListener("takeboard:update-available", notice);
+    window.addEventListener("yoyotv:update-available", notice);
+    return () => window.removeEventListener("yoyotv:update-available", notice);
   }, []);
   return (
     <button type="button" className="settings-entry" onClick={() => openSettings()}>
@@ -76,8 +76,8 @@ export function SettingsHost() {
       );
       consumePending();
     };
-    window.addEventListener("takeboard:open-settings", show);
-    return () => window.removeEventListener("takeboard:open-settings", show);
+    window.addEventListener("yoyotv:open-settings", show);
+    return () => window.removeEventListener("yoyotv:open-settings", show);
   }, []);
   return section
     ? createPortal(

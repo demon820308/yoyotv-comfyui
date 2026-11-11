@@ -12,7 +12,7 @@ function crc32(buffer: Buffer): number {
       crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
     }
   }
-  return (~crc) >>> 0;
+  return ~crc >>> 0;
 }
 
 export type ZipEntry = {
@@ -93,18 +93,26 @@ export function createZipArchive(entries: readonly ZipEntry[]): Buffer {
 
 function runFfmpeg(args: readonly string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    execFile("ffmpeg", args as string[], { maxBuffer: 10 * 1024 * 1024 }, (err, _stdout, stderr) => {
-      if (err) {
-        reject(new Error(stderr || err.message));
-      } else {
-        resolve();
-      }
-    });
+    execFile(
+      "ffmpeg",
+      args as string[],
+      { maxBuffer: 10 * 1024 * 1024 },
+      (err, _stdout, stderr) => {
+        if (err) {
+          reject(new Error(stderr || err.message));
+        } else {
+          resolve();
+        }
+      },
+    );
   });
 }
 
 /** Concatenate a list of video files using FFmpeg (stream-copy first, transcoding fallback). */
-export async function concatVideos(filePaths: readonly string[], outputPath: string): Promise<void> {
+export async function concatVideos(
+  filePaths: readonly string[],
+  outputPath: string,
+): Promise<void> {
   if (filePaths.length === 0) {
     throw new Error("No video files provided for concatenation");
   }
@@ -118,7 +126,18 @@ export async function concatVideos(filePaths: readonly string[], outputPath: str
   try {
     try {
       // Fast path: stream copy when codec and parameters match
-      await runFfmpeg(["-y", "-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", outputPath]);
+      await runFfmpeg([
+        "-y",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        listFile,
+        "-c",
+        "copy",
+        outputPath,
+      ]);
     } catch {
       // Fallback path: re-encode to ensure diverse resolutions/frame rates concatenate cleanly
       await runFfmpeg([

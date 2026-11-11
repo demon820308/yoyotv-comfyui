@@ -86,13 +86,13 @@ async function request(path, options = {}) {
   const headers = new Headers(options.headers);
   if (cookie) headers.set("cookie", cookie);
   const method = (options.method ?? "GET").toUpperCase();
-  if (csrf && !["GET", "HEAD"].includes(method)) headers.set("x-takeboard-csrf", csrf);
+  if (csrf && !["GET", "HEAD"].includes(method)) headers.set("x-yoyotv-csrf", csrf);
   if (
     projectKey &&
     path.startsWith(`/api/projects/${encodeURIComponent(projectKey)}`) &&
     !["GET", "HEAD"].includes(method)
   ) {
-    headers.set("x-takeboard-revision", String(revision));
+    headers.set("x-yoyotv-revision", String(revision));
   }
   if (options.body && typeof options.body === "string")
     headers.set("content-type", "application/json");

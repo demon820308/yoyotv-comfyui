@@ -146,7 +146,9 @@ export function buildPortal(options: PortalOptions) {
     const session = sessionFor(request);
     if (!session) return null;
     if (unsafeMethods.has(request.method)) {
-      const csrf = request.headers["x-takeboard-portal-csrf"];
+      // shortcut: legacy x-takeboard-portal-csrf fallback for pre-rebrand clients, remove in v2.0.0
+      const csrf =
+        request.headers["x-yoyotv-portal-csrf"] ?? request.headers["x-takeboard-portal-csrf"];
       if (typeof csrf !== "string" || csrf !== session.csrfToken) return null;
     }
     return session;

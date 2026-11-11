@@ -1469,8 +1469,8 @@ export function ProjectHub({
       setWorkerPanelOpen(false);
       setUtilityOpen(false);
     };
-    window.addEventListener("takeboard:open-settings", closeMenus);
-    return () => window.removeEventListener("takeboard:open-settings", closeMenus);
+    window.addEventListener("yoyotv:open-settings", closeMenus);
+    return () => window.removeEventListener("yoyotv:open-settings", closeMenus);
   }, []);
 
   useEffect(() => {
@@ -1521,8 +1521,8 @@ export function ProjectHub({
       const quality = (event as CustomEvent<SceneQuality>).detail;
       setSceneQuality(quality);
     };
-    window.addEventListener("takeboard:scene-quality", changeQuality);
-    return () => window.removeEventListener("takeboard:scene-quality", changeQuality);
+    window.addEventListener("yoyotv:scene-quality", changeQuality);
+    return () => window.removeEventListener("yoyotv:scene-quality", changeQuality);
   }, []);
 
   useEffect(() => {
@@ -1672,7 +1672,7 @@ export function ProjectHub({
               ref={importInput}
               className="visually-hidden"
               type="file"
-              accept=".tgz,.gz,application/gzip,application/x-gzip"
+              accept=".tgz,.yoyotv.tgz,.takeboard.tgz,.gz,application/gzip,application/x-gzip"
               aria-label="选择 YoYo 项目包"
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -2118,7 +2118,7 @@ export function ProjectHub({
               </div>
             </div>
             <small className="start-guide-note">
-              “导入项目包”用于恢复 YoYo 导出的 .takeboard.tgz
+              “导入项目包”用于恢复 YoYo 导出的 .yoyotv.tgz（及旧版 .takeboard.tgz）
               文件，不要求原来的文件夹结构。普通图片和视频请在项目画布或资产库中导入。
             </small>
           </section>

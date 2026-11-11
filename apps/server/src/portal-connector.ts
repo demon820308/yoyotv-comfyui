@@ -448,7 +448,7 @@ export class PortalConnector {
       );
       headers.set("origin", this.options.localOrigin);
       if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
-        headers.set("x-takeboard-csrf", this.localSession.csrfToken);
+        headers.set("x-yoyotv-csrf", this.localSession.csrfToken);
       }
       const body = Buffer.concat(request.chunks);
       const localUrl = new URL(request.path, this.options.localOrigin);

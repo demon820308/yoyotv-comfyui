@@ -36,7 +36,7 @@ export function requestDesktopData<T = unknown>(
       (window as unknown as { __takeboardNativeActions?: number }).__takeboardNativeActions === 2;
     const done = (error?: string, data?: T) => {
       window.clearTimeout(timer);
-      window.removeEventListener("takeboard:desktop-action", receive);
+      window.removeEventListener("yoyotv:desktop-action", receive);
       if (error) reject(new Error(error));
       else resolve(data as T);
     };
@@ -48,7 +48,7 @@ export function requestDesktopData<T = unknown>(
       () => done("桌面应用未响应。请从应用菜单打开对应功能，或更新 YoYoTV 安装包后重试。"),
       timeoutMs,
     );
-    window.addEventListener("takeboard:desktop-action", receive);
+    window.addEventListener("yoyotv:desktop-action", receive);
     const theme = document.documentElement.dataset.theme || "chroma";
     window.location.href = desktopActionUrl(action, { ...parameters, theme, actionId }, modern);
   });

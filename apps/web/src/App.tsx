@@ -9,6 +9,7 @@ import {
   type NodeTypes,
   ReactFlow,
   type ReactFlowInstance,
+  useViewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type {
@@ -119,6 +120,15 @@ type PendingCanvasRemoval = {
   command?: ProjectCommand;
   preview: ProjectCommandPreview;
 };
+
+function CanvasStatus({ nodesCount, edgesCount }: { nodesCount: number; edgesCount: number }) {
+  const { zoom } = useViewport();
+  return (
+    <div className="canvas-status">
+      {Math.round(zoom * 100)}% · {nodesCount} 节点 · {edgesCount} 关系 · 轻量对齐
+    </div>
+  );
+}
 
 export function App() {
   const { user: authUser, enabled: authEnabled, local: authLocal } = useAuth();
@@ -425,13 +435,13 @@ export function App() {
         })
         .catch(() => setSyncStatus("offline"));
     };
-    window.addEventListener("takeboard:revision-conflict", recoverConflict);
-    return () => window.removeEventListener("takeboard:revision-conflict", recoverConflict);
+    window.addEventListener("yoyotv:revision-conflict", recoverConflict);
+    return () => window.removeEventListener("yoyotv:revision-conflict", recoverConflict);
   }, [acceptPayload, projectKey, projectMode, setError]);
 
   useEffect(() => {
     if (showHub || projectMode !== "demo" || !snapshot) return;
-    optionalSessionStorage.setItem("takeboard.resumeDemo", "1");
+    optionalSessionStorage.setItem("yoyotv.resumeDemo", "1");
   }, [projectMode, showHub, snapshot]);
 
   useEffect(() => {
@@ -456,10 +466,10 @@ export function App() {
       }
     };
     window.addEventListener("resize", adaptWorkspacePanels);
-    window.addEventListener("takeboard:display-scale", adaptWorkspacePanels);
+    window.addEventListener("yoyotv:display-scale", adaptWorkspacePanels);
     return () => {
       window.removeEventListener("resize", adaptWorkspacePanels);
-      window.removeEventListener("takeboard:display-scale", adaptWorkspacePanels);
+      window.removeEventListener("yoyotv:display-scale", adaptWorkspacePanels);
     };
   }, [selection.inspect]);
 
@@ -1036,7 +1046,14 @@ export function App() {
         (target.closest("dialog[open], .settings-panel") ||
           (target.closest('[role="dialog"], .studio-backdrop') &&
             (event.key !== "Escape" ||
-              !(recipeOpen || assetLibraryOpen || storyboardOpen || exportManagerOpen || renameOpen || nodeEditDraft))))
+              !(
+                recipeOpen ||
+                assetLibraryOpen ||
+                storyboardOpen ||
+                exportManagerOpen ||
+                renameOpen ||
+                nodeEditDraft
+              ))))
       )
         return;
       if (event.key === "Escape") {
@@ -1619,6 +1636,7 @@ export function App() {
         selection.activate(payload.snapshot);
         pendingSyncRef.current = null;
         setSyncStatus("current");
+        optionalSessionStorage.removeItem("yoyotv.resumeDemo");
         optionalSessionStorage.removeItem("takeboard.resumeDemo");
         setBlankCanvasGuideOpen(false);
         setProjectKey(key);
@@ -1654,11 +1672,15 @@ export function App() {
         selection.activate(payload.snapshot);
         pendingSyncRef.current = null;
         setSyncStatus("current");
+        optionalSessionStorage.removeItem("yoyotv.resumeDemo");
         optionalSessionStorage.removeItem("takeboard.resumeDemo");
         let showFirstGuide = false;
         try {
-          showFirstGuide = optionalLocalStorage.getItem("takeboard.blankCanvasGuideSeen") !== "1";
-          optionalLocalStorage.setItem("takeboard.blankCanvasGuideSeen", "1");
+          // shortcut: legacy takeboard.blankCanvasGuideSeen read fallback, remove in v2.0.0
+          showFirstGuide =
+            (optionalLocalStorage.getItem("yoyotv.blankCanvasGuideSeen") ??
+              optionalLocalStorage.getItem("takeboard.blankCanvasGuideSeen")) !== "1";
+          optionalLocalStorage.setItem("yoyotv.blankCanvasGuideSeen", "1");
         } catch {
           // Storage may be unavailable in privacy-restricted browser sessions.
         }
@@ -1851,7 +1873,13 @@ export function App() {
   ]);
 
   useEffect(() => {
-    if (optionalSessionStorage.getItem("takeboard.resumeDemo") !== "1") return;
+    // shortcut: legacy takeboard.resumeDemo read fallback, remove in v2.0.0
+    if (
+      (optionalSessionStorage.getItem("yoyotv.resumeDemo") ??
+        optionalSessionStorage.getItem("takeboard.resumeDemo")) !== "1"
+    )
+      return;
+    optionalSessionStorage.removeItem("yoyotv.resumeDemo");
     optionalSessionStorage.removeItem("takeboard.resumeDemo");
     void openDemo();
   }, [openDemo]);
@@ -2158,6 +2186,7 @@ export function App() {
             title="返回项目主页"
             onClick={() => {
               detachGeneration();
+              optionalSessionStorage.removeItem("yoyotv.resumeDemo");
               optionalSessionStorage.removeItem("takeboard.resumeDemo");
               beginNavigation();
               setBusy(false);
@@ -2845,7 +2874,7 @@ export function App() {
           }}
           minZoom={0.35}
           maxZoom={4}
-          onlyRenderVisibleElements
+          onlyRenderVisibleElements={selectedCanvasItemIds.length === 0}
           snapToGrid
           snapGrid={canvasSnapGrid}
           defaultViewport={{ x: 60, y: 30, zoom: 0.78 }}
@@ -2857,10 +2886,8 @@ export function App() {
         >
           <Background color="var(--canvas-grid)" gap={28} size={1} />
           <Controls showInteractive={false} position="bottom-left" />
+          <CanvasStatus nodesCount={nodes.length} edgesCount={edges.length} />
         </ReactFlow>
-        <div className="canvas-status">
-          {nodes.length} 节点 · {edges.length} 关系 · 轻量对齐
-        </div>
       </section>
 
       {canvasContextMenu ? (
@@ -3802,7 +3829,7 @@ export function App() {
             if (action === "review") setError(null);
             else if (action === "workflows") setRecipeOpen(true);
             else if (action === "assets") setAssetLibraryOpen(true);
-            else if (action === "tasks") window.dispatchEvent(new Event("takeboard:open-tasks"));
+            else if (action === "tasks") window.dispatchEvent(new Event("yoyotv:open-tasks"));
             else if (action === "prompt" || action === "parameters") {
               const target = document.querySelector<HTMLButtonElement>("#inspector-tab-generate");
               if (target) {

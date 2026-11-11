@@ -693,11 +693,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const offline = () => {
       setError("连接暂时中断，当前页面已保留。恢复后请确认任务状态，不要重复提交生成。");
     };
-    window.addEventListener("takeboard:auth-required", expired);
-    window.addEventListener("takeboard:connection-lost", offline);
+    window.addEventListener("yoyotv:auth-required", expired);
+    window.addEventListener("yoyotv:connection-lost", offline);
     return () => {
-      window.removeEventListener("takeboard:auth-required", expired);
-      window.removeEventListener("takeboard:connection-lost", offline);
+      window.removeEventListener("yoyotv:auth-required", expired);
+      window.removeEventListener("yoyotv:connection-lost", offline);
     };
   }, [load]);
   useEffect(() => {

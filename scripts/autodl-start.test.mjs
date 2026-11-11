@@ -80,7 +80,7 @@ test("cloud starts privately, requires accounts, and does not inherit desktop se
   assert.equal(env.TAKEBOARD_HOST, "127.0.0.1");
   assert.equal(env.TAKEBOARD_AUTH_MODE, "required");
   assert.equal(env.COMFY_URL, "http://127.0.0.1:8188");
-  assert.equal(env.COMFY_START_PID_FILE, join(env.COMFY_START_CWD, ".takeboard-comfy.pid"));
+  assert.equal(env.COMFY_START_PID_FILE, join(env.COMFY_START_CWD, ".yoyotv-comfy.pid"));
   assert.equal(env.TAKEBOARD_DESKTOP, undefined);
   assert.equal(env.COMFY_START_SERVICE, undefined);
   assert.equal(env.TAKEBOARD_BACKUP_DESTINATION, undefined);

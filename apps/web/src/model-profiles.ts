@@ -58,7 +58,12 @@ export function workflowInputSlots(workflow: WorkflowSummary | null): WorkflowIn
       required: ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(
         workflow.capability,
       ),
-      hint: workflow.capability === "upscale_image" ? "待放大的原图" : workflow.capability === "image_to_image" ? "保留并编辑这张图" : "视频从这里开始",
+      hint:
+        workflow.capability === "upscale_image"
+          ? "待放大的原图"
+          : workflow.capability === "image_to_image"
+            ? "保留并编辑这张图"
+            : "视频从这里开始",
       maxCount: workflow.mediaInputs?.first_frame ?? 1,
       mediaType: "image",
     });
@@ -186,11 +191,15 @@ export function modelProfile(
   };
 }
 
-const preferencePrefix = "takeboard.model-preferences.";
+// shortcut: legacy takeboard.model-preferences. read fallback for pre-rebrand browser storage, remove in v2.0.0
+const preferencePrefix = "yoyotv.model-preferences.";
+const legacyPreferencePrefix = "takeboard.model-preferences.";
 
 export function loadModelPreferences(path: string): Partial<ModelDefaults> {
   try {
-    const raw = optionalLocalStorage.getItem(`${preferencePrefix}${path}`);
+    const raw =
+      optionalLocalStorage.getItem(`${preferencePrefix}${path}`) ??
+      optionalLocalStorage.getItem(`${legacyPreferencePrefix}${path}`);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return Object.fromEntries(

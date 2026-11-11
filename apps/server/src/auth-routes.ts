@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
 import type { Account, AuthStatus, InstanceRole, ProjectRole } from "@takeboard/contracts";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -255,7 +255,8 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions) {
     };
     authContexts.set(request, context);
     if (unsafeMethods.has(request.method)) {
-      const supplied = request.headers["x-takeboard-csrf"];
+      // shortcut: legacy x-takeboard-csrf header fallback, remove in v2.0.0
+      const supplied = request.headers["x-yoyotv-csrf"] ?? request.headers["x-takeboard-csrf"];
       if (typeof supplied !== "string" || supplied !== session.csrfToken) {
         auth.audit(
           session.user.id,
@@ -644,10 +645,7 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions) {
       return await reply
         .header("content-type", "application/gzip")
         .header("cache-control", "no-store")
-        .header(
-          "content-disposition",
-          `attachment; filename="${request.params.backupId}.takeboard-instance.tgz"`,
-        )
+        .header("content-disposition", `attachment; filename="${basename(path)}"`)
         .send(createReadStream(path));
     },
   );

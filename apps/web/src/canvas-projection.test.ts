@@ -1,7 +1,7 @@
 import type { ProjectSnapshot } from "@takeboard/contracts";
 import { describe, expect, it } from "vitest";
 import type { WorkflowSummary } from "./api";
-import { shotMediaFactsText, type BoardNode } from "./board-nodes";
+import { type BoardNode, shotMediaFactsText } from "./board-nodes";
 import {
   boardEdges,
   boardNodes,
@@ -132,24 +132,15 @@ it("only exposes duration and fps controls for workflows that actually declare t
     supportsSeed: true,
   });
 
-  const unexpandedNodes = boardNodes(
-    snapshot,
-    null,
-    null,
-    [videoWorkflow],
-    null,
-    null,
-    null,
-    {
-      "shot-1": {
-        phase: "running",
-        label: "正在生成: SamplerCustomAdvanced",
-        detail: "真实步进 2 / 3",
-        percent: 67,
-        elapsedSeconds: 79,
-      },
+  const unexpandedNodes = boardNodes(snapshot, null, null, [videoWorkflow], null, null, null, {
+    "shot-1": {
+      phase: "running",
+      label: "正在生成: SamplerCustomAdvanced",
+      detail: "真实步进 2 / 3",
+      percent: 67,
+      elapsedSeconds: 79,
     },
-  );
+  });
   expect(unexpandedNodes[0]?.data.inlineControls).toBeUndefined();
   expect(unexpandedNodes[0]?.data.progress).toEqual({
     phase: "running",
@@ -402,7 +393,13 @@ describe("canvas edge resolution", () => {
       capability: "upscale_video" as const,
       capabilityLabel: "视频放大",
       inputs: ["reference_videos", "denoise"],
-      mediaInputs: { first_frame: 0, last_frame: 0, reference: 0, reference_video: 1, reference_audio: 0 },
+      mediaInputs: {
+        first_frame: 0,
+        last_frame: 0,
+        reference: 0,
+        reference_video: 1,
+        reference_audio: 0,
+      },
       models: [],
       nodeCount: 10,
       source: "comfyui" as const,
@@ -438,7 +435,15 @@ describe("canvas edge resolution", () => {
       onOpenWorkflows: () => {},
       onCommitTitle: () => {},
     };
-    const nodes = boardNodes(snap, "shot-node", "demo", [upscaleWorkflow], upscaleWorkflow, "shot-1", controls);
+    const nodes = boardNodes(
+      snap,
+      "shot-node",
+      "demo",
+      [upscaleWorkflow],
+      upscaleWorkflow,
+      "shot-1",
+      controls,
+    );
     const shotNode = nodes.find((n) => n.id === "shot-node");
     expect(shotNode?.data.inlineControls?.supportsResolution).toBe(false);
     expect(shotNode?.data.inlineControls?.supportsSeed).toBe(false);
@@ -455,7 +460,13 @@ describe("canvas edge resolution", () => {
       capability: "upscale_image" as const,
       capabilityLabel: "图片放大",
       inputs: ["first_frame", "denoise"],
-      mediaInputs: { first_frame: 1, last_frame: 0, reference: 0, reference_video: 0, reference_audio: 0 },
+      mediaInputs: {
+        first_frame: 1,
+        last_frame: 0,
+        reference: 0,
+        reference_video: 0,
+        reference_audio: 0,
+      },
       models: [],
       nodeCount: 3,
       source: "comfyui" as const,
@@ -491,7 +502,15 @@ describe("canvas edge resolution", () => {
       onOpenWorkflows: () => {},
       onCommitTitle: () => {},
     };
-    const nodes = boardNodes(snap, "shot-node", "demo", [upscaleImageWorkflow], upscaleImageWorkflow, "shot-1", controls);
+    const nodes = boardNodes(
+      snap,
+      "shot-node",
+      "demo",
+      [upscaleImageWorkflow],
+      upscaleImageWorkflow,
+      "shot-1",
+      controls,
+    );
     const shotNode = nodes.find((n) => n.id === "shot-node");
     expect(shotNode?.data.inlineControls?.supportsResolution).toBe(false);
     expect(shotNode?.data.inlineControls?.supportsSeed).toBe(false);

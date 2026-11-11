@@ -63,6 +63,21 @@ export function authModeFromEnvironment(): AuthMode {
   return process.env.NODE_ENV === "test" ? "off" : "optional";
 }
 
+// shortcut: fallback to legacy .takeboard-data directory when .yoyotv-data is absent, remove in v2.0.0
+export function resolveDefaultProjectsRoot() {
+  if (process.env.TAKEBOARD_DATA_ROOT) return resolve(process.env.TAKEBOARD_DATA_ROOT);
+  const primary = resolve(".yoyotv-data/projects");
+  const legacy = resolve(".takeboard-data/projects");
+  return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
+}
+
+function resolveDefaultDemoDirectory() {
+  if (process.env.TAKEBOARD_DEMO_DIRECTORY) return resolve(process.env.TAKEBOARD_DEMO_DIRECTORY);
+  const primary = resolve(".yoyotv-data/demo.yoyotv");
+  const legacy = resolve(".takeboard-data/demo.takeboard");
+  return !existsSync(primary) && existsSync(legacy) ? legacy : primary;
+}
+
 export function buildApp(options: AppOptions = {}): FastifyInstance {
   const app = Fastify({
     logger: process.env.NODE_ENV !== "test",
@@ -73,8 +88,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   });
   registerRequestSecurity(app, options.requestSecurity);
 
-  const projectsRoot =
-    options.projectsRoot ?? resolve(process.env.TAKEBOARD_DATA_ROOT ?? ".takeboard-data/projects");
+  const projectsRoot = options.projectsRoot ?? resolveDefaultProjectsRoot();
   const auth = registerAuth(app, {
     mode: options.auth?.mode ?? authModeFromEnvironment(),
     databasePath:
@@ -132,11 +146,7 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
   app.addHook("onReady", async () => portalConnector.start());
   app.addHook("onClose", async () => portalConnector.stop());
 
-  registerDemoRoutes(
-    app,
-    options.demoDirectory ??
-      resolve(process.env.TAKEBOARD_DEMO_DIRECTORY ?? ".takeboard-data/demo.takeboard"),
-  );
+  registerDemoRoutes(app, options.demoDirectory ?? resolveDefaultDemoDirectory());
   const comfyUrl = options.comfyUrl ?? process.env.COMFY_URL ?? "http://127.0.0.1:8188";
   const comfyInputRoot = options.comfyInputRoot ?? process.env.COMFY_INPUT_ROOT ?? null;
   const comfyOutputRoot = options.comfyOutputRoot ?? process.env.COMFY_OUTPUT_ROOT ?? null;

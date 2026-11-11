@@ -1,5 +1,5 @@
-import { expect, it } from "vitest";
 import type { ProjectSnapshot } from "@takeboard/contracts";
+import { expect, it } from "vitest";
 import type { WorkflowSummary } from "./api";
 import { defaultGenerationSettings } from "./generation-model";
 import { generationProblem } from "./generation-readiness";

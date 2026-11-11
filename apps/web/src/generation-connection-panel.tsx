@@ -77,11 +77,11 @@ export function GenerationConnectionPanel({ manage = false }: { manage?: boolean
     void read();
     const timer = window.setInterval(() => void read(), 5000);
     const changed = () => void read();
-    window.addEventListener("takeboard:generation-connection-changed", changed);
+    window.addEventListener("yoyotv:generation-connection-changed", changed);
     return () => {
       active = false;
       window.clearInterval(timer);
-      window.removeEventListener("takeboard:generation-connection-changed", changed);
+      window.removeEventListener("yoyotv:generation-connection-changed", changed);
     };
   }, []);
   const operate = async (
@@ -98,7 +98,7 @@ export function GenerationConnectionPanel({ manage = false }: { manage?: boolean
       if (changesConnection) await refresh();
       setNotice(message);
       if (changesConnection)
-        window.dispatchEvent(new Event("takeboard:generation-connection-changed"));
+        window.dispatchEvent(new Event("yoyotv:generation-connection-changed"));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "连接失败，原设备未切换");
       if (changesConnection) await refresh().catch(() => undefined);

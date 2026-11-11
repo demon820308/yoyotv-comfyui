@@ -27,14 +27,14 @@ export function DisplaySettings({
     document.documentElement.style.setProperty("--ui-scale-inverse", String(1 / scale));
     document.documentElement.dataset.displayScale = String(scale).replace(".", "-");
     rememberDisplayPreference("display-scale", String(scale));
-    window.dispatchEvent(new CustomEvent("takeboard:display-scale", { detail: scale }));
+    window.dispatchEvent(new CustomEvent("yoyotv:display-scale", { detail: scale }));
     window.requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   }, [scale]);
 
   useEffect(() => {
     rememberDisplayPreference("scene-quality", sceneQuality);
     window.dispatchEvent(
-      new CustomEvent<SceneQuality>("takeboard:scene-quality", { detail: sceneQuality }),
+      new CustomEvent<SceneQuality>("yoyotv:scene-quality", { detail: sceneQuality }),
     );
   }, [sceneQuality]);
 
@@ -42,11 +42,11 @@ export function DisplaySettings({
     const size = (event: Event) =>
       setScale(resolveDisplayScale(String((event as CustomEvent<DisplayScale>).detail)));
     const quality = (event: Event) => setSceneQuality((event as CustomEvent<SceneQuality>).detail);
-    window.addEventListener("takeboard:display-scale", size);
-    window.addEventListener("takeboard:scene-quality", quality);
+    window.addEventListener("yoyotv:display-scale", size);
+    window.addEventListener("yoyotv:scene-quality", quality);
     return () => {
-      window.removeEventListener("takeboard:display-scale", size);
-      window.removeEventListener("takeboard:scene-quality", quality);
+      window.removeEventListener("yoyotv:display-scale", size);
+      window.removeEventListener("yoyotv:scene-quality", quality);
     };
   }, []);
 

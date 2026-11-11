@@ -186,7 +186,7 @@ try {
   const headers = {
     cookie,
     "content-type": "application/json",
-    "x-takeboard-csrf": status.csrfToken,
+    "x-yoyotv-csrf": status.csrfToken,
   };
   assert.equal(
     (
@@ -213,7 +213,7 @@ try {
   );
   const created = await fetch(`${first.origin}/api/projects`, {
     method: "POST",
-    headers: { cookie, "content-type": "application/json", "x-takeboard-csrf": status.csrfToken },
+    headers: { cookie, "content-type": "application/json", "x-yoyotv-csrf": status.csrfToken },
     body: JSON.stringify({ title: "Packaged runtime verification" }),
   });
   assert.equal(created.status, 201, await created.text());

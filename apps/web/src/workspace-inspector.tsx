@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { projectApi, type WorkflowSummary } from "./api";
 import { DetailMedia } from "./detail-media";
 import {
+  removePromptMention,
+  splitPromptMentionSegments,
+  togglePromptMention,
+} from "./generation-draft";
+import {
   type GenerationProgress,
   type GenerationSettings,
   generationPromptPlaceholder,
@@ -25,11 +30,6 @@ import { ResultPreview } from "./result-preview";
 import { recordedSettings } from "./result-reuse";
 import { openSettings } from "./settings-navigation";
 import { VideoThumbnail } from "./video-preview";
-import {
-  removePromptMention,
-  splitPromptMentionSegments,
-  togglePromptMention,
-} from "./generation-draft";
 
 const rejectionReasons = ["角色漂移", "运动方向错误", "构图不稳定", "细节异常"];
 
@@ -514,7 +514,7 @@ export function Inspector({
     if (action === "review") onClose();
     else if (action === "workflows") onOpenRecipes();
     else if (action === "assets") onOpenAssets();
-    else if (action === "tasks") window.dispatchEvent(new Event("takeboard:open-tasks"));
+    else if (action === "tasks") window.dispatchEvent(new Event("yoyotv:open-tasks"));
     else if (action === "prompt" || action === "parameters") {
       setInspectorTab("generate");
       window.requestAnimationFrame(() => {
@@ -814,7 +814,11 @@ export function Inspector({
                           .map((mention) => (
                             <span key={mention.alias} className="prompt-active-pill">
                               {mention.thumbnailUrl ? (
-                                <img src={mention.thumbnailUrl} alt="" className="prompt-active-thumb" />
+                                <img
+                                  src={mention.thumbnailUrl}
+                                  alt=""
+                                  className="prompt-active-thumb"
+                                />
                               ) : null}
                               <strong>@{mention.alias}</strong>
                               <small>{mention.role}</small>
@@ -837,7 +841,11 @@ export function Inspector({
                       </div>
                     ) : null}
                     <div className="prompt-mirror-wrap">
-                      <div ref={promptBackdropRef} className="prompt-mirror-backdrop" aria-hidden="true">
+                      <div
+                        ref={promptBackdropRef}
+                        className="prompt-mirror-backdrop"
+                        aria-hidden="true"
+                      >
                         {splitPromptMentionSegments(
                           settings.prompt,
                           mentions.map((item) => item.alias),
@@ -951,8 +959,8 @@ export function Inspector({
                                 }
                               }}
                             >
-                              {isActive ? <span className="chip-check">✓ </span> : null}
-                              @{mention.alias}
+                              {isActive ? <span className="chip-check">✓ </span> : null}@
+                              {mention.alias}
                               <small>{mention.role}</small>
                             </button>
                           );

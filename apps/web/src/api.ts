@@ -136,20 +136,20 @@ async function apiFetch(path: string, options?: RequestInit) {
   const headers = new Headers(options?.headers);
   const method = (options?.method ?? "GET").toUpperCase();
   if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) {
-    headers.set("x-takeboard-csrf", csrfToken);
+    headers.set("x-yoyotv-csrf", csrfToken);
   }
   const projectMatch = /^\/api\/projects\/([^/?]+)/.exec(path);
   if (projectMatch?.[1] && !["GET", "HEAD", "OPTIONS"].includes(method)) {
     const key = decodeURIComponent(projectMatch[1]);
     const revision = knownProjectRevisions.get(key);
-    if (revision !== undefined) headers.set("x-takeboard-revision", String(revision));
+    if (revision !== undefined) headers.set("x-yoyotv-revision", String(revision));
   }
   let response: Response;
   try {
     response = await fetch(path, { credentials: "same-origin", ...options, headers });
   } catch (cause) {
     const timedOut = isTimeoutFailure(cause);
-    if (!options?.signal?.aborted) window.dispatchEvent(new Event("takeboard:connection-lost"));
+    if (!options?.signal?.aborted) window.dispatchEvent(new Event("yoyotv:connection-lost"));
     throw new TakeBoardApiError(
       timedOut
         ? "YoYoTV 请求超时。请保持页面打开，检查服务器或 SSH 连接后重试。"
@@ -161,7 +161,7 @@ async function apiFetch(path: string, options?: RequestInit) {
     );
   }
   if (response.status === 401 && !path.startsWith("/api/auth/"))
-    window.dispatchEvent(new Event("takeboard:auth-required"));
+    window.dispatchEvent(new Event("yoyotv:auth-required"));
   return response;
 }
 
@@ -426,7 +426,7 @@ export type WorkflowRecipeImport = WorkflowSummary &
   WorkflowBindingInspection & {
     imported: true;
     recipePackage: {
-      format: "takeboard.workflow-recipe";
+      format: "yoyotv.workflow-recipe" | "takeboard.workflow-recipe";
       version: 1;
       sourcePath: string;
       bindingProposalIncluded: boolean;
@@ -519,7 +519,7 @@ async function jsonRequest<T>(path: string, options?: RequestInit): Promise<T> {
   if (!response.ok) {
     if (response.status === 409 && payload.code === "REVISION_CONFLICT") {
       window.dispatchEvent(
-        new CustomEvent("takeboard:revision-conflict", {
+        new CustomEvent("yoyotv:revision-conflict", {
           detail: { path, currentRevision: payload.currentRevision },
         }),
       );

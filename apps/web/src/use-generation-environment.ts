@@ -85,7 +85,7 @@ export function useGenerationEnvironment(
       );
     };
     changed();
-    window.addEventListener("takeboard:generation-connection-changed", changed);
+    window.addEventListener("yoyotv:generation-connection-changed", changed);
     let polling = false;
     const heartbeat = async () => {
       if (polling || document.visibilityState === "hidden") return;
@@ -101,7 +101,7 @@ export function useGenerationEnvironment(
     return () => {
       epoch.current++;
       window.clearInterval(timer);
-      window.removeEventListener("takeboard:generation-connection-changed", changed);
+      window.removeEventListener("yoyotv:generation-connection-changed", changed);
       document.removeEventListener("visibilitychange", heartbeat);
     };
   }, [onError, refreshInventory, refreshWorker]);

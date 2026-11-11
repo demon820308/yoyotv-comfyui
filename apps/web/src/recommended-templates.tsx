@@ -47,10 +47,10 @@ export function RecommendedTemplates({
       setNotice("");
       void refresh();
     };
-    window.addEventListener("takeboard:generation-connection-changed", changed);
+    window.addEventListener("yoyotv:generation-connection-changed", changed);
     return () => {
       epoch.current++;
-      window.removeEventListener("takeboard:generation-connection-changed", changed);
+      window.removeEventListener("yoyotv:generation-connection-changed", changed);
     };
   }, [refresh]);
   const install = async (template: RecommendedWorkflowTemplate) => {

@@ -13,7 +13,7 @@ async function api(path, options = {}) {
     ...options,
     headers: {
       ...(options.body ? { "content-type": "application/json" } : {}),
-      ...(csrfToken ? { "x-takeboard-portal-csrf": csrfToken } : {}),
+      ...(csrfToken ? { "x-yoyotv-portal-csrf": csrfToken } : {}),
       ...options.headers,
     },
   });

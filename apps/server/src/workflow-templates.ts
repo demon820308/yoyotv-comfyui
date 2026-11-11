@@ -58,7 +58,7 @@ async function inspectArtifact(
       ? createHash("sha256")
           .update(
             JSON.stringify({
-              purpose: "takeboard-template-install-v1",
+              purpose: "yoyotv-template-install-v1",
               endpoint,
               path: artifact.path,
               hash: artifact.hash,

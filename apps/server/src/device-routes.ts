@@ -127,6 +127,7 @@ export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string)
               (entry) =>
                 entry.isDirectory() &&
                 !entry.name.startsWith(".") &&
+                !entry.name.endsWith(".yoyotv") &&
                 !entry.name.endsWith(".takeboard"),
             )
             .map((entry) => entry.name)
@@ -153,6 +154,7 @@ export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string)
         [...name].some((character) => character.charCodeAt(0) < 32) ||
         name.startsWith(".") ||
         /[. ]$/.test(name) ||
+        name.endsWith(".yoyotv") ||
         name.endsWith(".takeboard") ||
         /^(con|prn|aux|nul|com\d|lpt\d)(\.|$)/i.test(name)
       )

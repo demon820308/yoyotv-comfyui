@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { createReadStream, createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream, existsSync } from "node:fs";
 import { copyFile, mkdir, opendir, readdir, readFile, rename, rm, stat } from "node:fs/promises";
 import { basename, dirname, join, normalize, resolve, sep } from "node:path";
 import { Transform } from "node:stream";
@@ -19,7 +19,9 @@ import { projectDirectory } from "./project-locations.js";
 import { acquireProjectLock, acquireProjectLocks } from "./project-request-lock.js";
 import { ProjectStore } from "./storage/project-store.js";
 
-const manifestName = "takeboard-instance.json";
+const manifestName = "yoyotv-instance.json";
+// shortcut: legacy takeboard-instance.json and .takeboard-instance.tgz support, remove in v2.0.0
+const legacyManifestName = "takeboard-instance.json";
 const identityName = "identity/auth.db";
 const maxManifestBytes = 2 * 1024 * 1024;
 const maxEntries = 10_000;
@@ -29,7 +31,7 @@ type BackupFile = { path: string; size: number; sha256: string };
 type BackupProject = { key: string; projectId: string; title: string; revision: number };
 
 export type InstanceBackupManifest = {
-  format: "takeboard.instance-backup";
+  format: "yoyotv.instance-backup" | "takeboard.instance-backup";
   version: 1;
   createdAt: string;
   projects: BackupProject[];
@@ -66,7 +68,7 @@ export class InstanceBackupError extends Error {
 }
 
 function isProjectKey(value: string) {
-  return /^[a-z0-9][a-z0-9-]{0,80}\.takeboard$/.test(value) && basename(value) === value;
+  return /^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(value) && basename(value) === value;
 }
 
 function safePath(value: string) {
@@ -126,7 +128,7 @@ export async function createInstanceBackup(
   const backupsRoot = join(root, ".system", "backups");
   const workRoot = join(backupsRoot, `.creating-${id}`);
   const filesRoot = join(workRoot, "files");
-  const destination = join(backupsRoot, `${id}.takeboard-instance.tgz`);
+  const destination = join(backupsRoot, `${id}.yoyotv-instance.tgz`);
   try {
     await mkdir(filesRoot, { recursive: true, mode: 0o700 });
     const identityPath = join(filesRoot, identityName);
@@ -186,7 +188,7 @@ export async function createInstanceBackup(
       files.push({ path: relativePath, size: info.size, sha256: await sha256File(file) });
     }
     const manifest: InstanceBackupManifest = {
-      format: "takeboard.instance-backup",
+      format: "yoyotv.instance-backup",
       version: 1,
       createdAt: new Date().toISOString(),
       projects,
@@ -250,7 +252,7 @@ function storedBackupFromManifest(
   size: number,
 ): StoredInstanceBackup {
   return {
-    id: basename(path).replace(/\.takeboard-instance\.tgz$/, ""),
+    id: basename(path).replace(/\.(?:yoyotv|takeboard)-instance\.tgz$/, ""),
     filename: basename(path),
     createdAt: manifest.createdAt,
     size,
@@ -261,7 +263,7 @@ function storedBackupFromManifest(
 
 async function pruneBackups(root: string, retainedCopies: number) {
   const files = (await readdir(root, { withFileTypes: true }).catch(() => []))
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".takeboard-instance.tgz"))
+    .filter((entry) => entry.isFile() && /\.(?:yoyotv|takeboard)-instance\.tgz$/.test(entry.name))
     .map((entry) => entry.name)
     .sort()
     .reverse();
@@ -276,7 +278,8 @@ export async function listInstanceBackups(projectsRoot: string) {
   const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
   const backups: StoredInstanceBackup[] = [];
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".takeboard-instance.tgz.json")) continue;
+    if (!entry.isFile() || !/\.(?:yoyotv|takeboard)-instance\.tgz\.json$/.test(entry.name))
+      continue;
     try {
       const parsed = JSON.parse(
         await readFile(join(root, entry.name), "utf8"),
@@ -293,7 +296,10 @@ export async function listInstanceBackups(projectsRoot: string) {
 
 export function instanceBackupPath(projectsRoot: string, id: string) {
   if (!/^[A-Za-z0-9-]{10,100}$/.test(id)) return null;
-  return join(resolve(projectsRoot), ".system", "backups", `${id}.takeboard-instance.tgz`);
+  const backupsRoot = join(resolve(projectsRoot), ".system", "backups");
+  const primary = join(backupsRoot, `${id}.yoyotv-instance.tgz`);
+  const legacy = join(backupsRoot, `${id}.takeboard-instance.tgz`);
+  return existsSync(legacy) && !existsSync(primary) ? legacy : primary;
 }
 
 function parseManifest(value: Buffer) {
@@ -305,7 +311,8 @@ function parseManifest(value: Buffer) {
   }
   const manifest = candidate as Partial<InstanceBackupManifest> | null;
   if (
-    manifest?.format !== "takeboard.instance-backup" ||
+    (manifest?.format !== "yoyotv.instance-backup" &&
+      manifest?.format !== "takeboard.instance-backup") ||
     manifest.version !== 1 ||
     typeof manifest.createdAt !== "string" ||
     !Number.isFinite(Date.parse(manifest.createdAt)) ||
@@ -416,7 +423,7 @@ export async function stageInstanceRestore(
       expanded += declared;
       if (expanded > maxExpandedBytes)
         throw new InstanceBackupError(413, "实例备份解压后超过安全上限");
-      if (name === manifestName) {
+      if (name === manifestName || name === legacyManifestName) {
         if (manifestBuffer || declared > maxManifestBytes)
           throw new InstanceBackupError(400, "实例备份清单无效");
         const chunks: Buffer[] = [];
@@ -432,7 +439,7 @@ export async function stageInstanceRestore(
       }
       if (
         name !== identityName &&
-        !/^projects\/[a-z0-9][a-z0-9-]{0,80}\.takeboard\.tgz$/.test(name)
+        !/^projects\/[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)\.tgz$/.test(name)
       )
         throw new InstanceBackupError(400, "实例备份目录结构无效");
       if (actual.has(name)) throw new InstanceBackupError(400, "实例备份包含重复文件路径");
@@ -669,7 +676,7 @@ async function restoreInstanceOfflineUnlocked(
       restoredIdentity.close();
     }
     const receipt = {
-      format: "takeboard.offline-restore-receipt",
+      format: "yoyotv.offline-restore-receipt",
       version: 1,
       restoredAt: new Date().toISOString(),
       sourceCreatedAt: staged.createdAt,

@@ -953,7 +953,7 @@ describe("TakeBoard project API", () => {
     });
     expect(exported.statusCode, exported.body).toBe(200);
     expect(exported.headers["content-type"]).toContain("application/gzip");
-    expect(exported.headers["content-disposition"]).toContain("takeboard-project.tgz");
+    expect(exported.headers["content-disposition"]).toContain("yoyotv-project.tgz");
 
     const imported = await destinationApp.inject({
       method: "POST",

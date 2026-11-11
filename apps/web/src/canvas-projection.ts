@@ -5,8 +5,8 @@ import { projectApi, type WorkflowSummary } from "./api";
 import type { BoardNode } from "./board-nodes";
 import {
   findWorkflow,
-  generationPromptPlaceholder,
   type GenerationProgress,
+  generationPromptPlaceholder,
   type PromptMention,
   runWorkflowPath,
   type ShotCanvasControls,
@@ -262,7 +262,10 @@ export function boardNodes(
                 supportsResolution:
                   !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
                   (workflow?.inputs.includes("resolution") ?? false),
-                resolutionPolicy: generationResolutionPolicy(workflow?.execution === "native", profile.family),
+                resolutionPolicy: generationResolutionPolicy(
+                  workflow?.execution === "native",
+                  profile.family,
+                ),
                 supportsSeed:
                   !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
                   (workflow?.inputs.includes("seed") ?? false),
@@ -275,7 +278,8 @@ export function boardNodes(
                 denoiseStep: workflow?.capability === "upscale_image" ? 0.5 : 0.05,
                 denoise:
                   typeof controls.settings.denoise === "number" &&
-                  controls.settings.denoise >= (workflow?.capability === "upscale_image" ? 1 : 0.05) &&
+                  controls.settings.denoise >=
+                    (workflow?.capability === "upscale_image" ? 1 : 0.05) &&
                   controls.settings.denoise <= (workflow?.capability === "upscale_image" ? 8 : 2.0)
                     ? controls.settings.denoise
                     : workflow?.capability === "upscale_image"
@@ -284,12 +288,15 @@ export function boardNodes(
                 resolutionOptions:
                   !["upscale_image", "upscale_video"].includes(workflow?.capability ?? "") &&
                   (workflow?.inputs.includes("resolution") ?? false)
-                  ? resolutionPresets(
-                      controls.settings.width,
-                      controls.settings.height,
-                      generationResolutionPolicy(workflow?.execution === "native", profile.family),
-                    )
-                  : [],
+                    ? resolutionPresets(
+                        controls.settings.width,
+                        controls.settings.height,
+                        generationResolutionPolicy(
+                          workflow?.execution === "native",
+                          profile.family,
+                        ),
+                      )
+                    : [],
                 mentionAliases: controls.mentionAliases,
                 busy: controls.busy,
                 progress: controls.progress,

@@ -101,7 +101,7 @@ fn publish_notice(app: &tauri::AppHandle, available: bool) {
     }
     for label in ["main", "remote-workspace"] {
         if let Some(window) = app.get_webview_window(label) {
-            let _ = window.eval(&format!("window.__takeboardUpdateAvailable={available};window.dispatchEvent(new CustomEvent('takeboard:update-available',{{detail:{available}}}));"));
+            let _ = window.eval(&format!("window.__takeboardUpdateAvailable={available};window.dispatchEvent(new CustomEvent('yoyotv:update-available',{{detail:{available}}}));"));
         }
     }
 }

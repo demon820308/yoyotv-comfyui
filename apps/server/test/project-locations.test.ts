@@ -216,7 +216,7 @@ describe("device-scoped project folders", () => {
     expect(directory.startsWith(join(external, "短片", "远端影片 ("))).toBe(true);
     expect(projectDirectory(root, key)).toBe(directory);
     expect(
-      JSON.parse(await readFile(join(directory, "project.takeboard.json"), "utf8")).project.title,
+      JSON.parse(await readFile(join(directory, "project.yoyotv.json"), "utf8")).project.title,
     ).toBe("远端影片");
     expect(
       (await app.inject("/api/projects")).json().projects.map((item: { key: string }) => item.key),
@@ -228,7 +228,7 @@ describe("device-scoped project folders", () => {
     expect(deleted.statusCode).toBe(200);
     expect((await app.inject("/api/projects")).json().projects).toHaveLength(0);
     // Recycle is recoverable and never deletes files from the chosen disk.
-    expect(await readFile(join(directory, "project.takeboard.json"), "utf8")).toContain("远端影片");
+    expect(await readFile(join(directory, "project.yoyotv.json"), "utf8")).toContain("远端影片");
     const trash = (await app.inject("/api/projects/trash")).json().projects;
     expect(trash).toHaveLength(1);
     const restored = await app.inject({

@@ -38,8 +38,8 @@ describe("theme preferences", () => {
     browser();
     const theme = await import("./theme-preferences");
     expect(theme.readThemePreference()).toBe("noir");
-    expect(theme.themeFromCookie("takeboard_theme=unexpected")).toBeNull();
-    expect(theme.themeFromCookie("other_takeboard_theme=noir")).toBeNull();
+    expect(theme.themeFromCookie("yoyotv_theme=unexpected")).toBeNull();
+    expect(theme.themeFromCookie("other_yoyotv_theme=noir")).toBeNull();
   });
 
   it("preserves all explicit old choices, including noir, and migrates them to a host cookie", async () => {
@@ -49,7 +49,7 @@ describe("theme preferences", () => {
       const theme = await import("./theme-preferences");
       expect(theme.readThemePreference()).toBe(selected);
       theme.rememberTheme(theme.readThemePreference());
-      expect(doc.cookie).toBe(`takeboard_theme=${selected}`);
+      expect(doc.cookie).toBe(`yoyotv_theme=${selected}`);
     }
   });
 
@@ -62,7 +62,7 @@ describe("theme preferences", () => {
     const restarted = await import("./theme-preferences");
     expect(restarted.readThemePreference()).toBe("light");
     vi.resetModules();
-    browser(new Map([["takeboard.theme", "noir"]]), doc.cookie);
+    browser(new Map([["yoyotv.theme", "noir"]]), doc.cookie);
     expect((await import("./theme-preferences")).readThemePreference()).toBe("light");
   });
 

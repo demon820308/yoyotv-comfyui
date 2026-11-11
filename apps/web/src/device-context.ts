@@ -37,7 +37,7 @@ export function readConnectionDisplay(): ConnectionDisplay | null {
     const value = parseConnectionDisplay(raw);
     if (value) {
       try {
-        sessionStorage.setItem("takeboard.connection-display", JSON.stringify(value));
+        sessionStorage.setItem("yoyotv.connection-display", JSON.stringify(value));
       } catch {
         return value;
       }
@@ -49,7 +49,11 @@ export function readConnectionDisplay(): ConnectionDisplay | null {
       );
       return value;
     }
-    return parseConnectionDisplay(sessionStorage.getItem("takeboard.connection-display"));
+    // shortcut: legacy takeboard.connection-display fallback for pre-rebrand sessionStorage, remove in v2.0.0
+    return parseConnectionDisplay(
+      sessionStorage.getItem("yoyotv.connection-display") ??
+        sessionStorage.getItem("takeboard.connection-display"),
+    );
   } catch {
     return null;
   }

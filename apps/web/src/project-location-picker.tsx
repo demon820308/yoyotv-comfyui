@@ -56,10 +56,10 @@ export function ProjectLocationPicker({
           if (active) setBusy(false);
         });
     };
-    window.addEventListener("takeboard:folder-picked", picked);
+    window.addEventListener("yoyotv:folder-picked", picked);
     return () => {
       active = false;
-      window.removeEventListener("takeboard:folder-picked", picked);
+      window.removeEventListener("yoyotv:folder-picked", picked);
     };
   }, [folderRequest, onValid]);
   useEffect(() => {

@@ -65,12 +65,8 @@ describe("TakeBoard instance backups", () => {
       const staged = await stageInstanceRestore(root, archive);
       expect(staged.projects[0]?.alreadyExists).toBe(false);
       await applyStagedProjectRestore(root, staged.restoreId, auth, admin.id);
-      const original = JSON.parse(
-        await readFile(join(directory, "project.takeboard.json"), "utf8"),
-      );
-      const restored = JSON.parse(
-        await readFile(join(root, key, "project.takeboard.json"), "utf8"),
-      );
+      const original = JSON.parse(await readFile(join(directory, "project.yoyotv.json"), "utf8"));
+      const restored = JSON.parse(await readFile(join(root, key, "project.yoyotv.json"), "utf8"));
       expect(restored.project).toEqual(original.project);
     } finally {
       auth.close();

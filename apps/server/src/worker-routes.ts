@@ -288,7 +288,7 @@ export function registerWorkerRoutes(
   comfyUrl: string,
   routeOptions: WorkerRouteOptions = {},
   workerPool = new WorkerPool(
-    ".takeboard-data/.system/workers.json",
+    ".yoyotv-data/.system/workers.json",
     comfyUrl,
     routeOptions.runtime?.fetch,
   ),

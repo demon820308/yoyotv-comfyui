@@ -1,9 +1,12 @@
 export type TakeBoardTheme = "noir" | "light" | "chroma";
 
-export const themeStorageKey = "takeboard.theme";
-export const themeCookieName = "takeboard_theme";
+// shortcut: legacy takeboard.theme / takeboard_theme read fallback for pre-rebrand browser storage, remove in v2.0.0
+export const themeStorageKey = "yoyotv.theme";
+const legacyThemeStorageKey = "takeboard.theme";
+export const themeCookieName = "yoyotv_theme";
+const legacyThemeCookieName = "takeboard_theme";
 export const defaultTheme: TakeBoardTheme = "noir";
-const themeChangeEvent = "takeboard:theme";
+const themeChangeEvent = "yoyotv:theme";
 let sessionTheme: TakeBoardTheme | null = null;
 
 export function parseTheme(value: string | null | undefined): TakeBoardTheme | null {
@@ -11,12 +14,15 @@ export function parseTheme(value: string | null | undefined): TakeBoardTheme | n
 }
 
 export function themeFromCookie(cookie: string): TakeBoardTheme | null {
-  const value = cookie
-    .split(";")
-    .map((entry) => entry.trim())
+  const entries = cookie.split(";").map((entry) => entry.trim());
+  const current = entries
     .find((entry) => entry.startsWith(`${themeCookieName}=`))
     ?.slice(themeCookieName.length + 1);
-  return parseTheme(value);
+  if (current !== undefined) return parseTheme(current);
+  const legacy = entries
+    .find((entry) => entry.startsWith(`${legacyThemeCookieName}=`))
+    ?.slice(legacyThemeCookieName.length + 1);
+  return parseTheme(legacy);
 }
 
 export function readThemePreference(): TakeBoardTheme {
@@ -31,7 +37,12 @@ export function readThemePreference(): TakeBoardTheme {
     // Sandboxed/blocked storage must not prevent the app from opening.
   }
   try {
-    return parseTheme(window.localStorage.getItem(themeStorageKey)) ?? defaultTheme;
+    return (
+      parseTheme(
+        window.localStorage.getItem(themeStorageKey) ??
+          window.localStorage.getItem(legacyThemeStorageKey),
+      ) ?? defaultTheme
+    );
   } catch {
     return parseTheme(document.documentElement.dataset.theme) ?? defaultTheme;
   }
@@ -57,7 +68,11 @@ export function rememberTheme(theme: TakeBoardTheme) {
 
 export function subscribeToTheme(listener: () => void) {
   const onStorage = (event: StorageEvent) => {
-    if (event.key === themeStorageKey || event.key === null) {
+    if (
+      event.key === themeStorageKey ||
+      event.key === legacyThemeStorageKey ||
+      event.key === null
+    ) {
       sessionTheme = null;
       listener();
     }

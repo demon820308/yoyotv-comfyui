@@ -294,7 +294,8 @@ function validExternalRecord(value: unknown): value is ExternalBackupRecord {
       /^[A-Za-z0-9-]{10,100}$/.test(record.id) &&
       typeof record.filename === "string" &&
       basename(record.filename) === record.filename &&
-      record.filename.endsWith(".takeboard-instance.tgz") &&
+      // shortcut: legacy .takeboard-instance.tgz external backup support, remove in v2.0.0
+      /\.(?:yoyotv|takeboard)-instance\.tgz$/.test(record.filename) &&
       validTimestamp(record.createdAt) &&
       validTimestamp(record.copiedAt) &&
       Number.isSafeInteger(record.size) &&
@@ -526,7 +527,11 @@ async function restoredProjectCount(root: string) {
   const entries = await readdir(root, { withFileTypes: true });
   let projects = 0;
   for (const entry of entries) {
-    if (!entry.isDirectory() || !entry.name.endsWith(".takeboard")) continue;
+    if (
+      !entry.isDirectory() ||
+      (!entry.name.endsWith(".yoyotv") && !entry.name.endsWith(".takeboard"))
+    )
+      continue;
     const store = ProjectStore.openExisting(projectDirectory(root, entry.name));
     if (!store) throw new Error("恢复演练无法打开项目数据库");
     try {

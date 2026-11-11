@@ -1,5 +1,9 @@
-import { resolve } from "node:path";
-import { authModeFromEnvironment, buildApp, takeBoardVersion } from "./app.js";
+import {
+  authModeFromEnvironment,
+  buildApp,
+  resolveDefaultProjectsRoot,
+  takeBoardVersion,
+} from "./app.js";
 import { completionFor, hasUnfinishedWork } from "./background-completion.js";
 import { acquireInstanceLease } from "./instance-lease.js";
 import { assertSafeBindHost } from "./request-security.js";
@@ -13,9 +17,7 @@ assertSafeBindHost(
   process.env.TAKEBOARD_ALLOW_NON_LOOPBACK === "1",
   authModeFromEnvironment(),
 );
-const lease = acquireInstanceLease(
-  resolve(process.env.TAKEBOARD_DATA_ROOT ?? ".takeboard-data/projects"),
-);
+const lease = acquireInstanceLease(resolveDefaultProjectsRoot());
 process.env.TAKEBOARD_INSTANCE_ID = lease.instanceId;
 process.once("exit", lease.release);
 const app = (() => {
@@ -61,8 +63,7 @@ function shutdown(reason: string) {
   }
   completing ??= completionFor(app)
     .drain(
-      () =>
-        hasUnfinishedWork(resolve(process.env.TAKEBOARD_DATA_ROOT ?? ".takeboard-data/projects")),
+      () => hasUnfinishedWork(resolveDefaultProjectsRoot()),
       () => closeServer(reason),
     )
     .finally(() => {

@@ -36,7 +36,7 @@ export const test = base.extend<{ request: APIRequestContext }>({
     const authenticated = await playwright.request.newContext({
       baseURL,
       storageState: authState,
-      extraHTTPHeaders: { "x-takeboard-csrf": csrfToken },
+      extraHTTPHeaders: { "x-yoyotv-csrf": csrfToken },
     });
     await use(authenticated);
     await authenticated.dispose();

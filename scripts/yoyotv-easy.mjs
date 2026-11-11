@@ -630,9 +630,7 @@ async function remote(host) {
     console.log(`远程 YoYoTV 已连接：${connection.url}`);
     console.log(`已验证实例：${connection.instanceId}（服务端口 ${connection.remotePort}）`);
     if (connection.comfyUrl)
-      console.log(
-        `ComfyUI 编辑器转发地址：${connection.comfyUrl}（是否在线请在 YoYoTV 中检查）`,
-      );
+      console.log(`ComfyUI 编辑器转发地址：${connection.comfyUrl}（是否在线请在 YoYoTV 中检查）`);
     console.log("下次可直接运行 npm run easy:remote，或在双击入口留空以连接上次服务器。");
     console.log("关闭此窗口或按 Ctrl-C 即可断开；不会停止服务器上的生成任务。");
     openBrowser(connection.url);
@@ -650,9 +648,7 @@ async function remote(host) {
 
 async function restore(archive, confirmation) {
   if (!archive || confirmation !== "--confirm") {
-    throw new Error(
-      "用法：npm run easy -- restore /path/to/backup.takeboard-instance.tgz --confirm",
-    );
+    throw new Error("用法：npm run easy -- restore /path/to/backup.yoyotv-instance.tgz --confirm");
   }
   const source = resolve(archive);
   if (!existsSync(source) || !statSync(source).isFile())

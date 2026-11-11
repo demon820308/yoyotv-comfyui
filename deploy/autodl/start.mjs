@@ -87,7 +87,7 @@ export function cloudEnvironment(config, inherited = process.env) {
     COMFY_LAUNCH_PROVIDER: "process",
     COMFY_START_EXECUTABLE: resolve(config.python),
     COMFY_START_CWD: resolve(config.comfyRoot),
-    COMFY_START_PID_FILE: join(resolve(config.comfyRoot), ".takeboard-comfy.pid"),
+    COMFY_START_PID_FILE: join(resolve(config.comfyRoot), ".yoyotv-comfy.pid"),
     COMFY_START_ARGS_JSON: JSON.stringify([
       join(resolve(config.comfyRoot), "main.py"),
       "--listen",

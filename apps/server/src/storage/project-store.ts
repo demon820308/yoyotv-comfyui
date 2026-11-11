@@ -23,8 +23,11 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrateDatabase, pendingDatabaseMigrations } from "./migrations.js";
 import { commandLogTable, eventLogTable, projectStateTable } from "./schema.js";
 
-const databaseFileName = "takeboard.db";
-const snapshotFileName = "project.takeboard.json";
+const databaseFileName = "yoyotv.db";
+// shortcut: legacy takeboard.db and project.takeboard.json migration, remove in v2.0.0
+const legacyDatabaseFileName = "takeboard.db";
+const snapshotFileName = "project.yoyotv.json";
+const legacySnapshotFileName = "project.takeboard.json";
 
 type MigrationBackup = {
   directory: string;
@@ -46,18 +49,24 @@ function migrationBackup(
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const backupDatabasePath = join(directory, databaseFileName);
   client.prepare("VACUUM INTO ?").run(backupDatabasePath);
-  const snapshotPath = join(projectDirectory, snapshotFileName);
-  if (existsSync(snapshotPath)) copyFileSync(snapshotPath, join(directory, snapshotFileName));
+  const primarySnapshotPath = join(projectDirectory, snapshotFileName);
+  const legacySnapshotPath = join(projectDirectory, legacySnapshotFileName);
+  const snapshotPath = existsSync(primarySnapshotPath)
+    ? primarySnapshotPath
+    : existsSync(legacySnapshotPath)
+      ? legacySnapshotPath
+      : null;
+  if (snapshotPath) copyFileSync(snapshotPath, join(directory, snapshotFileName));
   writeFileSync(
     join(directory, "migration-backup.json"),
     `${JSON.stringify(
       {
-        format: "takeboard.migration-backup",
+        format: "yoyotv.migration-backup",
         version: 1,
         createdAt: new Date().toISOString(),
         pendingMigrations,
         databaseFile: databaseFileName,
-        snapshotFile: existsSync(snapshotPath) ? snapshotFileName : null,
+        snapshotFile: snapshotPath ? snapshotFileName : null,
       },
       null,
       2,
@@ -118,17 +127,19 @@ export class ProjectStore {
 
   private constructor(projectDirectory: string) {
     this.projectDirectory = resolve(projectDirectory);
-    const databasePath = join(this.projectDirectory, databaseFileName);
-    const existingDatabase = existsSync(databasePath) && statSync(databasePath).size > 0;
-    const client = new BetterSqlite3(databasePath);
+    const primaryDatabasePath = join(this.projectDirectory, databaseFileName);
+    const legacyDatabasePath = join(this.projectDirectory, legacyDatabaseFileName);
+    const migratingLegacy = !existsSync(primaryDatabasePath) && existsSync(legacyDatabasePath);
+    const activeDatabasePath = migratingLegacy ? legacyDatabasePath : primaryDatabasePath;
+    const existingDatabase =
+      existsSync(activeDatabasePath) && statSync(activeDatabasePath).size > 0;
+    let client = new BetterSqlite3(activeDatabasePath);
     let clientClosed = false;
     const closeClient = () => {
       if (clientClosed) return;
       client.close();
       clientClosed = true;
     };
-    this.client = client;
-    this.database = drizzle(client);
     try {
       const pendingMigrations = existingDatabase ? pendingDatabaseMigrations(client) : [];
       const backup = pendingMigrations.length
@@ -140,7 +151,7 @@ export class ProjectStore {
         closeClient();
         if (backup) {
           try {
-            restoreMigrationBackup(backup, databasePath);
+            restoreMigrationBackup(backup, activeDatabasePath);
           } catch (restoreError) {
             throw new AggregateError(
               [error, restoreError],
@@ -151,7 +162,40 @@ export class ProjectStore {
         }
         throw error;
       }
+      if (migratingLegacy) {
+        try {
+          client.pragma("wal_checkpoint(TRUNCATE)");
+        } catch {
+          // Best-effort WAL flush before closing for rename.
+        }
+        closeClient();
+        for (const suffix of ["-wal", "-shm", "-journal"]) {
+          try {
+            unlinkSync(`${legacyDatabasePath}${suffix}`);
+          } catch {
+            // Optional SQLite sidecars may already be removed after close.
+          }
+        }
+        renameSync(legacyDatabasePath, primaryDatabasePath);
+        client = new BetterSqlite3(primaryDatabasePath);
+        clientClosed = false;
+        client.pragma("journal_mode = WAL");
+        client.pragma("foreign_keys = ON");
+      }
+      this.client = client;
+      this.database = drizzle(client);
       this.reconcilePortableSnapshot();
+      const legacySnapshotPath = join(this.projectDirectory, legacySnapshotFileName);
+      if (
+        existsSync(legacySnapshotPath) &&
+        existsSync(join(this.projectDirectory, snapshotFileName))
+      ) {
+        try {
+          unlinkSync(legacySnapshotPath);
+        } catch {
+          // Legacy snapshot cleanup is non-fatal once project.yoyotv.json is reconciled.
+        }
+      }
     } catch (error) {
       try {
         closeClient();
@@ -183,7 +227,12 @@ export class ProjectStore {
 
   static openExisting(projectDirectory: string) {
     const resolvedDirectory = resolve(projectDirectory);
-    if (!existsSync(join(resolvedDirectory, databaseFileName))) return null;
+    if (
+      !existsSync(join(resolvedDirectory, databaseFileName)) &&
+      !existsSync(join(resolvedDirectory, legacyDatabaseFileName))
+    ) {
+      return null;
+    }
     return new ProjectStore(resolvedDirectory);
   }
 
@@ -202,7 +251,7 @@ export class ProjectStore {
       .limit(1)
       .get();
     if (existingProject && existingProject.projectId !== snapshot.project.id) {
-      throw new Error("A .takeboard directory can contain only one project");
+      throw new Error("A .yoyotv directory can contain only one project");
     }
 
     const temporarySnapshot = await this.writeSnapshotTemporary(snapshotJson);
@@ -411,7 +460,11 @@ export class ProjectStore {
   }
 
   async readOpenSnapshot() {
-    const contents = await readFile(join(this.projectDirectory, snapshotFileName), "utf8");
+    const primary = join(this.projectDirectory, snapshotFileName);
+    const snapshotPath = existsSync(primary)
+      ? primary
+      : join(this.projectDirectory, legacySnapshotFileName);
+    const contents = await readFile(snapshotPath, "utf8");
     return projectSnapshotSchema.parse(JSON.parse(contents));
   }
 

@@ -36,7 +36,10 @@ export function generationProblem({
       ? "请连接一张源图"
       : "请从资产库选择一张起始帧";
   }
-  if (selectedWorkflow.capability === "upscale_video" && selectedInputCounts.reference_video === 0) {
+  if (
+    selectedWorkflow.capability === "upscale_video" &&
+    selectedInputCounts.reference_video === 0
+  ) {
     return "视频放大需要连接一段源视频";
   }
   if (selectedWorkflow.capability === "first_last_video" && !lastFrameAvailable) {
@@ -51,7 +54,9 @@ export function generationProblem({
   ) {
     return "Ref2VA 至少需要一张参考图、一段参考视频或参考音频";
   }
-  const imageWorkflow = ["text_to_image", "image_to_image", "upscale_image"].includes(selectedWorkflow.capability);
+  const imageWorkflow = ["text_to_image", "image_to_image", "upscale_image"].includes(
+    selectedWorkflow.capability,
+  );
   const invalidVideoParameters =
     !imageWorkflow &&
     ((selectedWorkflow.inputs.includes("duration") &&

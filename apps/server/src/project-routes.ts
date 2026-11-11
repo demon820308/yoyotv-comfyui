@@ -1,9 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream, createWriteStream, existsSync, statSync } from "node:fs";
-import { copyFile, mkdir, readFile, readdir, rename, rm, stat, unlink } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rename, rm, stat, unlink } from "node:fs/promises";
 import { basename, extname, join, resolve, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
-import { concatVideos, createZipArchive } from "./export-service.js";
 import {
   type AspectRatio,
   type BatchApprovalDecision,
@@ -23,6 +22,7 @@ import type { FastifyInstance } from "fastify";
 import { authContext } from "./auth-routes.js";
 import type { AuthService } from "./auth-service.js";
 import { readDeviceSettings } from "./device-settings.js";
+import { concatVideos, createZipArchive } from "./export-service.js";
 import type { ExtensionRegistry } from "./extension-registry.js";
 import {
   createProjectArchive,
@@ -148,8 +148,9 @@ function canvasItemMedia(snapshot: ProjectSnapshot, item: { refType: string; ref
     : {};
 }
 
+// shortcut: legacy .takeboard project directory suffix support, remove in v2.0.0
 export function projectKey(value: unknown): string | null {
-  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9-]{0,80}\.takeboard$/.test(value)) {
+  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9-]{0,80}\.(?:yoyotv|takeboard)$/.test(value)) {
     return null;
   }
   return basename(value) === value ? value : null;
@@ -173,6 +174,10 @@ function trashEntryKey(value: unknown): string | null {
 }
 
 function originalKeyFromTrashEntry(value: string) {
+  const yoyotvMarker = value.lastIndexOf(".yoyotv.");
+  if (yoyotvMarker >= 0) {
+    return projectKey(value.slice(0, yoyotvMarker + ".yoyotv".length));
+  }
   const marker = value.lastIndexOf(".takeboard.");
   if (marker < 0) return null;
   return projectKey(value.slice(0, marker + ".takeboard".length));
@@ -373,7 +378,7 @@ export function registerProjectRoutes(
         store.close();
       }
       const restoredKey = existsSync(join(root, originalKey))
-        ? `${slugify(title)}-restored-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}.takeboard`
+        ? `${slugify(title)}-restored-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}.yoyotv`
         : originalKey;
       await rename(source, join(root, restoredKey));
       return { restored: true as const, key: restoredKey, title };
@@ -556,7 +561,7 @@ export function registerProjectRoutes(
 
     await mkdir(root, { recursive: true });
     const suffix = `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`;
-    const key = `${slugify(title)}-${suffix}.takeboard`;
+    const key = `${slugify(title)}-${suffix}.yoyotv`;
     let destination = join(root, key);
     const customLocation = body.storageRootId !== undefined || body.storageFolder !== undefined;
     if (customLocation) {
@@ -590,7 +595,7 @@ export function registerProjectRoutes(
           if (Buffer.byteLength(folderTitle + character, "utf8") > 180) break;
           folderTitle += character;
         }
-        destination = join(selected.path, `${folderTitle} (${suffix}).takeboard`);
+        destination = join(selected.path, `${folderTitle} (${suffix}).yoyotv`);
       } catch (cause) {
         return await reply.code(400).send({
           error:
@@ -667,13 +672,13 @@ export function registerProjectRoutes(
       title: current.snapshot.project.title,
       revision: current.revision,
     });
-    const filename = `${current.snapshot.project.title || "TakeBoard-project"}.takeboard.tgz`;
+    const filename = `${current.snapshot.project.title || "YoYoTV-project"}.yoyotv.tgz`;
     return await reply
       .header("content-type", "application/gzip")
       .header("cache-control", "no-store")
       .header(
         "content-disposition",
-        `attachment; filename="takeboard-project.tgz"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        `attachment; filename="yoyotv-project.tgz"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       )
       .send(archive);
   });
@@ -708,7 +713,8 @@ export function registerProjectRoutes(
       const absPath = join(directory, asset.storagePath);
       if (!existsSync(absPath)) continue;
       const data = await readFile(absPath);
-      let baseName = filenames[id] || asset.originalName || `${asset.id}${extname(asset.storagePath)}`;
+      const baseName =
+        filenames[id] || asset.originalName || `${asset.id}${extname(asset.storagePath)}`;
       let finalName = baseName;
       let counter = 1;
       while (usedNames.has(finalName)) {

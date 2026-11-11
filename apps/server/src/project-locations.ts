@@ -1,11 +1,37 @@
 import { createHash, randomUUID } from "node:crypto";
-import { constants, existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
+import { constants, existsSync, lstatSync, readFileSync, realpathSync, renameSync } from "node:fs";
 import { access, mkdir, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export type StorageRoot = { id: string; name: string; path: string };
-const marker = ".takeboard-location.json";
+const marker = ".yoyotv-location.json";
+// shortcut: legacy .takeboard-location.json and .takeboard project directory support, remove in v2.0.0
+const legacyMarker = ".takeboard-location.json";
 const configuration = (root: string) => join(root, ".system", "project-storage-roots.json");
+
+function isProjectDirectoryName(part: string) {
+  return part.endsWith(".yoyotv") || part.endsWith(".takeboard");
+}
+
+function hasProjectSnapshot(directory: string) {
+  return (
+    existsSync(join(directory, "project.yoyotv.json")) ||
+    existsSync(join(directory, "project.takeboard.json"))
+  );
+}
+
+function resolveLocationMarker(index: string): string | null {
+  const primary = join(index, marker);
+  if (existsSync(primary)) return primary;
+  const legacy = join(index, legacyMarker);
+  if (!existsSync(legacy)) return null;
+  try {
+    renameSync(legacy, primary);
+    return primary;
+  } catch {
+    return legacy;
+  }
+}
 
 export function storageRoots(root: string): StorageRoot[] {
   const result = [{ id: "instance", name: "默认项目位置", path: resolve(root) }];
@@ -39,8 +65,8 @@ export function contained(root: string, target: string) {
  */
 export function projectDirectory(root: string, key: string): string {
   const index = join(root, key);
-  const file = join(index, marker);
-  if (!existsSync(file)) return index;
+  const file = resolveLocationMarker(index);
+  if (!file) return index;
   const value = JSON.parse(readFileSync(file, "utf8"));
   if (value.version !== 1 || typeof value.path !== "string" || !isAbsolute(value.path))
     throw new Error("项目位置记录无效");
@@ -81,7 +107,7 @@ export async function addStorageRoot(root: string, input: { path: string; name: 
     contained(join(instanceRoot, ".system"), path) ||
     contained(join(instanceRoot, ".trash"), path)
   )
-    throw new Error("不能使用 TakeBoard 内部目录");
+    throw new Error("不能使用 YoYoTV 内部目录");
   await access(path, constants.R_OK | constants.W_OK);
   await readdir(path); // Require a directory, not a writable file.
   const roots = storageRoots(root);
@@ -118,16 +144,17 @@ export async function storageFolder(root: string, rootId: string, folder = "") {
     throw new Error("文件夹路径无效");
   const base = await realpath(entry.path);
   const path = await realpath(join(base, folder));
-  if (!contained(base, path) || folder.split("/").some((part) => part.endsWith(".takeboard")))
+  if (!contained(base, path) || folder.split("/").some((part) => isProjectDirectoryName(part)))
     throw new Error("不能在其他项目内部创建项目");
-  if (existsSync(join(path, "project.takeboard.json"))) throw new Error("请选择项目之外的父文件夹");
+  if (hasProjectSnapshot(path)) throw new Error("请选择项目之外的父文件夹");
   const actualRelative = relative(base, path);
-  if (actualRelative.split(sep).some((part) => part.startsWith(".") || part.endsWith(".takeboard")))
+  if (
+    actualRelative.split(sep).some((part) => part.startsWith(".") || isProjectDirectoryName(part))
+  )
     throw new Error("不能在隐藏目录或其他项目内部创建项目");
   let ancestor = path;
   while (contained(base, ancestor)) {
-    if (existsSync(join(ancestor, "project.takeboard.json")))
-      throw new Error("不能在其他项目内部创建项目");
+    if (hasProjectSnapshot(ancestor)) throw new Error("不能在其他项目内部创建项目");
     if (ancestor === base) break;
     ancestor = resolve(ancestor, "..");
   }
@@ -161,7 +188,7 @@ export async function linkProjectDirectory(
 }
 
 export function isLocatedProject(root: string, key: string) {
-  return existsSync(join(root, key, marker));
+  return resolveLocationMarker(join(root, key)) !== null;
 }
 
 export async function updateLocatedProjectSummary(
@@ -169,9 +196,10 @@ export async function updateLocatedProjectSummary(
   key: string,
   summary: { projectId: string; title: string; updatedAt: string },
 ) {
+  const existing = resolveLocationMarker(join(root, key));
+  if (!existing) return;
   const file = join(root, key, marker);
-  if (!existsSync(file)) return;
-  const previous = JSON.parse(readFileSync(file, "utf8"));
+  const previous = JSON.parse(readFileSync(existing, "utf8"));
   if (previous.version !== 1 || previous.projectId !== summary.projectId)
     throw new Error("项目位置索引不匹配");
   const temporary = `${file}.${randomUUID()}.tmp`;
@@ -181,6 +209,7 @@ export async function updateLocatedProjectSummary(
       mode: 0o600,
     });
     await rename(temporary, file);
+    if (existing !== file) await rm(existing, { force: true });
   } finally {
     await rm(temporary, { force: true });
   }
@@ -191,7 +220,9 @@ export function locatedProjectSummary(
   key: string,
 ): { projectId: string; title: string; updatedAt: string } | null {
   try {
-    const data = JSON.parse(readFileSync(join(root, key, marker), "utf8"));
+    const file = resolveLocationMarker(join(root, key));
+    if (!file) return null;
+    const data = JSON.parse(readFileSync(file, "utf8"));
     if (
       data.version !== 1 ||
       typeof data.projectId !== "string" ||

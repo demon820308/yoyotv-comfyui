@@ -45,7 +45,7 @@ describe("portable Workflow Recipe package", () => {
     const parsed = await parseWorkflowRecipeArchive(bytes);
     expect(parsed).toMatchObject({
       manifest: {
-        format: "takeboard.workflow-recipe",
+        format: "yoyotv.workflow-recipe",
         version: 1,
         workflowHash: hash,
         bindingIncluded: true,

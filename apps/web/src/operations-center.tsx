@@ -590,8 +590,8 @@ export function OperationsCenter({
       setTab("tasks");
       setOpen(true);
     };
-    window.addEventListener("takeboard:open-tasks", showTasks);
-    return () => window.removeEventListener("takeboard:open-tasks", showTasks);
+    window.addEventListener("yoyotv:open-tasks", showTasks);
+    return () => window.removeEventListener("yoyotv:open-tasks", showTasks);
   }, []);
   const [center, setCenter] = useState<OperationsTaskCenter | null>(null);
   const [storage, setStorage] = useState<OperationsStorage | null>(null);
@@ -600,8 +600,11 @@ export function OperationsCenter({
   const [loading, setLoading] = useState(true);
   const [storageLoading, setStorageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // shortcut: legacy takeboard.task-notifications read fallback, remove in v2.0.0
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    () => optionalLocalStorage.getItem("takeboard.task-notifications") === "1",
+    () =>
+      (optionalLocalStorage.getItem("yoyotv.task-notifications") ??
+        optionalLocalStorage.getItem("takeboard.task-notifications")) === "1",
   );
   const previousStatuses = useRef<Map<string, RunStatus> | null>(null);
   const shell = useRef<HTMLDivElement>(null);
@@ -698,7 +701,7 @@ export function OperationsCenter({
     }
     const next = !notificationsEnabled;
     setNotificationsEnabled(next);
-    optionalLocalStorage.setItem("takeboard.task-notifications", next ? "1" : "0");
+    optionalLocalStorage.setItem("yoyotv.task-notifications", next ? "1" : "0");
   };
 
   const cancelTask = async (task: OperationTask) => {

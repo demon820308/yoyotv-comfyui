@@ -14,7 +14,10 @@
       "!**/src-tauri/resources",
       "!**/src-tauri/target",
       "!**/src-tauri/gen",
-      "!**/*.takeboard"
+      "!**/*.yoyotv",
+      "!**/*.takeboard",
+      "!**/.yoyotv-data",
+      "!**/.takeboard-data"
     ]
   },
   "formatter": {

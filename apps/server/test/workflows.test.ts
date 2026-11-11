@@ -100,7 +100,7 @@ describe("ComfyUI workflow detection", () => {
     });
     expect(exported.statusCode, exported.body).toBe(200);
     expect(exported.headers["content-type"]).toContain("application/gzip");
-    expect(exported.headers["content-disposition"]).toContain("takeboard-recipe.tgz");
+    expect(exported.headers["content-disposition"]).toContain("yoyotv-recipe.tgz");
 
     const imported = await app.inject({
       method: "POST",
@@ -124,8 +124,8 @@ describe("ComfyUI workflow detection", () => {
       },
     });
     const destination = imported.json().path as string;
-    const activeBindingPath = `takeboard/bindings/${Buffer.from(destination).toString("base64url")}.json`;
-    const proposalPath = `takeboard/binding-proposals/${Buffer.from(destination).toString("base64url")}.json`;
+    const activeBindingPath = `yoyotv/bindings/${Buffer.from(destination).toString("base64url")}.json`;
+    const proposalPath = `yoyotv/binding-proposals/${Buffer.from(destination).toString("base64url")}.json`;
     expect(documents.has(`workflows/${destination}`)).toBe(true);
     expect(documents.has(proposalPath)).toBe(true);
     expect(documents.has(activeBindingPath)).toBe(false);
@@ -330,7 +330,7 @@ describe("ComfyUI workflow detection", () => {
     });
     expect(archived.statusCode, archived.body).toBe(200);
     const archivePath = archived.json().archivePath as string;
-    expect(archivePath).toContain("TakeBoard/.archive/");
+    expect(archivePath).toContain("YoYoTV/.archive/");
     const listed = await app.inject({ method: "GET", url: "/api/workflows" });
     expect(listed.json().workflows).toEqual([]);
     const archives = await app.inject({ method: "GET", url: "/api/workflows/archives" });
@@ -437,7 +437,7 @@ describe("ComfyUI workflow detection", () => {
           return Response.json(["TakeBoard/custom-t2i.json"]);
         }
         if (url.endsWith("/object_info")) return Response.json(objectInfo);
-        if (url.includes("takeboard/bindings/")) {
+        if (url.includes("yoyotv/bindings/") || url.includes("takeboard/bindings/")) {
           if (init?.method === "POST") {
             savedBinding = String(init.body);
             return Response.json({});

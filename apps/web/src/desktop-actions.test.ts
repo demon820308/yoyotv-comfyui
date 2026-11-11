@@ -20,13 +20,13 @@ describe("desktop navigation bridge", () => {
           const actionId = destination.searchParams.get("actionId");
           queueMicrotask(() =>
             events.dispatchEvent(
-              new CustomEvent("takeboard:desktop-action", { detail: { actionId } }),
+              new CustomEvent("yoyotv:desktop-action", { detail: { actionId } }),
             ),
           );
         },
       },
     });
-    const url = "http://127.0.0.1:48288/?takeboard_workflow=TakeBoard%2Fmy%20workflow.json";
+    const url = "http://127.0.0.1:48288/?yoyotv_workflow=YoYoTV%2Fmy%20workflow.json";
     await requestDesktopAction("open-external", { url });
     expect(destination).not.toBeNull();
     expect((destination as unknown as URL).pathname).toBe("/open-external");
