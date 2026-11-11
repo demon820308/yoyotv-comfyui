@@ -27,8 +27,41 @@ const operationsCss = `.operations-device-view {
 .device-memory-card > footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   font-size: calc(12px * var(--ui-scale));
+}
+.device-memory-queues {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.device-release-button {
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: calc(11px * var(--ui-scale));
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+}
+.device-release-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.device-release-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.device-release-status {
+  font-size: calc(11px * var(--ui-scale));
+  color: var(--accent);
+}
+.device-release-status.is-error {
+  color: #ff6b6b;
 }
 .device-memory-card > header span,
 .device-memory-card > footer {
@@ -609,6 +642,34 @@ export function OperationsCenter({
   const previousStatuses = useRef<Map<string, RunStatus> | null>(null);
   const shell = useRef<HTMLDivElement>(null);
 
+  const [releasingWorkerId, setReleasingWorkerId] = useState<string | null>(null);
+  const [releaseStatus, setReleaseStatus] = useState<{
+    id: string;
+    message: string;
+    isError?: boolean;
+  } | null>(null);
+
+  const releaseMemory = async (workerId: string) => {
+    if (releasingWorkerId) return;
+    setReleasingWorkerId(workerId);
+    setReleaseStatus(null);
+    try {
+      await projectApi.releaseWorkerMemory(workerId);
+      setReleaseStatus({ id: workerId, message: "已释放显存" });
+      const fleet = await workerApi.fleet();
+      setDevices(fleet.workers);
+    } catch (cause) {
+      setReleaseStatus({
+        id: workerId,
+        message: cause instanceof Error ? cause.message : "释放失败",
+        isError: true,
+      });
+    } finally {
+      setReleasingWorkerId(null);
+      window.setTimeout(() => setReleaseStatus(null), 3000);
+    }
+  };
+
   const refreshTasks = useCallback(async () => {
     try {
       const payload = await projectApi.tasks();
@@ -953,8 +1014,32 @@ export function OperationsCenter({
                             />
                           ) : null}
                           <footer>
-                            <span>{entry.queueRunning} 执行中</span>
-                            <span>{entry.queuePending} 排队中</span>
+                            <div className="device-memory-queues">
+                              <span>{entry.queueRunning} 执行中</span>
+                              <span>{entry.queuePending} 排队中</span>
+                              {releaseStatus?.id === entry.worker.id ? (
+                                <span
+                                  className={`device-release-status ${releaseStatus.isError ? "is-error" : ""}`}
+                                >
+                                  {releaseStatus.message}
+                                </span>
+                              ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              className="device-release-button"
+                              disabled={
+                                entry.queueRunning > 0 || releasingWorkerId === entry.worker.id
+                              }
+                              title={
+                                entry.queueRunning > 0
+                                  ? "当前有任务正在执行，无法清理显存"
+                                  : "卸载空闲模型并释放显存缓存"
+                              }
+                              onClick={() => void releaseMemory(entry.worker.id)}
+                            >
+                              {releasingWorkerId === entry.worker.id ? "清理中…" : "清理显存"}
+                            </button>
                           </footer>
                         </>
                       ) : null}
