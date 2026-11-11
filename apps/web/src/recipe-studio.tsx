@@ -751,7 +751,7 @@ export function RecipeStudio({
               >
                 <span>↧</span>
                 <strong>{packageBusy ? "正在导入…" : "导入工作流"}</strong>
-                <p>JSON、包含工作流的 PNG，或 TakeBoard 工作流包</p>
+                <p>JSON、包含工作流的 PNG，或 YoYoTV 工作流包</p>
               </button>
             </div>
           ) : (
@@ -897,7 +897,7 @@ export function RecipeStudio({
               {inspection.status === "built_in" && inspection.diagnostic ? (
                 <div className="binding-editor-body">
                   <p>
-                    此模板使用 TakeBoard
+                    此模板使用 YoYoTV
                     原生适配。需要修改节点时，请创建可编辑副本；副本按实际节点配置运行。
                   </p>
                   {canManageWorkflows ? (

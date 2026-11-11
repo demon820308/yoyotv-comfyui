@@ -692,7 +692,7 @@ export function StudioUniverse({
     <div
       className="studio-universe artifact-universe"
       role="img"
-      aria-label="可旋转的 TakeBoard 三维导演板，正面是产品主页，背面展示创作谱系"
+      aria-label="可旋转的 YoYoTV 三维导演板，正面是产品主页，背面展示创作谱系"
     >
       <SceneBoundary fallback={<SceneFallback />}>
         <Canvas

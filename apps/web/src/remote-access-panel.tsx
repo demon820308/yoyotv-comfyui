@@ -164,7 +164,7 @@ export default function RemoteAccessPanel() {
                   {portal ? portalStateLabel(portal.state) : "检查中"}
                 </i>
               </header>
-              <h4>TakeBoard 账号门户</h4>
+              <h4>YoYoTV 账号门户</h4>
               {portal?.state === "pairing" && portal.pairing ? (
                 <>
                   <p>在门户登录后输入下面的一次性代码。代码不会授予 ComfyUI 端口访问。</p>
@@ -215,7 +215,7 @@ export default function RemoteAccessPanel() {
                         onChange={(event) => setPortalUrl(event.target.value)}
                         inputMode="url"
                         placeholder="https://portal.example.com"
-                        aria-label="TakeBoard 门户地址"
+                        aria-label="YoYoTV 门户地址"
                       />
                       <button
                         type="button"
@@ -243,9 +243,9 @@ export default function RemoteAccessPanel() {
               <p>
                 {standalone
                   ? "当前已经在独立应用窗口中运行。"
-                  : "可从支持的浏览器菜单选择“安装 TakeBoard”或“添加到程序坞”。"}
+                  : "可从支持的浏览器菜单选择“安装 YoYoTV”或“添加到程序坞”。"}
               </p>
-              <small>它仍连接自己的 TakeBoard 服务，不会把素材复制到浏览器。</small>
+              <small>它仍连接自己的 YoYoTV 服务，不会把素材复制到浏览器。</small>
             </article>
           </div>
 

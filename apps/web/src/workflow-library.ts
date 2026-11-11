@@ -6,7 +6,7 @@ export function workflowCheckGuidance(check: Pick<WorkflowDiagnosticCheck, "code
     case "WORKFLOW_TEMPLATE_CHANGED":
       return "推荐模板已修改或需要更新。创建可编辑副本使用自己的配置，或从可添加中添加当前版本。";
     case "TAKEBOARD_NATIVE_TEMPLATE_INCOMPATIBLE":
-      return "推荐模板与当前生成设备不兼容。请检查 TakeBoard 与 ComfyUI 更新后重试，或选择其他模板。";
+      return "推荐模板与当前生成设备不兼容。请检查 YoYoTV 与 ComfyUI 更新后重试，或选择其他模板。";
     case "COMFY_NODE_TYPES_MISSING":
       return "当前生成设备缺少模板所需的组件。请在 ComfyUI 中安装缺失节点，再重新检查。";
     case "COMFY_MODELS_MISSING":

@@ -198,7 +198,7 @@ export function ExportManager({ snapshot, projectKey, onClose }: ExportManagerPr
         const item = allEntries.find((e) => e.asset.id === id);
         if (item) filenames[id] = item.suggestedFilename;
       }
-      const title = `${snapshot.project.title || "takeboard"}_${tab === "video" ? "视频" : "图片"}`;
+      const title = `${snapshot.project.title || "yoyotv"}_${tab === "video" ? "视频" : "图片"}`;
       const blob = await projectApi.exportZip(projectKey, assetIds, filenames, title);
       triggerBlobDownload(blob, `${title}_打包导出.zip`);
       setStatusNotice(`已成功打包并导出 ${assetIds.length} 个文件`);
@@ -215,7 +215,7 @@ export function ExportManager({ snapshot, projectKey, onClose }: ExportManagerPr
     setErrorMessage(null);
     setStatusNotice(null);
     try {
-      const title = `${snapshot.project.title || "takeboard"}_成片`;
+      const title = `${snapshot.project.title || "yoyotv"}_成片`;
       const blob = await projectApi.exportConcat(projectKey, concatSequenceIds, title);
       triggerBlobDownload(blob, `${title}_拼接.mp4`);
       setStatusNotice(`视频拼接成功！已导出包含 ${concatSequenceIds.length} 个镜头的完整成片`);

@@ -254,7 +254,7 @@ export function ProjectLocationPicker({
               value={newRoot}
               onChange={(event) => setNewRoot(event.target.value)}
               placeholder={
-                device?.platform === "win32" ? "D:\\TakeBoardProjects" : "/data/TakeBoardProjects"
+                device?.platform === "win32" ? "D:\\YoYoTVProjects" : "/data/YoYoTVProjects"
               }
             />
             <button

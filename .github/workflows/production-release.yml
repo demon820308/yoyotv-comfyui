@@ -230,8 +230,8 @@ jobs:
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
-          description: TakeBoard
-          description-url: https://github.com/Fourques/Takeboard
+          description: YoYoTV
+          description-url: https://github.com/demon820308/yoyotv-comfyui
       - name: Verify application and runtime signatures
         shell: pwsh
         run: |
@@ -257,8 +257,8 @@ jobs:
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
-          description: TakeBoard Installer
-          description-url: https://github.com/Fourques/Takeboard
+          description: YoYoTV Installer
+          description-url: https://github.com/demon820308/yoyotv-comfyui
       - name: Verify installer signatures
         shell: pwsh
         run: |

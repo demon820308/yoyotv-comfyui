@@ -1,12 +1,12 @@
 [package]
 name = "takeboard-desktop"
-version = "0.2.0-beta.21"
-description = "Native desktop host for the TakeBoard local-first filmmaking workspace"
-authors = ["TakeBoard contributors"]
+version = "1.0.0-beta.1"
+description = "Native desktop host for the YoYoTV local-first filmmaking workspace"
+authors = ["YoYoTV contributors", "TakeBoard contributors"]
 edition = "2021"
 rust-version = "1.77.2"
 license = "Apache-2.0"
-repository = "https://github.com/Fourques/Takeboard"
+repository = "https://github.com/demon820308/yoyotv-comfyui"
 build = "build.rs"
 
 [build-dependencies]

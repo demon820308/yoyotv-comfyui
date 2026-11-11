@@ -92,5 +92,5 @@ Open `http://127.0.0.1:48120` in your browser.
 
 Distributed under the [Apache-2.0](LICENSE) License. Connected ComfyUI models, nodes, and weights follow their respective licenses.
 
-<!-- release: https://github.com/Fourques/Takeboard/releases/tag/v0.2.0-beta.21 -->
+<!-- release: https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1 -->
 

@@ -151,7 +151,7 @@ export function useGenerationSession(
           );
           if (!opened) throw new Error("浏览器阻止了新窗口，请允许弹窗后重试");
           opened.opener = null;
-          setNotice("已打开 ComfyUI；这个 JSON 的输入槽位已在 TakeBoard 中识别");
+          setNotice("已打开 ComfyUI；这个 JSON 的输入槽位已在 YoYoTV 中识别");
           return;
         }
         if (effectiveDisabledReason) throw new Error(effectiveDisabledReason);

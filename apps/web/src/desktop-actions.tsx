@@ -45,7 +45,7 @@ export function requestDesktopData<T = unknown>(
       if (detail?.actionId === actionId) done(detail.error, detail.data);
     };
     const timer = window.setTimeout(
-      () => done("桌面应用未响应。请从应用菜单打开对应功能，或更新 TakeBoard 安装包后重试。"),
+      () => done("桌面应用未响应。请从应用菜单打开对应功能，或更新 YoYoTV 安装包后重试。"),
       timeoutMs,
     );
     window.addEventListener("takeboard:desktop-action", receive);

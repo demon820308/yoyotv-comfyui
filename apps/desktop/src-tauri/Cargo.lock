@@ -3511,7 +3511,7 @@ dependencies = [
 
 [[package]]
 name = "takeboard-desktop"
-version = "0.2.0-beta.21"
+version = "1.0.0-beta.1"
 dependencies = [
  "open",
  "serde",

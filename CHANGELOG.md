@@ -1,10 +1,22 @@
 # Changelog
 
-TakeBoard follows [Semantic Versioning](https://semver.org/) from the first public preview. Until
-1.0, project packages and database migrations remain forward-oriented: always keep a verified backup
-before moving production work to a newer minor version.
+YoYoTV follows [Semantic Versioning](https://semver.org/).
+YoYoTV is forked from Fourques/Takeboard at commit `45dd727` (upstream `v0.2.0-beta.21`).
 
-## 0.2.0-beta.21 — 2026-10-16
+## 1.0.0-beta.1 — 2026-11-11
+
+- Forked from TakeBoard 0.2.0-beta.21 and established YoYoTV independent version line.
+- Remediated external links, redirecting issue templates, security advisory forms, contribution docs, and release URLs to `demon820308/yoyotv-comfyui`.
+- Updated desktop application identity: display name and window title set to YoYoTV while preserving identifier `app.takeboard.desktop` for non-breaking local data compatibility.
+- Updated user-visible Web UI texts, dialog prompts, default project storage paths (`D:\YoYoTVProjects`), and notification labels.
+- Integrated Trust-Workflow and Export Manager enhancements.
+
+---
+
+> [!NOTE]
+> Below are upstream historical releases from Fourques/Takeboard, preserved for license attribution and security audit history.
+
+## [Upstream] 0.2.0-beta.21 — 2026-10-16
 
 - Cancel deferred node click-toggles when the user starts editing canvas controls, so model changes and input focus cannot unexpectedly close the editor. A timed regression reproduces the race; browser CI runs in two isolated, internally serial shards without dropping coverage.
 - Validate AutoDL directory isolation using the host's path semantics, including Windows drive and UNC roots. Keep Unix permission assertions on systems that implement them, without skipping the cross-platform workflow-seeding tests.

@@ -152,8 +152,8 @@ async function apiFetch(path: string, options?: RequestInit) {
     if (!options?.signal?.aborted) window.dispatchEvent(new Event("takeboard:connection-lost"));
     throw new TakeBoardApiError(
       timedOut
-        ? "TakeBoard 请求超时。请保持页面打开，检查服务器或 SSH 连接后重试。"
-        : "无法连接 TakeBoard 服务。请保持页面打开，检查服务状态或 SSH 隧道后重试。",
+        ? "YoYoTV 请求超时。请保持页面打开，检查服务器或 SSH 连接后重试。"
+        : "无法连接 YoYoTV 服务。请保持页面打开，检查服务状态或 SSH 隧道后重试。",
       0,
       timedOut ? "REQUEST_TIMEOUT" : "SERVICE_UNREACHABLE",
       true,
@@ -475,9 +475,7 @@ async function request(path: string, options?: RequestInit): Promise<DemoPayload
   });
   const payload = (await response.json()) as DemoPayload | { error?: string };
   if (!response.ok || !("snapshot" in payload)) {
-    throw new Error(
-      "error" in payload && payload.error ? payload.error : "TakeBoard request failed",
-    );
+    throw new Error("error" in payload && payload.error ? payload.error : "YoYoTV request failed");
   }
   return payload;
 }
@@ -535,7 +533,7 @@ async function jsonRequest<T>(path: string, options?: RequestInit): Promise<T> {
       );
     }
     throw new TakeBoardApiError(
-      payload.error ?? `TakeBoard 请求失败（${response.status}）`,
+      payload.error ?? `YoYoTV 请求失败（${response.status}）`,
       response.status,
       payload.code ?? null,
       response.status === 408 ||

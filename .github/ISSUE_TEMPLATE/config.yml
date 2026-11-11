@@ -1,14 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Download and install / 下载与安装
-    url: https://github.com/Fourques/Takeboard/blob/main/docs/downloads.md
+    url: https://github.com/demon820308/yoyotv-comfyui/blob/main/docs/downloads.md
     about: Choose your platform and distinguish published packages from temporary test builds. English guide linked inside.
   - name: Documentation / 使用文档
-    url: https://github.com/Fourques/Takeboard/blob/main/docs/README.md
+    url: https://github.com/demon820308/yoyotv-comfyui/blob/main/docs/README.md
     about: Find creation, remote access, accounts, backup and developer guides.
   - name: Security vulnerability / 安全漏洞
-    url: https://github.com/Fourques/Takeboard/security/advisories/new
+    url: https://github.com/demon820308/yoyotv-comfyui/security/advisories/new
     about: Report credentials, access-control bypasses and other vulnerabilities privately.
-  - name: Questions and production feedback / 使用交流
-    url: https://github.com/Fourques/Takeboard/discussions
-    about: Ask setup questions and share creator workflows without opening a bug.

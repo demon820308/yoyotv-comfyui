@@ -539,13 +539,10 @@ function notifyFinishedTasks(
     const prior = previous.get(task.runId);
     if (!prior || !activeStatuses.has(prior) || activeStatuses.has(task.status)) continue;
     if (Notification.permission === "granted") {
-      new Notification(
-        task.status === "completed" ? "TakeBoard 生成完成" : "TakeBoard 任务已结束",
-        {
-          body: `${taskIdentity(task)} · ${statusLabel[task.status]}`,
-          tag: task.runId,
-        },
-      );
+      new Notification(task.status === "completed" ? "YoYoTV 生成完成" : "YoYoTV 任务已结束", {
+        body: `${taskIdentity(task)} · ${statusLabel[task.status]}`,
+        tag: task.runId,
+      });
     }
   }
 }
@@ -981,7 +978,7 @@ export function OperationsCenter({
                 </strong>
                 <small>
                   {storage?.filesystem
-                    ? `TakeBoard 保留 ${formatBytes(storage.filesystem.reserveBytes)} 安全余量`
+                    ? `YoYoTV 保留 ${formatBytes(storage.filesystem.reserveBytes)} 安全余量`
                     : "当前平台没有提供文件系统容量信息"}
                 </small>
                 <i

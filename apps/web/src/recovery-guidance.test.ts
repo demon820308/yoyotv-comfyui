@@ -16,12 +16,12 @@ describe("user-facing recovery guidance", () => {
   it("never suggests a blind retry for unknown submission or failed collection", () => {
     expect(recoveryGuidance("", "SUBMISSION_OUTCOME_UNKNOWN").action).toBe("tasks");
     expect(recoveryGuidance("", "OUTPUT_TRANSFER_FAILED").next).toContain("不必重新生成");
-    expect(recoveryGuidance("TakeBoard 请求超时").action).toBe("tasks");
+    expect(recoveryGuidance("YoYoTV 请求超时").action).toBe("tasks");
   });
   it("routes actionable known failures without inventing a diagnosis", () => {
     expect(recoveryGuidance("CUDA out of memory").action).toBe("parameters");
     expect(recoveryGuidance("当前电脑缺少模型：a.safetensors").action).toBe("workflows");
-    expect(recoveryGuidance("无法连接 TakeBoard 服务").action).toBe("connections");
+    expect(recoveryGuidance("无法连接 YoYoTV 服务").action).toBe("connections");
     expect(recoveryGuidance("请先输入镜头提示词").action).toBe("prompt");
     expect(recoveryGuidance("首尾帧模式还需要一张结束帧").action).toBe("assets");
     expect(recoveryGuidance("unknown plugin exception").action).toBe("diagnostics");
@@ -29,8 +29,12 @@ describe("user-facing recovery guidance", () => {
   it("keeps version-conflict instructions visible rather than hiding them as technical details", () => {
     const message = "项目刚刚在其他设备发生变化；已载入最新版本，请确认后再次执行刚才的操作。";
     expect(recoveryGuidance(message)).toMatchObject({ next: message, action: "review" });
-    expect(recoveryGuidance("项目已由其他操作更新（当前版本 108，请求基于版本 107），请刷新后重试")).toMatchObject({ action: "review" });
-    expect(recoveryGuidance("请连接到镜头的图片、视频或音频输入端口")).toMatchObject({ action: "assets" });
+    expect(
+      recoveryGuidance("项目已由其他操作更新（当前版本 108，请求基于版本 107），请刷新后重试"),
+    ).toMatchObject({ action: "review" });
+    expect(recoveryGuidance("请连接到镜头的图片、视频或音频输入端口")).toMatchObject({
+      action: "assets",
+    });
     expect(recoveryGuidance("ENOSPC").action).toBe("storage");
   });
 });

@@ -1,6 +1,6 @@
-# Contributing to TakeBoard
+# Contributing to YoYoTV
 
-TakeBoard is a local-first public preview for individual AI filmmakers and trusted self-hosted teams.
+YoYoTV is a local-first public preview for individual AI filmmakers and trusted self-hosted teams.
 Contributions are welcome when they make the creator workflow safer, clearer or more compatible
 without weakening ownership of local media and ComfyUI infrastructure.
 
@@ -21,8 +21,8 @@ source development. User guides and deployment references are in the [documentat
 Use Node.js 24 LTS and the exact pnpm version declared in `package.json`.
 
 ```bash
-git clone https://github.com/Fourques/Takeboard.git
-cd Takeboard
+git clone https://github.com/demon820308/yoyotv-comfyui.git
+cd yoyotv-comfyui
 corepack enable
 pnpm install --frozen-lockfile
 pnpm verify

@@ -116,7 +116,7 @@ export default function RemoteProjectSettings() {
   return (
     <section className="remote-project-settings" aria-label="远程项目连接">
       <h3>远程项目</h3>
-      <p>打开另一台 TakeBoard 的项目，文件保留在那台设备。</p>
+      <p>打开另一台 YoYoTV 的项目，文件保留在那台设备。</p>
       {migrationFailed ? (
         <p role="alert">旧连接记录未能迁移，原记录仍保留。请重新启动 App 后重试。</p>
       ) : null}
@@ -272,7 +272,7 @@ export default function RemoteProjectSettings() {
               }}
             >
               <option value="ssh">SSH · IP 或主机别名</option>
-              <option value="https">TakeBoard 地址</option>
+              <option value="https">YoYoTV 地址</option>
               <option value="portal">Portal 门户</option>
             </select>
           </label>
@@ -286,7 +286,7 @@ export default function RemoteProjectSettings() {
               spellCheck={false}
               onChange={(event) => setAddress(event.target.value)}
               placeholder={
-                kind === "ssh" ? "user@192.168.1.10 或 SSH 别名" : "https://takeboard.example.com"
+                kind === "ssh" ? "user@192.168.1.10 或 SSH 别名" : "https://yoyotv.example.com"
               }
             />
           </label>
@@ -295,7 +295,7 @@ export default function RemoteProjectSettings() {
               <summary>SSH 连接选项</summary>
               <p>使用系统 SSH 配置与可信主机记录，不保存密码。</p>
               <label>
-                TakeBoard 服务端口
+                YoYoTV 服务端口
                 <input
                   inputMode="numeric"
                   value={port}
@@ -320,7 +320,7 @@ export default function RemoteProjectSettings() {
                 checked={allowStart}
                 onChange={(event) => setAllowStart(event.target.checked)}
               />
-              允许启动远端已安装的 TakeBoard
+              允许启动远端已安装的 YoYoTV
             </label>
           ) : null}
           {status.code === "START_REQUIRED" ? (

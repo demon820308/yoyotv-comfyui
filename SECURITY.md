@@ -7,7 +7,7 @@ the operator explicitly sets `TAKEBOARD_ALLOW_NON_LOOPBACK=1`; it also rejects u
 browser `Origin` values to reduce DNS-rebinding and cross-site request risks.
 
 Please do not report vulnerabilities through public issues. Use the repository's
-[private security advisory form](https://github.com/Fourques/Takeboard/security/advisories/new).
+[private security advisory form](https://github.com/demon820308/yoyotv-comfyui/security/advisories/new).
 Include the affected version, reproduction steps and impact, but never include real API keys,
 cookies, private media or access tokens unless the maintainer explicitly provides a secure transfer
 method.

@@ -77,11 +77,11 @@ function RecoveryCodesPanel() {
       .catch((cause) => setError(cause instanceof Error ? cause.message : "无法读取恢复码状态"));
   }, []);
   const saveCodes = () => {
-    const content = `TakeBoard 离线恢复码\n账号恢复时，每个恢复码只能使用一次。\n生成时间：${new Date().toLocaleString("zh-CN")}\n\n${codes.join("\n")}\n`;
+    const content = `YoYoTV 离线恢复码\n账号恢复时，每个恢复码只能使用一次。\n生成时间：${new Date().toLocaleString("zh-CN")}\n\n${codes.join("\n")}\n`;
     const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "takeboard-recovery-codes.txt";
+    anchor.download = "yoyotv-recovery-codes.txt";
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -290,7 +290,7 @@ function TeamPanel({ currentUser }: { currentUser: Account }) {
               <option value={168}>7 天</option>
             </select>
           </label>
-          <small>成员通过一次性链接设置密码；TakeBoard 不保存临时密码。</small>
+          <small>成员通过一次性链接设置密码；YoYoTV 不保存临时密码。</small>
           <div className="account-form-actions">
             <button type="button" onClick={() => setCreating(false)}>
               取消

@@ -1,6 +1,6 @@
 # 从这里开始
 
-TakeBoard 是基于 ComfyUI 的开源 AI 创作画布。在同一工作区选择模型、连接素材、生成图片与视频，再用结果继续创作。
+YoYoTV 是基于 ComfyUI 的开源 AI 创作画布。在同一工作区选择模型、连接素材、生成图片与视频，再用结果继续创作。
 
 ## 开始使用
 
@@ -20,4 +20,4 @@ TakeBoard 是基于 ComfyUI 的开源 AI 创作画布。在同一工作区选择
 
 [文档索引](docs/README.md) · [产品定位](docs/product-strategy.md) · [路线图](docs/roadmap.md) · [版本记录](CHANGELOG.md)
 
-公开反馈可以直接[描述卡住的步骤](https://github.com/Fourques/Takeboard/issues/new?template=first_try.yml)，不需要先自行诊断底层节点。
+公开反馈可以直接[描述卡住的步骤](https://github.com/demon820308/yoyotv-comfyui/issues/new?template=first_try.yml)，不需要先自行诊断底层节点。
