@@ -323,7 +323,7 @@ describe("project command API", () => {
     const staleRename = await app.inject({
       method: "PATCH",
       url: `/api/projects/${key}`,
-      headers: { "x-takeboard-revision": String(revision) },
+      headers: { "x-yoyotv-revision": String(revision) },
       payload: { title: "不应覆盖更新" },
     });
     expect(staleRename.statusCode).toBe(409);

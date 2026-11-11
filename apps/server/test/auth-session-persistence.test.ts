@@ -68,7 +68,7 @@ describe("persistent login", () => {
       url: "/api/auth/logout",
       headers: {
         cookie: `${updatedCookie}; ${legacyCookie}`,
-        "x-takeboard-csrf": login.json().csrfToken,
+        "x-yoyotv-csrf": login.json().csrfToken,
       },
     });
     expect(logout.statusCode).toBe(200);
@@ -179,7 +179,7 @@ describe("persistent login", () => {
     }
     const headers = {
       cookie: cookie.split(";", 1)[0],
-      "x-takeboard-csrf": bootstrap.json().csrfToken,
+      "x-yoyotv-csrf": bootstrap.json().csrfToken,
     };
     const logout = await app.inject({ method: "POST", url: "/api/auth/logout", headers });
     expect(logout.statusCode).toBe(200);

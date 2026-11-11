@@ -256,8 +256,7 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions) {
     };
     authContexts.set(request, context);
     if (unsafeMethods.has(request.method)) {
-      // shortcut: legacy x-takeboard-csrf header fallback, remove in v2.0.0
-      const supplied = request.headers["x-yoyotv-csrf"] ?? request.headers["x-takeboard-csrf"];
+      const supplied = request.headers["x-yoyotv-csrf"];
       if (typeof supplied !== "string" || supplied !== session.csrfToken) {
         auth.audit(
           session.user.id,

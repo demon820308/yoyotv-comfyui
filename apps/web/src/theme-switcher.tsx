@@ -4,11 +4,10 @@ import {
   readThemePreference,
   rememberTheme,
   subscribeToTheme,
-  type TakeBoardTheme,
   type YoYoTVTheme,
 } from "./theme-preferences";
 
-export type { TakeBoardTheme, YoYoTVTheme } from "./theme-preferences";
+export type { YoYoTVTheme } from "./theme-preferences";
 
 const themes: Array<{ id: YoYoTVTheme; label: string; color: string }> = [
   { id: "noir", label: "黑曜", color: "#111714" },

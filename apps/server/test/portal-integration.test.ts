@@ -143,7 +143,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         url: "/api/admin/portal/pairing",
         headers: {
           cookie: localSession.cookie,
-          "x-takeboard-csrf": localSession.csrf,
+          "x-yoyotv-csrf": localSession.csrf,
         },
         payload: { portalUrl: portalOrigin },
       });
@@ -157,7 +157,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         headers: {
           host: `127.0.0.1:${portalPort}`,
           cookie: portalSession.cookie,
-          "x-takeboard-portal-csrf": portalSession.csrf,
+          "x-yoyotv-portal-csrf": portalSession.csrf,
         },
         payload: { code },
       });
@@ -200,7 +200,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         headers: {
           host: `127.0.0.1:${portalPort}`,
           cookie: portalSession.cookie,
-          "x-takeboard-portal-csrf": portalSession.csrf,
+          "x-yoyotv-portal-csrf": portalSession.csrf,
         },
       });
       expect(revoked.statusCode, revoked.body).toBe(200);
@@ -222,7 +222,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         url: "/api/admin/portal/pairing",
         headers: {
           cookie: localSession.cookie,
-          "x-takeboard-csrf": localSession.csrf,
+          "x-yoyotv-csrf": localSession.csrf,
         },
         payload: { portalUrl: portalOrigin },
       });
@@ -233,7 +233,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         headers: {
           host: `127.0.0.1:${portalPort}`,
           cookie: portalSession.cookie,
-          "x-takeboard-portal-csrf": portalSession.csrf,
+          "x-yoyotv-portal-csrf": portalSession.csrf,
         },
         payload: { code: secondPairing.json().pairing.userCode },
       });
@@ -256,7 +256,7 @@ describe.sequential("TakeBoard portal end-to-end", () => {
         url: "/api/admin/portal",
         headers: {
           cookie: localSession.cookie,
-          "x-takeboard-csrf": localSession.csrf,
+          "x-yoyotv-csrf": localSession.csrf,
         },
       });
       expect(localDisconnect.statusCode, localDisconnect.body).toBe(200);

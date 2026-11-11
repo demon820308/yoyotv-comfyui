@@ -1701,7 +1701,6 @@ export function App() {
         pendingSyncRef.current = null;
         setSyncStatus("current");
         optionalSessionStorage.removeItem("yoyotv.resumeDemo");
-        optionalSessionStorage.removeItem("takeboard.resumeDemo");
         setBlankCanvasGuideOpen(false);
         setProjectKey(key);
         setProjectMode("project");
@@ -1737,13 +1736,9 @@ export function App() {
         pendingSyncRef.current = null;
         setSyncStatus("current");
         optionalSessionStorage.removeItem("yoyotv.resumeDemo");
-        optionalSessionStorage.removeItem("takeboard.resumeDemo");
         let showFirstGuide = false;
         try {
-          // shortcut: legacy takeboard.blankCanvasGuideSeen read fallback, remove in v2.0.0
-          showFirstGuide =
-            (optionalLocalStorage.getItem("yoyotv.blankCanvasGuideSeen") ??
-              optionalLocalStorage.getItem("takeboard.blankCanvasGuideSeen")) !== "1";
+          showFirstGuide = optionalLocalStorage.getItem("yoyotv.blankCanvasGuideSeen") !== "1";
           optionalLocalStorage.setItem("yoyotv.blankCanvasGuideSeen", "1");
         } catch {
           // Storage may be unavailable in privacy-restricted browser sessions.
@@ -1937,14 +1932,8 @@ export function App() {
   ]);
 
   useEffect(() => {
-    // shortcut: legacy takeboard.resumeDemo read fallback, remove in v2.0.0
-    if (
-      (optionalSessionStorage.getItem("yoyotv.resumeDemo") ??
-        optionalSessionStorage.getItem("takeboard.resumeDemo")) !== "1"
-    )
-      return;
+    if (optionalSessionStorage.getItem("yoyotv.resumeDemo") !== "1") return;
     optionalSessionStorage.removeItem("yoyotv.resumeDemo");
-    optionalSessionStorage.removeItem("takeboard.resumeDemo");
     void openDemo();
   }, [openDemo]);
 
@@ -2296,7 +2285,6 @@ export function App() {
             onClick={() => {
               detachGeneration();
               optionalSessionStorage.removeItem("yoyotv.resumeDemo");
-              optionalSessionStorage.removeItem("takeboard.resumeDemo");
               beginNavigation();
               setBusy(false);
               setShowHub(true);
@@ -2703,11 +2691,11 @@ export function App() {
         className="canvas-wrap"
         aria-label="YoYo 创作画布"
         onDragOver={(event) => {
-          if (event.dataTransfer.types.includes("application/x-takeboard-asset"))
+          if (event.dataTransfer.types.includes("application/x-yoyotv-asset"))
             event.preventDefault();
         }}
         onDrop={(event) => {
-          const assetId = event.dataTransfer.getData("application/x-takeboard-asset");
+          const assetId = event.dataTransfer.getData("application/x-yoyotv-asset");
           if (!assetId || !snapshot.assets.some((asset) => asset.id === assetId)) return;
           event.preventDefault();
           void addAssetToCanvasFromLibrary(

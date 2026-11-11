@@ -25,7 +25,7 @@ async function setup() {
 function session(response: { headers: Record<string, unknown>; json(): { csrfToken: string } }) {
   return {
     cookie: String(response.headers["set-cookie"]).split(";", 1)[0] ?? "",
-    "x-takeboard-csrf": response.json().csrfToken,
+    "x-yoyotv-csrf": response.json().csrfToken,
   };
 }
 

@@ -516,13 +516,13 @@ export function AssetLibrary({
       onClose={onClose}
       locked={uploadStatus.state === "uploading"}
       onBackdropDragOver={(event) => {
-        if (event.dataTransfer.types.includes("application/x-takeboard-asset")) {
+        if (event.dataTransfer.types.includes("application/x-yoyotv-asset")) {
           event.preventDefault();
           event.dataTransfer.dropEffect = "copy";
         }
       }}
       onBackdropDrop={(event) => {
-        const assetId = event.dataTransfer.getData("application/x-takeboard-asset");
+        const assetId = event.dataTransfer.getData("application/x-yoyotv-asset");
         if (!assetId || !onDropToCanvas) return;
         event.preventDefault();
         onDropToCanvas(assetId, { x: event.clientX, y: event.clientY });
@@ -842,7 +842,7 @@ export function AssetLibrary({
                     className={`asset-vault-card ${asset.id === selectedAssetId ? "selected" : ""}`}
                     draggable={!readOnly}
                     onDragStart={(event) => {
-                      event.dataTransfer.setData("application/x-takeboard-asset", asset.id);
+                      event.dataTransfer.setData("application/x-yoyotv-asset", asset.id);
                       event.dataTransfer.effectAllowed = "copy";
                     }}
                     onClick={() => setSelectedAssetId(asset.id)}
@@ -955,7 +955,7 @@ export function AssetLibrary({
                   className="asset-detail-preview-wrap"
                   draggable={!readOnly}
                   onDragStart={(event) => {
-                    event.dataTransfer.setData("application/x-takeboard-asset", selectedAsset.id);
+                    event.dataTransfer.setData("application/x-yoyotv-asset", selectedAsset.id);
                     event.dataTransfer.effectAllowed = "copy";
                   }}
                 >

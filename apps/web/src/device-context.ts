@@ -49,11 +49,7 @@ export function readConnectionDisplay(): ConnectionDisplay | null {
       );
       return value;
     }
-    // shortcut: legacy takeboard.connection-display fallback for pre-rebrand sessionStorage, remove in v2.0.0
-    return parseConnectionDisplay(
-      sessionStorage.getItem("yoyotv.connection-display") ??
-        sessionStorage.getItem("takeboard.connection-display"),
-    );
+    return parseConnectionDisplay(sessionStorage.getItem("yoyotv.connection-display"));
   } catch {
     return null;
   }

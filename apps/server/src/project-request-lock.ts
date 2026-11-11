@@ -73,9 +73,7 @@ export function registerProjectRequestLock(app: FastifyInstance, projectsRoot: s
   app.addHook("preHandler", async (request, reply) => {
     if (["GET", "HEAD", "OPTIONS"].includes(request.method)) return;
     const key = lockedProjectKey(request);
-    // shortcut: legacy x-takeboard-revision header and .takeboard key fallback, remove in v2.0.0
-    const supplied =
-      request.headers["x-yoyotv-revision"] ?? request.headers["x-takeboard-revision"];
+    const supplied = request.headers["x-yoyotv-revision"];
     if (
       !key ||
       typeof supplied !== "string" ||

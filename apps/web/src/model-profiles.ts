@@ -201,15 +201,11 @@ export function modelProfile(
   };
 }
 
-// shortcut: legacy takeboard.model-preferences. read fallback for pre-rebrand browser storage, remove in v2.0.0
 const preferencePrefix = "yoyotv.model-preferences.";
-const legacyPreferencePrefix = "takeboard.model-preferences.";
 
 export function loadModelPreferences(path: string): Partial<ModelDefaults> {
   try {
-    const raw =
-      optionalLocalStorage.getItem(`${preferencePrefix}${path}`) ??
-      optionalLocalStorage.getItem(`${legacyPreferencePrefix}${path}`);
+    const raw = optionalLocalStorage.getItem(`${preferencePrefix}${path}`);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return Object.fromEntries(

@@ -22,7 +22,7 @@ function sessionHeaders(response: {
   const setCookie = response.headers["set-cookie"];
   const cookie = String(Array.isArray(setCookie) ? setCookie[0] : setCookie).split(";", 1)[0];
   const csrf = (response.json() as { csrfToken: string }).csrfToken;
-  return { cookie, "x-takeboard-csrf": csrf };
+  return { cookie, "x-yoyotv-csrf": csrf };
 }
 
 function retentionRecord(id: string, createdAt: string): ExternalBackupRecord {

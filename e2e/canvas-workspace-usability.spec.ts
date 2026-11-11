@@ -453,7 +453,7 @@ test("real project results can be revoked and individually dragged or added with
     const candidate = page.getByRole("button", { name: "选择候选 2" });
     const transfer = await page.evaluateHandle(() => new DataTransfer());
     await candidate.dispatchEvent("dragstart", { dataTransfer: transfer });
-    expect(await transfer.evaluate((data) => data.getData("application/x-takeboard-asset"))).toBe(
+    expect(await transfer.evaluate((data) => data.getData("application/x-yoyotv-asset"))).toBe(
       initial.snapshot.takes[1]?.assetId,
     );
     const canvas = page.locator(".canvas-wrap");

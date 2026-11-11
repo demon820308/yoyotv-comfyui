@@ -633,11 +633,8 @@ export function OperationsCenter({
   const [loading, setLoading] = useState(true);
   const [storageLoading, setStorageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // shortcut: legacy takeboard.task-notifications read fallback, remove in v2.0.0
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    () =>
-      (optionalLocalStorage.getItem("yoyotv.task-notifications") ??
-        optionalLocalStorage.getItem("takeboard.task-notifications")) === "1",
+    () => optionalLocalStorage.getItem("yoyotv.task-notifications") === "1",
   );
   const previousStatuses = useRef<Map<string, RunStatus> | null>(null);
   const shell = useRef<HTMLDivElement>(null);

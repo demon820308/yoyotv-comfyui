@@ -1,12 +1,7 @@
 export type YoYoTVTheme = "noir" | "light" | "chroma";
-// shortcut: TakeBoardTheme alias for backward compatibility, remove in v2.0.0
-export type TakeBoardTheme = YoYoTVTheme;
 
-// shortcut: legacy takeboard.theme / takeboard_theme read fallback for pre-rebrand browser storage, remove in v2.0.0
 export const themeStorageKey = "yoyotv.theme";
-const legacyThemeStorageKey = "takeboard.theme";
 export const themeCookieName = "yoyotv_theme";
-const legacyThemeCookieName = "takeboard_theme";
 export const defaultTheme: YoYoTVTheme = "noir";
 const themeChangeEvent = "yoyotv:theme";
 let sessionTheme: YoYoTVTheme | null = null;
@@ -20,11 +15,7 @@ export function themeFromCookie(cookie: string): YoYoTVTheme | null {
   const current = entries
     .find((entry) => entry.startsWith(`${themeCookieName}=`))
     ?.slice(themeCookieName.length + 1);
-  if (current !== undefined) return parseTheme(current);
-  const legacy = entries
-    .find((entry) => entry.startsWith(`${legacyThemeCookieName}=`))
-    ?.slice(legacyThemeCookieName.length + 1);
-  return parseTheme(legacy);
+  return current !== undefined ? parseTheme(current) : null;
 }
 
 export function readThemePreference(): YoYoTVTheme {
@@ -39,12 +30,7 @@ export function readThemePreference(): YoYoTVTheme {
     // Sandboxed/blocked storage must not prevent the app from opening.
   }
   try {
-    return (
-      parseTheme(
-        window.localStorage.getItem(themeStorageKey) ??
-          window.localStorage.getItem(legacyThemeStorageKey),
-      ) ?? defaultTheme
-    );
+    return parseTheme(window.localStorage.getItem(themeStorageKey)) ?? defaultTheme;
   } catch {
     return parseTheme(document.documentElement.dataset.theme) ?? defaultTheme;
   }
@@ -70,11 +56,7 @@ export function rememberTheme(theme: YoYoTVTheme) {
 
 export function subscribeToTheme(listener: () => void) {
   const onStorage = (event: StorageEvent) => {
-    if (
-      event.key === themeStorageKey ||
-      event.key === legacyThemeStorageKey ||
-      event.key === null
-    ) {
+    if (event.key === themeStorageKey || event.key === null) {
       sessionTheme = null;
       listener();
     }

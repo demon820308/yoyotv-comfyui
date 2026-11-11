@@ -255,7 +255,7 @@ describe("server-owned generation recovery", () => {
       const response = await f.app.inject({
         method: "POST",
         url: f.generateUrl,
-        headers: { "x-takeboard-revision": String(revision) },
+        headers: { "x-yoyotv-revision": String(revision) },
         payload: { ...f.body, candidateIndex },
       });
       expect(response.statusCode, response.body).toBe(202);
@@ -264,7 +264,7 @@ describe("server-owned generation recovery", () => {
     const replay = await f.app.inject({
       method: "POST",
       url: f.generateUrl,
-      headers: { "x-takeboard-revision": String(revision) },
+      headers: { "x-yoyotv-revision": String(revision) },
       payload: f.body,
     });
     expect(replay.statusCode, replay.body).toBe(202);

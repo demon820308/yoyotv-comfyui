@@ -1,20 +1,16 @@
 import { resolveDisplayScale } from "./display-scale";
 
 // Non-sensitive appearance enums only. Host cookies also survive a desktop port change.
-// shortcut: legacy takeboard_* / takeboard.* read fallback for pre-rebrand browser storage, remove in v2.0.0
 export function readDisplayPreference(key: "display-scale" | "scene-quality") {
   try {
     const items = document.cookie.split(";").map((item) => item.trim());
-    const value = (
-      items.find((item) => item.startsWith(`yoyotv_${key}=`)) ??
-      items.find((item) => item.startsWith(`takeboard_${key}=`))
-    )?.split("=")[1];
+    const value = items.find((item) => item.startsWith(`yoyotv_${key}=`))?.split("=")[1];
     if (value) return value;
   } catch {
     /* Storage can be unavailable in an embedded browser. */
   }
   try {
-    return localStorage.getItem(`yoyotv.${key}`) ?? localStorage.getItem(`takeboard.${key}`);
+    return localStorage.getItem(`yoyotv.${key}`);
   } catch {
     return null;
   }

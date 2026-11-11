@@ -42,10 +42,10 @@ describe("theme preferences", () => {
     expect(theme.themeFromCookie("other_yoyotv_theme=noir")).toBeNull();
   });
 
-  it("preserves all explicit old choices, including noir, and migrates them to a host cookie", async () => {
+  it("reads persisted choices, including noir, and stores them in a host cookie", async () => {
     for (const selected of ["noir", "light", "chroma"] as const) {
       vi.resetModules();
-      const { doc } = browser(new Map([["takeboard.theme", selected]]));
+      const { doc } = browser(new Map([["yoyotv.theme", selected]]));
       const theme = await import("./theme-preferences");
       expect(theme.readThemePreference()).toBe(selected);
       theme.rememberTheme(theme.readThemePreference());

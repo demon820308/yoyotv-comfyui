@@ -39,9 +39,9 @@ export async function acceptance(configFile, prepareOnly = false, { mediaType } 
         method,
         headers: {
           ...(session.cookie ? { cookie: session.cookie } : {}),
-          ...(session.csrf ? { "x-takeboard-csrf": session.csrf } : {}),
+          ...(session.csrf ? { "x-yoyotv-csrf": session.csrf } : {}),
           ...(body === undefined ? {} : { "content-type": "application/json" }),
-          ...(revision === undefined ? {} : { "x-takeboard-revision": String(revision) }),
+          ...(revision === undefined ? {} : { "x-yoyotv-revision": String(revision) }),
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: AbortSignal.timeout(120_000),

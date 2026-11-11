@@ -1628,7 +1628,7 @@ export function Inspector({
                     type="button"
                     draggable={!readOnly && !isDemo && take.status !== "media_missing"}
                     onDragStart={(event) => {
-                      event.dataTransfer.setData("application/x-takeboard-asset", take.assetId);
+                      event.dataTransfer.setData("application/x-yoyotv-asset", take.assetId);
                       event.dataTransfer.effectAllowed = "copy";
                     }}
                     onClick={() => setSelectedTakeId(take.id)}

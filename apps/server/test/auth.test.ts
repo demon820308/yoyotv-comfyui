@@ -135,7 +135,7 @@ describe("TakeBoard authentication and authorization", () => {
     const created = await app.inject({
       method: "POST",
       url: "/api/projects",
-      headers: { cookie: owner.cookie, "x-takeboard-csrf": owner.csrf },
+      headers: { cookie: owner.cookie, "x-yoyotv-csrf": owner.csrf },
       payload: { title: "Private film" },
     });
     expect(created.statusCode, created.body).toBe(201);
@@ -182,7 +182,7 @@ describe("TakeBoard authentication and authorization", () => {
     const created = await app.inject({
       method: "POST",
       url: "/api/projects",
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: { title: "Shared production" },
     });
     const key = created.json().key as string;
@@ -190,7 +190,7 @@ describe("TakeBoard authentication and authorization", () => {
     const lastOwnerDemotion = await app.inject({
       method: "PUT",
       url: `/api/projects/${key}/members/${adminId}`,
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: { role: "editor" },
     });
     expect(lastOwnerDemotion.statusCode).toBe(400);
@@ -199,7 +199,7 @@ describe("TakeBoard authentication and authorization", () => {
     const memberCreated = await app.inject({
       method: "POST",
       url: "/api/admin/users",
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: {
         name: "Reviewer",
         email: "reviewer@example.com",
@@ -226,7 +226,7 @@ describe("TakeBoard authentication and authorization", () => {
     const changedInitialPassword = await app.inject({
       method: "POST",
       url: "/api/auth/change-password",
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
       payload: {
         currentPassword: "temporary reviewer passphrase",
         newPassword: "reviewer chose a private passphrase",
@@ -253,7 +253,7 @@ describe("TakeBoard authentication and authorization", () => {
         await app.inject({
           method: "PUT",
           url: "/api/device/settings",
-          headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+          headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
           payload: {
             revision: 0,
             projectLocation: { storageRootId: "instance", storageFolder: "" },
@@ -264,7 +264,7 @@ describe("TakeBoard authentication and authorization", () => {
     const arbitraryLocation = await app.inject({
       method: "POST",
       url: "/api/projects",
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
       payload: { title: "Forbidden location", storageRootId: "instance" },
     });
     expect(arbitraryLocation.statusCode).toBe(403);
@@ -314,7 +314,7 @@ describe("TakeBoard authentication and authorization", () => {
     const deniedTemplateInstall = await app.inject({
       method: "POST",
       url: "/api/workflows/templates/h3-t2v/install",
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
       payload: { confirmationToken: "not-admin" },
     });
     expect(deniedTemplateInstall.statusCode).toBe(403);
@@ -322,7 +322,7 @@ describe("TakeBoard authentication and authorization", () => {
       const deniedConnectionEdit = await app.inject({
         method,
         url: "/api/generation/connection/worker_any",
-        headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+        headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
         ...(method === "PATCH"
           ? { payload: { kind: "url", name: "Changed", url: "https://example.test" } }
           : {}),
@@ -346,14 +346,14 @@ describe("TakeBoard authentication and authorization", () => {
     const shared = await app.inject({
       method: "PUT",
       url: `/api/projects/${key}/members/${memberId}`,
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: { role: "viewer" },
     });
     expect(shared.statusCode, shared.body).toBe(200);
     const lastOwnerRemoval = await app.inject({
       method: "DELETE",
       url: `/api/projects/${key}/members/${adminId}`,
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
     });
     expect(lastOwnerRemoval.statusCode).toBe(400);
     expect(lastOwnerRemoval.json().error).toContain("至少需要保留一位 Owner");
@@ -413,7 +413,7 @@ describe("TakeBoard authentication and authorization", () => {
     const viewerWrite = await app.inject({
       method: "PATCH",
       url: `/api/projects/${key}`,
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
       payload: { title: "Should not change" },
     });
     expect(viewerWrite.statusCode).toBe(403);
@@ -421,13 +421,13 @@ describe("TakeBoard authentication and authorization", () => {
     await app.inject({
       method: "PUT",
       url: `/api/projects/${key}/members/${memberId}`,
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: { role: "editor" },
     });
     const editorWrite = await app.inject({
       method: "PATCH",
       url: `/api/projects/${key}`,
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
       payload: { title: "Editor changed this" },
     });
     expect(editorWrite.statusCode, editorWrite.body).toBe(200);
@@ -440,7 +440,7 @@ describe("TakeBoard authentication and authorization", () => {
     const editorDelete = await app.inject({
       method: "DELETE",
       url: `/api/projects/${key}`,
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
     });
     expect(editorDelete.statusCode).toBe(403);
     const audit = await app.inject({
@@ -461,14 +461,14 @@ describe("TakeBoard authentication and authorization", () => {
     const promotedOwner = await app.inject({
       method: "PUT",
       url: `/api/projects/${key}/members/${memberId}`,
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: { role: "owner" },
     });
     expect(promotedOwner.statusCode, promotedOwner.body).toBe(200);
     const ownerDelete = await app.inject({
       method: "DELETE",
       url: `/api/projects/${key}`,
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
     });
     expect(ownerDelete.statusCode, ownerDelete.body).toBe(200);
     const ownerTrash = await app.inject({
@@ -483,7 +483,7 @@ describe("TakeBoard authentication and authorization", () => {
     const ownerRestore = await app.inject({
       method: "POST",
       url: `/api/projects/trash/${trashKey}/restore`,
-      headers: { cookie: member.cookie, "x-takeboard-csrf": member.csrf },
+      headers: { cookie: member.cookie, "x-yoyotv-csrf": member.csrf },
     });
     expect(ownerRestore.statusCode, ownerRestore.body).toBe(200);
   }, 20_000);
@@ -510,7 +510,7 @@ describe("TakeBoard authentication and authorization", () => {
     const wrong = await app.inject({
       method: "POST",
       url: "/api/auth/change-password",
-      headers: { cookie: current.cookie, "x-takeboard-csrf": current.csrf },
+      headers: { cookie: current.cookie, "x-yoyotv-csrf": current.csrf },
       payload: {
         currentPassword: "wrong password value",
         newPassword: "replacement secure passphrase",
@@ -521,7 +521,7 @@ describe("TakeBoard authentication and authorization", () => {
     const changed = await app.inject({
       method: "POST",
       url: "/api/auth/change-password",
-      headers: { cookie: current.cookie, "x-takeboard-csrf": current.csrf },
+      headers: { cookie: current.cookie, "x-yoyotv-csrf": current.csrf },
       payload: {
         currentPassword: "original secure passphrase",
         newPassword: "replacement secure passphrase",
@@ -596,7 +596,7 @@ describe("TakeBoard authentication and authorization", () => {
     const created = await app.inject({
       method: "POST",
       url: "/api/admin/invitations",
-      headers: { cookie: admin.cookie, "x-takeboard-csrf": admin.csrf },
+      headers: { cookie: admin.cookie, "x-yoyotv-csrf": admin.csrf },
       payload: {
         name: "Cinematographer",
         email: "camera@example.com",
@@ -661,7 +661,7 @@ describe("TakeBoard authentication and authorization", () => {
     const generated = await app.inject({
       method: "POST",
       url: "/api/auth/recovery-codes",
-      headers: { cookie: owner.cookie, "x-takeboard-csrf": owner.csrf },
+      headers: { cookie: owner.cookie, "x-yoyotv-csrf": owner.csrf },
       payload: { currentPassword: "original account recovery passphrase" },
     });
     expect(generated.statusCode, generated.body).toBe(200);
