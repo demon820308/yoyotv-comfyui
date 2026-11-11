@@ -20,29 +20,28 @@ Desktop beta for macOS, Windows and Debian/Ubuntu. Connect your own local or rem
 
 ## 短片与截图 / Film and images
 
-[下载素材包 / Download media kit](https://fourques.github.io/Takeboard/takeboard-media-kit.zip)
+> [!NOTE]
+> YoYoTV 官方独立宣传短片与媒体素材包正在制作中，上线后将在此更新。目前仅提供本地界面截图与基础说明。
 
 | 素材 / Asset | 用途 / Use |
 | --- | --- |
-| [中文短片 · 42 秒](https://fourques.github.io/Takeboard/media/takeboard-film.zh.mp4) | 中文介绍、社区分享与展示 |
-| [English film · 42 sec](https://fourques.github.io/Takeboard/media/takeboard-film.en.mp4) | English-language introductions |
+| 中文短片 · 制作中 / Work in progress | 中文介绍、社区分享与展示 |
+| English film · Work in progress | English-language introductions |
 | [创作画布 / Canvas](assets/takeboard-film-canvas.png) | 真实项目全景 |
 | [生成结果 / Result](assets/takeboard-film-result.png) | 生成结果回到创作画布 |
 | [中文封面](assets/takeboard-film-poster.zh.jpg) · [English cover](assets/takeboard-film-poster.en.jpg) | 视频封面 |
-| [分享图 / Social image](https://fourques.github.io/Takeboard/media/takeboard-social.png) | 1200×630 链接预览 |
+| 分享图 / Social image（待上线） | 1200×630 链接预览 |
 | [图标 SVG / App icon](../apps/web/public/takeboard-icon.svg) | 项目标识 |
 
-短片展示真实项目中的参考、生成、采用与结果复用。生成等待已剪去；空间运镜是后期表现，不是应用的 3D 编辑功能。画布也包含导入素材与未生成的备选分支，不表示全部素材都由 YoYoTV 生成。英文版使用英文文案，实际应用录屏仍为中文。
+截图展示真实项目中的参考、生成、采用与结果复用。画布包含导入素材与未生成的备选分支，不表示全部素材都由 YoYoTV 生成。
 
-The film follows a real project through references, generation, choosing a result and connecting it to the next step. Generation wait is omitted. Spatial motion is editorial treatment, not a 3D app feature. Imported media and ungenerated branches remain visible; not every item is generated in YoYoTV. Both editions show the actual Chinese app interface.
-
-分享时链接官网或项目，并保留片内的等待剪辑说明。第三方素材遵循各自许可，详见[简短来源说明 / Credits](assets/takeboard-film-credits.md)。软件的 [Apache-2.0 许可](../LICENSE)不等于片中所有素材的再授权；素材包不包含原始素材合集或用户项目文件。
+第三方素材遵循各自许可，详见[简短来源说明 / Credits](assets/takeboard-film-credits.md)。软件的 [Apache-2.0 许可](../LICENSE)不等于片中所有素材的再授权。
 
 ## 可以直接使用的短帖
 
-> 从一张参考图，到下一幕的开始。YoYoTV 把模型、素材、提示词和图片 / 视频生成放进同一张创作画布。开源，连接自己的本机或远程 ComfyUI。观看 42 秒真实项目短片：https://fourques.github.io/Takeboard/zh/#demo
+> 从一张参考图，到下一幕的开始。YoYoTV 把模型、素材、提示词和图片 / 视频生成放进同一张创作画布。开源，连接自己的本机或远程 ComfyUI。
 
-> A starting frame. A result worth keeping. A new scene to build. YoYoTV brings AI image and video creation into one open-source canvas, powered by your own ComfyUI. Watch the 42-second film: https://fourques.github.io/Takeboard/#demo
+> A starting frame. A result worth keeping. A new scene to build. YoYoTV brings AI image and video creation into one open-source canvas, powered by your own ComfyUI.
 
 ## 下载与进一步了解
 
