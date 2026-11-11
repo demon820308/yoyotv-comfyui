@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "TakeBoard 创作工作台",
-  "short_name": "TakeBoard",
-  "description": "面向 ComfyUI 创作者的本地优先 AI 影像工作台",
+  "name": "YoYo 影视创作工作台",
+  "short_name": "YoYo",
+  "description": "面向 ComfyUI 创作者的本地优先 AI 电影与虚拟制片工作区",
   "lang": "zh-CN",
   "start_url": "/",
   "scope": "/",
@@ -12,6 +12,12 @@
   "icons": [
     {
       "src": "/takeboard-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/branding/yoyo-icon-cineloop.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

@@ -961,6 +961,646 @@ const companionMessages = {
   moth: "分镜标记",
 } as const;
 
+function CrewSlateGraphic({ active }: { active: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className="companion-svg companion-slate"
+      aria-hidden="true"
+    >
+      <circle
+        cx="60"
+        cy="60"
+        r="54"
+        fill="none"
+        stroke="var(--hub-accent)"
+        strokeWidth="1"
+        strokeDasharray="3 4"
+        opacity={active ? 0.8 : 0.25}
+      />
+      <rect
+        x="16"
+        y="44"
+        width="88"
+        height="60"
+        rx="6"
+        fill="var(--hub-surface-raised)"
+        stroke="var(--hub-line)"
+        strokeWidth="1.5"
+      />
+      <rect x="22" y="49" width="76" height="13" rx="3" fill="var(--hub-bg)" opacity="0.7" />
+      <circle cx="28" cy="55.5" r="2.8" fill={active ? "var(--hub-sage)" : "var(--hub-accent)"} />
+      <text
+        x="35"
+        y="58"
+        fill="var(--hub-copy)"
+        fontSize="6"
+        fontFamily="ui-monospace, monospace"
+        fontWeight="600"
+        letterSpacing="0.08em"
+      >
+        YOYO CINEMA
+      </text>
+      <text
+        x="92"
+        y="58"
+        textAnchor="end"
+        fill="var(--hub-accent)"
+        fontSize="5.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        SYNC
+      </text>
+
+      <line
+        x1="22"
+        y1="66"
+        x2="98"
+        y2="66"
+        stroke="var(--hub-line)"
+        strokeWidth="1"
+        opacity="0.6"
+      />
+      <line
+        x1="47"
+        y1="66"
+        x2="47"
+        y2="81"
+        stroke="var(--hub-line)"
+        strokeWidth="1"
+        opacity="0.6"
+      />
+      <line
+        x1="73"
+        y1="66"
+        x2="73"
+        y2="81"
+        stroke="var(--hub-line)"
+        strokeWidth="1"
+        opacity="0.6"
+      />
+
+      <text
+        x="25"
+        y="72"
+        fill="var(--hub-muted)"
+        fontSize="4.8"
+        fontFamily="ui-monospace, monospace"
+      >
+        SCENE
+      </text>
+      <text
+        x="34"
+        y="79"
+        fill="var(--hub-copy)"
+        fontSize="6.5"
+        fontWeight="bold"
+        fontFamily="ui-monospace, monospace"
+      >
+        04
+      </text>
+      <text
+        x="51"
+        y="72"
+        fill="var(--hub-muted)"
+        fontSize="4.8"
+        fontFamily="ui-monospace, monospace"
+      >
+        TAKE
+      </text>
+      <text
+        x="60"
+        y="79"
+        fill="var(--hub-accent)"
+        fontSize="6.5"
+        fontWeight="bold"
+        fontFamily="ui-monospace, monospace"
+      >
+        02
+      </text>
+      <text
+        x="77"
+        y="72"
+        fill="var(--hub-muted)"
+        fontSize="4.8"
+        fontFamily="ui-monospace, monospace"
+      >
+        FPS
+      </text>
+      <text
+        x="85"
+        y="79"
+        fill="var(--hub-copy)"
+        fontSize="6.5"
+        fontWeight="bold"
+        fontFamily="ui-monospace, monospace"
+      >
+        24
+      </text>
+
+      <rect
+        x="22"
+        y="84"
+        width="76"
+        height="14"
+        rx="3"
+        fill="var(--hub-bg)"
+        stroke="var(--hub-line)"
+        strokeWidth="1"
+      />
+      <text
+        x="60"
+        y="93.5"
+        textAnchor="middle"
+        fill={active ? "var(--hub-sage)" : "var(--hub-accent)"}
+        fontSize="7.5"
+        fontFamily="ui-monospace, monospace"
+        fontWeight="bold"
+        letterSpacing="0.08em"
+      >
+        {active ? "00:00:01:00" : "01:24:32:18"}
+      </text>
+
+      <g className={`slate-clapper-stick ${active ? "is-slapped" : ""}`}>
+        <rect
+          x="14"
+          y="27"
+          width="92"
+          height="15"
+          rx="3"
+          fill="var(--hub-surface)"
+          stroke="var(--hub-line)"
+          strokeWidth="1.5"
+        />
+        <line x1="28" y1="27" x2="36" y2="42" stroke="var(--hub-accent)" strokeWidth="4" />
+        <line x1="46" y1="27" x2="54" y2="42" stroke="var(--hub-accent)" strokeWidth="4" />
+        <line x1="64" y1="27" x2="72" y2="42" stroke="var(--hub-accent)" strokeWidth="4" />
+        <line x1="82" y1="27" x2="90" y2="42" stroke="var(--hub-accent)" strokeWidth="4" />
+        <circle
+          cx="20"
+          cy="34.5"
+          r="3.5"
+          fill="var(--hub-surface-raised)"
+          stroke="var(--hub-copy)"
+          strokeWidth="1"
+        />
+        <circle cx="20" cy="34.5" r="1.2" fill="var(--hub-accent)" />
+      </g>
+    </svg>
+  );
+}
+
+function LensOpticsGraphic({ active }: { active: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className="companion-svg companion-lens"
+      aria-hidden="true"
+    >
+      <circle
+        cx="60"
+        cy="60"
+        r="54"
+        fill="none"
+        stroke="var(--hub-line)"
+        strokeWidth="1.8"
+        strokeDasharray="3 3"
+        opacity="0.65"
+      />
+      <circle
+        cx="60"
+        cy="60"
+        r="48"
+        fill="var(--hub-surface-raised)"
+        stroke="var(--hub-line)"
+        strokeWidth="1.5"
+      />
+
+      <circle
+        cx="60"
+        cy="60"
+        r="41"
+        fill="none"
+        stroke="var(--hub-accent)"
+        strokeWidth="0.8"
+        opacity="0.5"
+        strokeDasharray="1 7"
+      />
+      <text
+        x="60"
+        y="23"
+        textAnchor="middle"
+        fill="var(--hub-accent)"
+        fontSize="4.5"
+        fontFamily="ui-monospace, monospace"
+        letterSpacing="0.06em"
+      >
+        35mm T1.5
+      </text>
+      <text
+        x="60"
+        y="103"
+        textAnchor="middle"
+        fill="var(--hub-muted)"
+        fontSize="4.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        Ø 95mm
+      </text>
+      <text
+        x="23"
+        y="62"
+        textAnchor="middle"
+        fill="var(--hub-muted)"
+        fontSize="4.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        1.2m
+      </text>
+      <text
+        x="97"
+        y="62"
+        textAnchor="middle"
+        fill="var(--hub-accent)"
+        fontSize="4.5"
+        fontFamily="ui-monospace, monospace"
+      >
+        ∞
+      </text>
+
+      <g className={`lens-iris-assembly ${active ? "is-focused" : ""}`}>
+        <circle
+          cx="60"
+          cy="60"
+          r="32"
+          fill="var(--hub-surface)"
+          stroke="var(--hub-line)"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M 44 48 L 76 48 L 68 72 L 36 72 Z"
+          fill="none"
+          stroke="var(--hub-line)"
+          strokeWidth="1"
+          opacity="0.7"
+        />
+        <path
+          d="M 48 40 L 72 40 L 80 66 L 56 66 Z"
+          fill="none"
+          stroke="var(--hub-accent)"
+          strokeWidth="1"
+          opacity="0.4"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="16"
+          fill="var(--hub-bg)"
+          stroke={active ? "var(--hub-sage)" : "var(--hub-accent)"}
+          strokeWidth="1.5"
+        />
+      </g>
+
+      <line
+        x1="60"
+        y1="47"
+        x2="60"
+        y2="54"
+        stroke={active ? "var(--hub-sage)" : "var(--hub-copy)"}
+        strokeWidth="1"
+      />
+      <line
+        x1="60"
+        y1="66"
+        x2="60"
+        y2="73"
+        stroke={active ? "var(--hub-sage)" : "var(--hub-copy)"}
+        strokeWidth="1"
+      />
+      <line
+        x1="47"
+        y1="60"
+        x2="54"
+        y2="60"
+        stroke={active ? "var(--hub-sage)" : "var(--hub-copy)"}
+        strokeWidth="1"
+      />
+      <line
+        x1="66"
+        y1="60"
+        x2="73"
+        y2="60"
+        stroke={active ? "var(--hub-sage)" : "var(--hub-copy)"}
+        strokeWidth="1"
+      />
+      <circle cx="60" cy="60" r="2.5" fill={active ? "var(--hub-sage)" : "var(--hub-accent)"} />
+
+      <ellipse
+        cx="60"
+        cy="60"
+        rx="36"
+        ry="6"
+        fill="none"
+        stroke="var(--hub-sage)"
+        strokeWidth="0.8"
+        opacity={active ? 0.75 : 0.28}
+        transform="rotate(-25 60 60)"
+      />
+    </svg>
+  );
+}
+
+function BoomSoundGraphic({ active }: { active: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className="companion-svg companion-sound"
+      aria-hidden="true"
+    >
+      <path
+        d="M 30 70 A 38 38 0 1 1 90 70"
+        fill="none"
+        stroke="var(--hub-line)"
+        strokeWidth="1"
+        strokeDasharray="2 3"
+        opacity="0.6"
+      />
+      <path
+        d="M 40 70 A 26 26 0 1 1 80 70"
+        fill="none"
+        stroke="var(--hub-sage)"
+        strokeWidth="1"
+        strokeDasharray="3 3"
+        opacity={active ? 0.8 : 0.35}
+      />
+
+      <path
+        d="M 46 26 A 18 18 0 0 1 74 26"
+        fill="none"
+        stroke="var(--hub-accent)"
+        strokeWidth="1.2"
+        opacity={active ? 0.9 : 0.3}
+        className="sound-wave-1"
+      />
+      <path
+        d="M 40 18 A 26 26 0 0 1 80 18"
+        fill="none"
+        stroke="var(--hub-accent)"
+        strokeWidth="1"
+        opacity={active ? 0.6 : 0.15}
+        className="sound-wave-2"
+      />
+
+      <rect
+        x="54"
+        y="32"
+        width="12"
+        height="52"
+        rx="6"
+        fill="var(--hub-surface-raised)"
+        stroke="var(--hub-line)"
+        strokeWidth="1.2"
+      />
+      {[-8, -4, 0, 4, 8, 12, 16].map((offset) => (
+        <line
+          key={offset}
+          x1="56"
+          y1={52 + offset}
+          x2="64"
+          y2={52 + offset}
+          stroke="var(--hub-copy)"
+          strokeWidth="1"
+          opacity="0.7"
+        />
+      ))}
+      <circle cx="60" cy="38" r="3" fill="var(--hub-accent)" />
+
+      <ellipse
+        cx="60"
+        cy="62"
+        rx="20"
+        ry="12"
+        fill="none"
+        stroke="var(--hub-line)"
+        strokeWidth="1.2"
+      />
+      <line
+        x1="42"
+        y1="56"
+        x2="54"
+        y2="68"
+        stroke="var(--hub-sage)"
+        strokeWidth="1"
+        opacity="0.7"
+      />
+      <line
+        x1="78"
+        y1="56"
+        x2="66"
+        y2="68"
+        stroke="var(--hub-sage)"
+        strokeWidth="1"
+        opacity="0.7"
+      />
+
+      <g className="audio-meter-left">
+        {[
+          { y: 88, h: 3, c: "var(--hub-sage)" },
+          { y: 83, h: 3, c: "var(--hub-sage)" },
+          { y: 78, h: 3, c: "var(--hub-sage)" },
+          { y: 73, h: 3, c: "var(--hub-accent)" },
+          { y: 68, h: 3, c: "var(--hub-accent)" },
+        ].map((bar, i) => (
+          <rect
+            key={bar.y}
+            x="26"
+            y={bar.y}
+            width="5"
+            height={bar.h}
+            rx="1"
+            fill={bar.c}
+            opacity={active || i < 3 ? 0.9 : 0.25}
+          />
+        ))}
+      </g>
+      <g className="audio-meter-right">
+        {[
+          { y: 88, h: 3, c: "var(--hub-sage)" },
+          { y: 83, h: 3, c: "var(--hub-sage)" },
+          { y: 78, h: 3, c: "var(--hub-sage)" },
+          { y: 73, h: 3, c: "var(--hub-accent)" },
+          { y: 68, h: 3, c: "var(--hub-accent)" },
+        ].map((bar, i) => (
+          <rect
+            key={bar.y}
+            x="89"
+            y={bar.y}
+            width="5"
+            height={bar.h}
+            rx="1"
+            fill={bar.c}
+            opacity={active || i < 4 ? 0.9 : 0.25}
+          />
+        ))}
+      </g>
+
+      <text
+        x="60"
+        y="100"
+        textAnchor="middle"
+        fill="var(--hub-muted)"
+        fontSize="4.5"
+        fontFamily="ui-monospace, monospace"
+        letterSpacing="0.05em"
+      >
+        32-BIT FLOAT · 48kHz
+      </text>
+    </svg>
+  );
+}
+
+function StoryboardFilmGraphic({ active }: { active: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className="companion-svg companion-storyboard"
+      aria-hidden="true"
+    >
+      <rect
+        x="20"
+        y="24"
+        width="80"
+        height="72"
+        rx="4"
+        fill="var(--hub-surface-raised)"
+        stroke="var(--hub-line)"
+        strokeWidth="1.2"
+      />
+
+      {[28, 40, 52, 64, 76, 88].map((y) => (
+        <g key={y}>
+          <rect
+            x="23"
+            y={y - 3}
+            width="5"
+            height="6"
+            rx="1.2"
+            fill="var(--hub-bg)"
+            stroke="var(--hub-line)"
+            strokeWidth="0.8"
+          />
+          <rect
+            x="92"
+            y={y - 3}
+            width="5"
+            height="6"
+            rx="1.2"
+            fill="var(--hub-bg)"
+            stroke="var(--hub-line)"
+            strokeWidth="0.8"
+          />
+        </g>
+      ))}
+
+      <rect
+        x="33"
+        y="32"
+        width="54"
+        height="38"
+        rx="2"
+        fill="var(--hub-bg)"
+        stroke={active ? "var(--hub-accent)" : "var(--hub-line)"}
+        strokeWidth="1"
+      />
+
+      <path d="M 37 39 L 37 36 L 41 36" fill="none" stroke="var(--hub-accent)" strokeWidth="1" />
+      <path d="M 83 39 L 83 36 L 79 36" fill="none" stroke="var(--hub-accent)" strokeWidth="1" />
+      <path d="M 37 63 L 37 66 L 41 66" fill="none" stroke="var(--hub-accent)" strokeWidth="1" />
+      <path d="M 83 63 L 83 66 L 79 66" fill="none" stroke="var(--hub-accent)" strokeWidth="1" />
+
+      <circle cx="60" cy="51" r="5" fill="none" stroke="var(--hub-sage)" strokeWidth="1" />
+      <circle cx="60" cy="51" r="2" fill={active ? "var(--hub-sage)" : "var(--hub-copy)"} />
+      <polygon points="68,48 74,44 74,58 68,54" fill="var(--hub-sage)" opacity="0.8" />
+
+      <g className="storyboard-nodes">
+        <line x1="38" y1="82" x2="82" y2="82" stroke="var(--hub-line)" strokeWidth="1" />
+        <circle
+          cx="42"
+          cy="82"
+          r="3"
+          fill="var(--hub-surface)"
+          stroke="var(--hub-sage)"
+          strokeWidth="1.2"
+        />
+        <circle
+          cx="60"
+          cy="82"
+          r="4.5"
+          fill={active ? "var(--hub-accent)" : "var(--hub-surface)"}
+          stroke="var(--hub-accent)"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="78"
+          cy="82"
+          r="3"
+          fill="var(--hub-surface)"
+          stroke="var(--hub-line)"
+          strokeWidth="1.2"
+        />
+        <text
+          x="60"
+          y="83.8"
+          textAnchor="middle"
+          fill="var(--hub-surface)"
+          fontSize="4.2"
+          fontWeight="bold"
+          fontFamily="ui-monospace, monospace"
+        >
+          ✓
+        </text>
+      </g>
+
+      <text
+        x="60"
+        y="93"
+        textAnchor="middle"
+        fill="var(--hub-muted)"
+        fontSize="4"
+        fontFamily="ui-monospace, monospace"
+        letterSpacing="0.08em"
+      >
+        {active ? "CUT #04 · SELECTED" : "TAKE LINEAGE · 2.39:1"}
+      </text>
+    </svg>
+  );
+}
+
+function CompanionGraphic({
+  kind,
+  active,
+}: {
+  kind: keyof typeof companionMessages;
+  active: boolean;
+}) {
+  switch (kind) {
+    case "crew":
+      return <CrewSlateGraphic active={active} />;
+    case "lens":
+      return <LensOpticsGraphic active={active} />;
+    case "dragonfly":
+      return <BoomSoundGraphic active={active} />;
+    case "moth":
+      return <StoryboardFilmGraphic active={active} />;
+    default:
+      return null;
+  }
+}
+
 function formatUpdatedAt(value: string) {
   const date = new Date(value);
   const now = new Date();
@@ -1594,7 +2234,14 @@ export function ProjectHub({
       <header className="hub-header">
         <div className="hub-header-inner">
           <div className="brand hub-brand">
-            <span className="brand-mark">YoYo</span>
+            <span className="brand-mark" aria-label="YoYo">
+              <svg viewBox="0 0 512 512" fill="none" width="18" height="18" aria-hidden="true">
+                <path d="M 130 148 C 130 230, 206 256, 256 256 C 306 256, 382 230, 382 148 C 382 108, 338 88, 290 102 C 238 116, 204 178, 172 232 C 142 284, 130 338, 158 382 C 188 428, 256 428, 256 428" stroke="var(--hub-accent)" strokeWidth="48" strokeLinecap="round"/>
+                <path d="M 382 364 C 382 282, 306 256, 256 256 C 206 256, 130 282, 130 364 C 130 404, 174 424, 222 410 C 274 396, 308 334, 340 280 C 370 228, 382 174, 354 130 C 324 84, 256 84, 256 84" stroke="var(--hub-sage)" strokeWidth="42" strokeLinecap="round"/>
+                <circle cx="256" cy="256" r="30" fill="var(--hub-bg)" stroke="var(--hub-accent)" strokeWidth="8"/>
+                <circle cx="256" cy="256" r="12" fill="var(--hub-sage)"/>
+              </svg>
+            </span>
             <div>
               <strong>YoYo</strong>
               <span>FILMMAKING WORKSPACE</span>
@@ -1786,12 +2433,43 @@ export function ProjectHub({
                   aria-label={`${companionMessages[companion]}互动`}
                   onClick={() => revealCompanionMoment(companion)}
                 >
-                  <span className="scene-companion-visual" aria-hidden="true" />
+                  <span className="scene-companion-visual" aria-hidden="true">
+                    <CompanionGraphic kind={companion} active={companionMoment === companion} />
+                  </span>
                   <em role="status">{companionMessages[companion]}</em>
                 </button>
               ),
             )}
             <div className="scene-curiosities" aria-hidden="true">
+              <div className="director-hud-overlay">
+                <div className="hud-safe-brackets">
+                  <span className="bracket bracket-tl" />
+                  <span className="bracket bracket-tr" />
+                  <span className="bracket bracket-bl" />
+                  <span className="bracket bracket-br" />
+                  <span className="hud-crosshair" />
+                </div>
+                <div className="hud-meta hud-meta-tl">
+                  <span className="hud-rec-wrap">
+                    <span className="hud-rec-dot" />
+                    <span>REC</span>
+                  </span>
+                  <span>4K RAW · 24.00 FPS</span>
+                  <small>PRORES 4444 XQ</small>
+                </div>
+                <div className="hud-meta hud-meta-tr">
+                  <span>SHUTTER 180° · EI 800</span>
+                  <small>5600K · T1.5 CINE</small>
+                </div>
+                <div className="hud-meta hud-meta-bl">
+                  <span>TC 01:00:24:18 · MASTER</span>
+                  <small>CH1/CH2 -18dB SYNC</small>
+                </div>
+                <div className="hud-meta hud-meta-br">
+                  <span>STAGE A · VIRTUAL PROD</span>
+                  <small>COMFYUI ENGINE</small>
+                </div>
+              </div>
               <span className="curiosity-constellation">
                 <i />
                 <i />
@@ -1919,7 +2597,7 @@ export function ProjectHub({
           </div>
         ) : (
           <div className="visually-hidden">
-            <span>TAKEBOARD / FILMMAKING WORKSPACE</span>
+            <span>YOYO / FILMMAKING WORKSPACE</span>
             <h1>从素材到成片，都在一张画布。</h1>
             <p>连接 ComfyUI，管理素材、镜头、Workflow 与生成结果。</p>
           </div>

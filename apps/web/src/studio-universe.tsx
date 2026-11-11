@@ -32,21 +32,21 @@ const palettes: Record<
     accent: "#d9b477",
     signal: "#82c9a8",
     violet: "#9f8fe4",
-    surface: "#101513",
-    raised: "#202824",
-    ink: "#f0eee6",
-    screen: "#28443a",
-    line: "#69776f",
-    dust: "#dce5de",
+    surface: "#141816",
+    raised: "#1f2623",
+    ink: "#f4f3ed",
+    screen: "#080b0a",
+    line: "#45504a",
+    dust: "#c8d4cc",
   },
   light: {
     accent: "#a87332",
     signal: "#2e8a63",
     violet: "#715bd0",
-    surface: "#e9e4d8",
-    raised: "#fffdf6",
-    ink: "#202520",
-    screen: "#476d5d",
+    surface: "#dcd7c8",
+    raised: "#ffffff",
+    ink: "#1a1f1b",
+    screen: "#f2f0e6",
     line: "#86928a",
     dust: "#58675e",
   },
@@ -54,11 +54,11 @@ const palettes: Record<
     accent: "#b89550",
     signal: "#4c9d8c",
     violet: "#8172cf",
-    surface: "#e9e9f2",
-    raised: "#fffdfb",
-    ink: "#24283b",
-    screen: "#dfe9e7",
-    line: "#81879a",
+    surface: "#1c2030",
+    raised: "#272c42",
+    ink: "#f0f2fa",
+    screen: "#10121d",
+    line: "#484f68",
     dust: "#747b91",
   },
 };
@@ -81,20 +81,24 @@ function useBoardFaceTexture(
     if (!context) return new THREE.CanvasTexture(canvas);
     context.scale(textureScale, textureScale);
 
-    const paper = face === "front" ? palette.screen : palette.raised;
     const safeTitle = (recentProjectTitle?.trim() || "未命名项目").slice(0, 18);
 
-    context.fillStyle = paper;
+    // Deep OLED Carbon background
+    context.fillStyle = palette.screen;
     context.fillRect(0, 0, width, height);
 
-    const wash = context.createRadialGradient(1030, 170, 40, 1030, 170, 620);
-    wash.addColorStop(0, `${face === "front" ? palette.signal : palette.violet}2a`);
-    wash.addColorStop(0.52, `${palette.accent}0c`);
+    // Subtle anamorphic horizontal studio glow
+    const wash = context.createLinearGradient(0, height / 2, width, height / 2);
+    wash.addColorStop(0, "transparent");
+    wash.addColorStop(0.2, `${palette.accent}0a`);
+    wash.addColorStop(0.5, `${palette.signal}12`);
+    wash.addColorStop(0.8, `${palette.accent}0a`);
     wash.addColorStop(1, "transparent");
     context.fillStyle = wash;
     context.fillRect(0, 0, width, height);
 
-    context.strokeStyle = `${palette.line}38`;
+    // Fine technical grid
+    context.strokeStyle = `${palette.line}24`;
     context.lineWidth = 1;
     for (let x = 0; x <= width; x += 64) {
       context.beginPath();
@@ -109,111 +113,193 @@ function useBoardFaceTexture(
       context.stroke();
     }
 
+    // Top Header / Monitor Telemetry
     context.textBaseline = "middle";
+
+    // Glowing Red Tally Dot & REC tag
+    context.fillStyle = "#ef4444";
+    context.beginPath();
+    context.arc(76, 54, 6, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#ef4444";
+    context.font = "700 17px ui-monospace, monospace";
+    context.letterSpacing = "2px";
+    context.fillText("REC", 90, 54);
+
     context.fillStyle = palette.accent;
-    context.font = "600 22px ui-monospace, monospace";
-    context.letterSpacing = "3px";
+    context.font = "600 18px ui-monospace, monospace";
+    context.letterSpacing = "2px";
     context.fillText(
-      face === "front" ? "TAKEBOARD / FILMMAKING WORKSPACE" : "TAKEBOARD / CREATIVE LINEAGE",
-      68,
+      face === "front" ? "YOYO CINE-7 // VIRTUAL PRODUCTION" : "YOYO // CREATIVE LINEAGE PIPELINE",
+      150,
       54,
     );
+
+    // Right Status Pills
+    context.textAlign = "right";
     context.fillStyle = ready ? palette.signal : palette.accent;
     context.beginPath();
-    context.arc(1280, 54, 7, 0, Math.PI * 2);
+    context.arc(1100, 54, 6, 0, Math.PI * 2);
     context.fill();
+
     context.fillStyle = palette.ink;
-    context.textAlign = "right";
     context.font = "600 16px ui-monospace, monospace";
     context.letterSpacing = "2px";
-    context.fillText(ready ? "COMFYUI / READY" : "COMFYUI / STANDBY", 1372, 55);
+    context.fillText(ready ? "COMFYUI / READY" : "COMFYUI / STANDBY", 1085, 55);
+
+    context.fillStyle = `${palette.accent}e6`;
+    context.font = "600 15px ui-monospace, monospace";
+    context.fillText("T1.5 · 180° · 4K DCI", 1372, 55);
     context.textAlign = "left";
-    context.fillStyle = `${palette.line}aa`;
-    context.fillRect(68, 91, 1304, 2);
+
+    // Divider bar
+    context.fillStyle = `${palette.line}88`;
+    context.fillRect(68, 88, 1304, 2);
 
     if (face === "front") {
+      // Left Headline section
+      context.fillStyle = palette.accent;
+      context.font = "600 17px ui-monospace, monospace";
+      context.letterSpacing = "2.5px";
+      context.fillText("AI FILMMAKING WORKSPACE // 2.39:1 SCOPE", 70, 136);
+
       context.fillStyle = palette.ink;
-      context.font = "500 78px 'Songti SC', STSong, serif";
-      context.letterSpacing = "-2px";
-      context.fillText("从素材到成片，", 68, 184);
-      context.fillText("都在一张画布。", 68, 278);
+      context.font = "700 66px Inter, -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif";
+      context.letterSpacing = "-1.5px";
+      context.fillText("从素材到成片，", 68, 218);
+      context.fillText("都在一张无界画布。", 68, 298);
 
       context.fillStyle = `${palette.ink}b8`;
-      context.font = "400 22px 'PingFang SC', 'Microsoft YaHei', sans-serif";
-      context.letterSpacing = "1px";
-      context.fillText("连接 ComfyUI，管理素材、镜头、Workflow 与生成结果。", 72, 358);
+      context.font = "400 21px Inter, -apple-system, 'PingFang SC', sans-serif";
+      context.letterSpacing = "0.5px";
+      context.fillText("原生连接本地 ComfyUI，统一调度镜头、Workflow 与生成线索。", 70, 376);
 
-      context.fillStyle = `${palette.surface}a8`;
-      context.roundRect(920, 132, 452, 290, 14);
+      // Right Active Monitor Card
+      const cardX = 860;
+      const cardY = 120;
+      const cardW = 512;
+      const cardH = 300;
+      context.fillStyle = `${palette.surface}f5`;
+      context.roundRect(cardX, cardY, cardW, cardH, 12);
       context.fill();
-      context.strokeStyle = `${palette.accent}b8`;
-      context.lineWidth = 3;
-      const corners = [
-        [946, 158, 1, 1],
-        [1346, 158, -1, 1],
-        [946, 396, 1, -1],
-        [1346, 396, -1, -1],
+      context.strokeStyle = `${palette.line}99`;
+      context.lineWidth = 1.5;
+      context.stroke();
+
+      // Card Header
+      context.fillStyle = palette.signal;
+      context.font = "600 14px ui-monospace, monospace";
+      context.letterSpacing = "1.5px";
+      context.fillText("ACTIVE PIPELINE", cardX + 24, cardY + 34);
+      context.fillStyle = palette.accent;
+      context.textAlign = "right";
+      context.fillText("WAN 2.1 I2V · READY", cardX + cardW - 24, cardY + 34);
+      context.textAlign = "left";
+
+      // Inner Waveform Scope
+      const scopeX = cardX + 24;
+      const scopeY = cardY + 58;
+      const scopeW = cardW - 48;
+      const scopeH = 150;
+      context.fillStyle = `${palette.screen}f0`;
+      context.roundRect(scopeX, scopeY, scopeW, scopeH, 8);
+      context.fill();
+      context.strokeStyle = `${palette.line}55`;
+      context.lineWidth = 1;
+      context.stroke();
+
+      // Viewfinder Brackets inside scope
+      context.strokeStyle = `${palette.accent}cc`;
+      context.lineWidth = 2;
+      const bCorners = [
+        [scopeX + 16, scopeY + 16, 1, 1],
+        [scopeX + scopeW - 16, scopeY + 16, -1, 1],
+        [scopeX + 16, scopeY + scopeH - 16, 1, -1],
+        [scopeX + scopeW - 16, scopeY + scopeH - 16, -1, -1],
       ] as const;
-      for (const [x, y, dx, dy] of corners) {
+      for (const [x, y, dx, dy] of bCorners) {
         context.beginPath();
-        context.moveTo(x, y + dy * 26);
+        context.moveTo(x, y + dy * 14);
         context.lineTo(x, y);
-        context.lineTo(x + dx * 26, y);
+        context.lineTo(x + dx * 14, y);
         context.stroke();
       }
-      context.strokeStyle = `${palette.line}78`;
-      context.lineWidth = 2;
+
+      // Bezier waveform
+      context.strokeStyle = palette.signal;
+      context.lineWidth = 2.5;
       context.beginPath();
-      context.moveTo(1010, 324);
-      context.bezierCurveTo(1078, 220, 1170, 222, 1234, 278);
-      context.bezierCurveTo(1276, 316, 1298, 294, 1322, 230);
+      context.moveTo(scopeX + 32, scopeY + 100);
+      context.bezierCurveTo(
+        scopeX + 120,
+        scopeY + 30,
+        scopeX + 220,
+        scopeY + 130,
+        scopeX + scopeW - 40,
+        scopeY + 45,
+      );
       context.stroke();
+
+      // Keyframe Reticle Dot
       context.fillStyle = palette.accent;
       context.beginPath();
-      context.arc(1234, 278, 8, 0, Math.PI * 2);
+      context.arc(scopeX + 270, scopeY + 82, 7, 0, Math.PI * 2);
       context.fill();
-      context.fillStyle = palette.ink;
-      context.font = "500 20px ui-monospace, monospace";
-      context.letterSpacing = "1px";
-      context.fillText("CURRENT BOARD", 950, 366);
-      context.fillStyle = palette.line;
-      context.font = "500 15px ui-monospace, monospace";
-      context.fillText("SOURCE / SHOT / TAKE", 950, 397);
+      context.strokeStyle = `${palette.accent}66`;
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(scopeX + 270, scopeY + 82, 14, 0, Math.PI * 2);
+      context.stroke();
 
-      context.fillStyle = `${palette.line}a8`;
+      // Card Bottom Pipeline Flow
+      context.fillStyle = palette.ink;
+      context.font = "600 15px ui-monospace, monospace";
+      context.letterSpacing = "1px";
+      context.fillText("PROMPT → COMFYUI LATENT → 4K SHOT", cardX + 24, cardY + cardH - 36);
+
+      context.textAlign = "right";
+      context.fillStyle = palette.signal;
+      context.font = "600 13px ui-monospace, monospace";
+      context.fillText("24 FPS SYNC", cardX + cardW - 24, cardY + cardH - 36);
+      context.textAlign = "left";
+
+      // Bottom Metadata Row
+      context.fillStyle = `${palette.line}88`;
       context.fillRect(68, 466, 1304, 2);
+
       const frontMeta = [
-        { label: "PROJECTS", value: String(projectCount).padStart(2, "0") },
-        { label: "STORAGE", value: "LOCAL" },
-        { label: "TRACE", value: "ON" },
+        { label: "PROJECTS", value: String(projectCount).padStart(2, "0") + " ACTIVE" },
+        { label: "GPU ENGINE", value: ready ? "RTX 24GB READY" : "STANDBY" },
+        { label: "STORAGE", value: "NVMe LOCAL" },
       ];
       for (let index = 0; index < frontMeta.length; index += 1) {
         const item = frontMeta[index];
         if (!item) continue;
-        const x = 68 + index * 210;
+        const x = 68 + index * 240;
         context.fillStyle = palette.line;
-        context.font = "500 14px ui-monospace, monospace";
+        context.font = "600 14px ui-monospace, monospace";
         context.letterSpacing = "2px";
         context.fillText(item.label, x, 513);
         context.fillStyle = palette.ink;
-        context.font = "500 23px ui-monospace, monospace";
+        context.font = "700 22px ui-monospace, monospace";
         context.fillText(item.value, x, 551);
       }
       context.fillStyle = palette.line;
-      context.font = "500 14px ui-monospace, monospace";
-      context.fillText("RECENT", 846, 513);
+      context.font = "600 14px ui-monospace, monospace";
+      context.fillText("RECENT PROJECT", 860, 513);
       context.fillStyle = palette.ink;
-      context.font = "500 23px 'PingFang SC', sans-serif";
-      context.fillText(safeTitle, 846, 551, 510);
+      context.font = "600 22px 'PingFang SC', sans-serif";
+      context.fillText(safeTitle, 860, 551, 490);
     } else {
+      // Back face - Modern 4K Pipeline Lineage
       context.fillStyle = palette.ink;
-      context.font = "500 49px 'Songti SC', STSong, serif";
+      context.font = "700 48px Inter, -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif";
       context.letterSpacing = "-1px";
-      context.fillText("创作谱系", 68, 148);
-      context.fillStyle = palette.line;
-      context.font = "500 15px ui-monospace, monospace";
+      context.fillText("创作谱系与生成线索", 68, 148);
+      context.fillStyle = palette.accent;
+      context.font = "600 16px ui-monospace, monospace";
       context.letterSpacing = "2px";
-      context.fillText("ASSET → SHOT → TAKES / FULL TRACE", 68, 191);
+      context.fillText("RAW ASSET → WORKFLOW GRAPH → 4K SHOT TAKES → MASTER CUT", 68, 191);
 
       const sources = [
         { y: 268, label: "IMAGE / 01", color: palette.signal },
@@ -221,7 +307,7 @@ function useBoardFaceTexture(
         { y: 448, label: "REF / 03", color: palette.violet },
       ];
       for (const source of sources) {
-        context.fillStyle = `${palette.surface}d8`;
+        context.fillStyle = `${palette.surface}f2`;
         context.roundRect(68, source.y - 32, 220, 64, 8);
         context.fill();
         context.fillStyle = source.color;
@@ -235,13 +321,13 @@ function useBoardFaceTexture(
         context.fill();
       }
 
-      context.fillStyle = `${palette.surface}e6`;
+      context.fillStyle = `${palette.surface}f5`;
       context.roundRect(504, 238, 350, 242, 12);
       context.fill();
       context.strokeStyle = `${palette.accent}d8`;
-      context.lineWidth = 3;
+      context.lineWidth = 2;
       context.strokeRect(527, 261, 304, 154);
-      context.fillStyle = `${palette.signal}32`;
+      context.fillStyle = `${palette.signal}28`;
       context.beginPath();
       context.moveTo(528, 415);
       context.lineTo(628, 326);
@@ -251,20 +337,20 @@ function useBoardFaceTexture(
       context.closePath();
       context.fill();
       context.fillStyle = palette.ink;
-      context.font = "600 17px ui-monospace, monospace";
-      context.fillText("SHOT / 04", 527, 448);
+      context.font = "700 17px ui-monospace, monospace";
+      context.fillText("SHOT / 04 (WAN 2.1)", 527, 448);
       context.textAlign = "right";
       context.fillStyle = palette.accent;
-      context.fillText("SELECTED", 831, 448);
+      context.fillText("SELECTED 4K", 831, 448);
       context.textAlign = "left";
 
       const takes = [
         { y: 260, label: "TAKE 01", color: palette.line },
-        { y: 350, label: "TAKE 02", color: palette.violet },
+        { y: 350, label: "TAKE 02 (MASTER)", color: palette.accent },
         { y: 440, label: "TAKE 03", color: palette.signal },
       ];
       for (const take of takes) {
-        context.fillStyle = `${palette.surface}d8`;
+        context.fillStyle = `${palette.surface}f2`;
         context.roundRect(1060, take.y - 33, 312, 66, 8);
         context.fill();
         context.fillStyle = `${take.color}58`;
@@ -274,7 +360,11 @@ function useBoardFaceTexture(
         context.fillText(take.label, 1160, take.y - 7);
         context.fillStyle = take.color;
         context.font = "500 13px ui-monospace, monospace";
-        context.fillText(take.label === "TAKE 02" ? "SELECTED" : "GENERATED", 1160, take.y + 16);
+        context.fillText(
+          take.label.includes("MASTER") ? "MASTER CUT" : "GENERATED",
+          1160,
+          take.y + 16,
+        );
       }
 
       context.lineWidth = 2;
@@ -299,18 +389,18 @@ function useBoardFaceTexture(
         context.fill();
       }
 
-      context.fillStyle = `${palette.line}a8`;
+      context.fillStyle = `${palette.line}88`;
       context.fillRect(68, 535, 1304, 2);
       context.fillStyle = palette.line;
-      context.font = "500 14px ui-monospace, monospace";
-      context.fillText("PROJECT", 68, 578);
+      context.font = "600 14px ui-monospace, monospace";
+      context.fillText("ACTIVE PROJECT", 68, 578);
       context.fillStyle = palette.ink;
-      context.font = "500 20px 'PingFang SC', sans-serif";
-      context.fillText(safeTitle, 170, 578, 420);
+      context.font = "600 20px 'PingFang SC', sans-serif";
+      context.fillText(safeTitle, 220, 578, 420);
       context.textAlign = "right";
-      context.fillStyle = palette.line;
-      context.font = "500 14px ui-monospace, monospace";
-      context.fillText("LOCAL / TRACEABLE / NON-DESTRUCTIVE", 1372, 578);
+      context.fillStyle = palette.signal;
+      context.font = "600 14px ui-monospace, monospace";
+      context.fillText("4K DCI · NON-DESTRUCTIVE TRACE", 1372, 578);
       context.textAlign = "left";
     }
 
@@ -423,47 +513,45 @@ function BackFace({
   );
 }
 
-function Clapper({ palette }: { palette: (typeof palettes)[ThemeName] }) {
-  const stripeShape = useMemo(() => {
-    const shape = new THREE.Shape();
-    shape.moveTo(-0.21, -0.18);
-    shape.lineTo(0.06, -0.18);
-    shape.lineTo(0.21, 0.18);
-    shape.lineTo(-0.06, 0.18);
-    shape.closePath();
-    return shape;
-  }, []);
+function MonitorTopArmor({ palette }: { palette: (typeof palettes)[ThemeName] }) {
   return (
-    <group position={[0, 0.94, 0.02]} rotation={[0, 0, -0.035]}>
+    <group position={[0, 0.82, 0]}>
+      {/* Top industrial chassis bar */}
       <mesh>
-        <boxGeometry args={[3.2, 0.38, 0.22]} />
+        <boxGeometry args={[3.12, 0.16, 0.22]} />
         <meshPhysicalMaterial
           color={palette.surface}
-          roughness={0.25}
-          metalness={0.5}
-          clearcoat={0.7}
-          clearcoatRoughness={0.2}
+          roughness={0.32}
+          metalness={0.82}
+          clearcoat={0.6}
+          clearcoatRoughness={0.25}
         />
       </mesh>
-      {[-1.3, -0.86, -0.42, 0.02, 0.46, 0.9, 1.34].map((x, index) => (
-        <group key={x}>
-          <mesh position={[x, 0, 0.116]}>
-            <shapeGeometry args={[stripeShape]} />
-            <meshBasicMaterial color={palette.accent} transparent opacity={0.9} />
-          </mesh>
-          <mesh position={[x, 0, -0.116]} rotation={[0, Math.PI, 0]}>
-            <shapeGeometry args={[stripeShape]} />
-            <meshBasicMaterial
-              color={index % 2 === 0 ? palette.signal : palette.violet}
-              transparent
-              opacity={0.82}
-            />
-          </mesh>
-        </group>
+      {/* Center glowing Red Tally indicator bar */}
+      <mesh position={[0, 0.02, 0.113]}>
+        <boxGeometry args={[0.48, 0.05, 0.01]} />
+        <meshBasicMaterial color="#ef4444" />
+      </mesh>
+      <mesh position={[0, 0.02, -0.113]}>
+        <boxGeometry args={[0.48, 0.05, 0.01]} />
+        <meshBasicMaterial color="#ef4444" />
+      </mesh>
+      {/* NATO Rail & mounting grooves */}
+      {[-1.15, -0.75, -0.35, 0.35, 0.75, 1.15].map((x) => (
+        <mesh key={x} position={[x, 0, 0.113]}>
+          <boxGeometry args={[0.07, 0.06, 0.01]} />
+          <meshBasicMaterial color={palette.line} />
+        </mesh>
       ))}
-      <mesh position={[-1.47, -0.03, 0.13]}>
-        <circleGeometry args={[0.055, 20]} />
+      {/* Top Left Green Status LED */}
+      <mesh position={[-1.4, 0.02, 0.114]}>
+        <circleGeometry args={[0.03, 16]} />
         <meshBasicMaterial color={palette.signal} />
+      </mesh>
+      {/* Top Right Amber Status LED */}
+      <mesh position={[1.4, 0.02, 0.114]}>
+        <circleGeometry args={[0.03, 16]} />
+        <meshBasicMaterial color={palette.accent} />
       </mesh>
     </group>
   );
@@ -534,11 +622,30 @@ function BoardArtifact({
           <boxGeometry args={[3.12, 1.82, 0.22]} />
           <meshPhysicalMaterial
             color={palette.surface}
-            roughness={0.24}
-            metalness={0.48}
-            clearcoat={0.72}
-            clearcoatRoughness={0.22}
+            roughness={0.35}
+            metalness={0.78}
+            clearcoat={0.5}
+            clearcoatRoughness={0.25}
           />
+        </mesh>
+        {/* 4 Rugged Armor Corner Bumpers (SmallHD / Atomos style) */}
+        {(
+          [
+            [-1.56, 0.76, 0],
+            [1.56, 0.76, 0],
+            [-1.56, -1.06, 0],
+            [1.56, -1.06, 0],
+          ] as const
+        ).map(([x, y, z], index) => (
+          <mesh key={index} position={[x, y, z]}>
+            <boxGeometry args={[0.12, 0.2, 0.25]} />
+            <meshPhysicalMaterial color={palette.raised} roughness={0.22} metalness={0.88} />
+          </mesh>
+        ))}
+        {/* Rear V-Mount Battery & Cooling Module on Back */}
+        <mesh position={[0, -0.15, -0.13]}>
+          <boxGeometry args={[1.1, 1.2, 0.04]} />
+          <meshPhysicalMaterial color={palette.raised} roughness={0.4} metalness={0.65} />
         </mesh>
         <FrontFace
           palette={palette}
@@ -552,7 +659,7 @@ function BoardArtifact({
           projectCount={projectCount}
           recentProjectTitle={recentProjectTitle}
         />
-        <Clapper palette={palette} />
+        <MonitorTopArmor palette={palette} />
       </group>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the labelled canvas uses this stationary transparent Three.js mesh for pointer rotation; keyboard users have a separate reset button */}
       <mesh

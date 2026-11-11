@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="prism-facet-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="100%" stop-color="#c99738"/>
+    </linearGradient>
+    <linearGradient id="prism-facet-b" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a8f62"/>
+      <stop offset="100%" stop-color="#6ce2ab"/>
+    </linearGradient>
+    <linearGradient id="prism-facet-c" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9a85ec"/>
+      <stop offset="100%" stop-color="#4e3fa3"/>
+    </linearGradient>
+    <radialGradient id="prism-bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#12151e"/>
+      <stop offset="100%" stop-color="#07080d"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="118" fill="url(#prism-bg)"/>
+  <rect x="2" y="2" width="508" height="508" rx="116" stroke="rgba(154,133,236,0.18)" stroke-width="2"/>
+
+  <!-- Isometric Hexagonal Prism Formation of "Y" -->
+  <g transform="translate(256, 256)">
+    <!-- Top-Left Facet: Prompt Stream (Gold) -->
+    <polygon points="0,0 -120,-70 -120,-170 0,-100" fill="url(#prism-facet-a)"/>
+    
+    <!-- Top-Right Facet: Model Latent (Cyan) -->
+    <polygon points="0,0 120,-70 120,-170 0,-100" fill="url(#prism-facet-b)"/>
+    
+    <!-- Bottom Stem Facet: Master Take (Violet) -->
+    <polygon points="0,0 -120,70 0,140 120,70" fill="url(#prism-facet-c)" opacity="0.9"/>
+    <polygon points="0,0 0,140 0,180 0,0" stroke="#ffffff" stroke-width="6"/>
+
+    <!-- Dynamic Inward Light Streams -->
+    <line x1="-120" y1="-170" x2="0" y2="0" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+    <line x1="120" y1="-170" x2="0" y2="0" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+    <line x1="0" y1="180" x2="0" y2="0" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Central Singularity Core -->
+    <circle cx="0" cy="0" r="28" fill="#07080d" stroke="#ffffff" stroke-width="6"/>
+    <circle cx="0" cy="0" r="14" fill="#fae2af"/>
+    <circle cx="0" cy="0" r="6" fill="#ef4444"/>
+  </g>
+</svg>

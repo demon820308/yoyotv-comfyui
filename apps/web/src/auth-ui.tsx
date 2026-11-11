@@ -47,7 +47,14 @@ export function useAuth() {
 function AuthMark() {
   return (
     <div className="auth-brand">
-      <span className="brand-mark">YoYo</span>
+      <span className="brand-mark" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <svg viewBox="0 0 512 512" fill="none" width="22" height="22" aria-hidden="true">
+          <path d="M 130 148 C 130 230, 206 256, 256 256 C 306 256, 382 230, 382 148 C 382 108, 338 88, 290 102 C 238 116, 204 178, 172 232 C 142 284, 130 338, 158 382 C 188 428, 256 428, 256 428" stroke="var(--accent)" strokeWidth="48" strokeLinecap="round"/>
+          <path d="M 382 364 C 382 282, 306 256, 256 256 C 206 256, 130 282, 130 364 C 130 404, 174 424, 222 410 C 274 396, 308 334, 340 280 C 370 228, 382 174, 354 130 C 324 84, 256 84, 256 84" stroke="var(--green)" strokeWidth="42" strokeLinecap="round"/>
+          <circle cx="256" cy="256" r="30" fill="var(--app-bg, #0b0f0e)" stroke="var(--accent)" strokeWidth="8"/>
+          <circle cx="256" cy="256" r="12" fill="var(--green)"/>
+        </svg>
+      </span>
       <div>
         <strong>YoYo</strong>
         <span>PRIVATE FILMMAKING WORKSPACE</span>

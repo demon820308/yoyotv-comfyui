@@ -11987,6 +11987,31 @@ html[data-theme="light"] .project-card-art {
   pointer-events: none;
 }
 
+.hub-artifact-background::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 50% 32%,
+      color-mix(in srgb, var(--hub-accent) 9%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      color-mix(in srgb, var(--hub-sage) 6%, transparent) 0%,
+      transparent 68%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--hub-bg) 95%, transparent) 0%,
+      transparent 15%,
+      transparent 85%,
+      color-mix(in srgb, var(--hub-bg) 95%, transparent) 100%
+    );
+  content: "";
+  pointer-events: none;
+}
+
 .hub-artifact-background::after {
   z-index: 3;
   position: absolute;
@@ -14399,42 +14424,224 @@ html[data-theme="chroma"] .scene-companions img {
 }
 
 .scene-companion-visual {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   aspect-ratio: 1;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  filter: drop-shadow(0 24px 38px rgb(0 0 0 / 32%));
+  filter: drop-shadow(0 20px 32px rgb(0 0 0 / 42%));
   transition:
     filter 220ms ease,
     transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.companion-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .scene-crew .scene-companion-visual {
-  background-image: url("/scene/takeboard-crew-mascot.webp");
   animation: mobile-companion-left 7.5s ease-in-out infinite;
 }
 
 .scene-lens .scene-companion-visual {
-  background-image: url("/scene/takeboard-lens-orbit.webp");
   animation: mobile-companion-right 8.4s ease-in-out infinite;
 }
 
 .scene-dragonfly .scene-companion-visual {
-  background-image: url("/scene/takeboard-boom-dragonfly.webp");
   animation: scene-dragonfly-drift 11s ease-in-out infinite;
 }
 
 .scene-moth .scene-companion-visual {
-  background-image: url("/scene/takeboard-storyboard-moth.webp");
   animation: scene-moth-drift 9.5s ease-in-out infinite;
+}
+
+.slate-clapper-stick {
+  transform-origin: 20px 35px;
+  transform: rotate(-10deg);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scene-companion:hover .slate-clapper-stick,
+.slate-clapper-stick.is-slapped {
+  transform: rotate(0deg);
+}
+
+.lens-iris-assembly {
+  transform-origin: 60px 60px;
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.scene-companion:hover .lens-iris-assembly,
+.lens-iris-assembly.is-focused {
+  transform: rotate(24deg);
+}
+
+.sound-wave-1,
+.sound-wave-2 {
+  animation: sound-wave-pulse 2.4s ease-in-out infinite;
+}
+
+.sound-wave-2 {
+  animation-delay: 0.6s;
+}
+
+@keyframes sound-wave-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.director-hud-overlay {
+  position: absolute;
+  inset: 20px 28px;
+  pointer-events: none;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+.hud-safe-brackets {
+  position: absolute;
+  inset: 9% 10%;
+  border: 1px solid color-mix(in srgb, var(--hub-line) 28%, transparent);
+  border-radius: 4px;
+}
+
+.bracket {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--hub-accent);
+  opacity: 0.42;
+}
+
+.bracket-tl {
+  top: -1px;
+  left: -1px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.bracket-tr {
+  top: -1px;
+  right: -1px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.bracket-bl {
+  bottom: -1px;
+  left: -1px;
+  border-right: 0;
+  border-top: 0;
+}
+.bracket-br {
+  bottom: -1px;
+  right: -1px;
+  border-left: 0;
+  border-top: 0;
+}
+
+.hud-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  opacity: 0.3;
+}
+
+.hud-crosshair::before,
+.hud-crosshair::after {
+  content: "";
+  position: absolute;
+  background: var(--hub-line);
+}
+
+.hud-crosshair::before {
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+}
+.hud-crosshair::after {
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 2px;
+}
+
+.hud-meta {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--hub-muted);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  opacity: 0.58;
+}
+
+.hud-meta small {
+  font-size: 8px;
+  color: color-mix(in srgb, var(--hub-muted) 68%, transparent);
+}
+
+.hud-meta-tl {
+  top: 10px;
+  left: 14px;
+}
+.hud-meta-tr {
+  top: 10px;
+  right: 14px;
+  text-align: right;
+}
+.hud-meta-bl {
+  bottom: 10px;
+  left: 14px;
+}
+.hud-meta-br {
+  bottom: 10px;
+  right: 14px;
+  text-align: right;
+}
+
+.hud-rec-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #e5877f;
+  font-weight: 600;
+}
+
+.hud-rec-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e5877f;
+  box-shadow: 0 0 8px #e5877f;
+  animation: hud-rec-blink 1.8s ease-in-out infinite;
+}
+
+@keyframes hud-rec-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .scene-companion:hover .scene-companion-visual,
 .scene-companion:focus-visible .scene-companion-visual {
   animation: none;
-  filter: drop-shadow(0 24px 38px rgb(0 0 0 / 32%))
+  filter: drop-shadow(0 24px 38px rgb(0 0 0 / 40%))
     drop-shadow(0 0 18px color-mix(in srgb, var(--hub-accent) 34%, transparent));
   transform: translateY(-5px) rotate(-2deg) scale(1.04);
 }
