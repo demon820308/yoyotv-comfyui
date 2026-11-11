@@ -95,6 +95,8 @@ type ContextInspectorProps = {
   ) => void;
   onSetAssetCustomTags: (assetId: string, tags: string[]) => void;
   onUseText: (body: string) => void;
+  onEditMask?: (asset: Asset) => void;
+  onDeleteMask?: (asset: Asset) => void;
   onClose: () => void;
 };
 
@@ -459,6 +461,8 @@ type InspectorProps = {
   candidateCount: number;
   onCandidateCountChange: (count: number) => void;
   onRetryRun: (run: Run) => void;
+  onEditMask?: (asset: Asset) => void;
+  onDeleteMask?: (asset: Asset) => void;
   onClose: () => void;
   readOnly: boolean;
 };
@@ -497,6 +501,8 @@ export function Inspector({
   candidateCount,
   onCandidateCountChange,
   onRetryRun,
+  onEditMask,
+  onDeleteMask,
   onClose,
   readOnly,
 }: InspectorProps) {
@@ -547,6 +553,8 @@ export function Inspector({
     setReason("");
   }, [selectedTakeId]);
   const [mentionOpen, setMentionOpen] = useState(false);
+  const [copiedPePrompt, setCopiedPePrompt] = useState(false);
+  const [pePromptOpen, setPePromptOpen] = useState(true);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const promptBackdropRef = useRef<HTMLDivElement>(null);
   const [shotDraft, setShotDraft] = useState(() => ({
@@ -592,6 +600,19 @@ export function Inspector({
   );
   const stepPolicy = generationStepPolicy(workflow);
   const shotRuns = runs.filter((run) => run.shotId === shot.id);
+  const activePromptRun =
+    selectedTakeRun ??
+    [...shotRuns]
+      .reverse()
+      .find(
+        (run) =>
+          run.status === "completed" && typeof run.parameters?.optimizedPrompt === "string",
+      ) ??
+    shotRuns[shotRuns.length - 1];
+  const peOptimizedPrompt =
+    typeof activePromptRun?.parameters?.optimizedPrompt === "string"
+      ? (activePromptRun.parameters.optimizedPrompt as string)
+      : null;
   const latestBatchId = [...shotRuns]
     .reverse()
     .map((run) => run.parameters.candidateBatchId)
@@ -968,6 +989,92 @@ export function Inspector({
                       </div>
                     ) : null}
                   </label>
+                  {peOptimizedPrompt ? (
+                    <div
+                      className="pe-optimized-prompt-card"
+                      style={{
+                        marginTop: "8px",
+                        marginBottom: "6px",
+                        padding: "8px 10px",
+                        background: "rgba(16, 185, 129, 0.08)",
+                        border: "1px solid rgba(16, 185, 129, 0.28)",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
+                          userSelect: "none",
+                        }}
+                        onClick={() => setPePromptOpen((prev) => !prev)}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: "#10b981",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            fontSize: "11px",
+                          }}
+                        >
+                          <span>✨</span>
+                          <span>PE 优化提示词</span>
+                          <span style={{ fontSize: "10px", opacity: 0.65 }}>
+                            {pePromptOpen ? "▼" : "▶"}
+                          </span>
+                        </span>
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(peOptimizedPrompt);
+                              setCopiedPePrompt(true);
+                              setTimeout(() => setCopiedPePrompt(false), 1500);
+                            }}
+                            style={{
+                              background: "rgba(255, 255, 255, 0.06)",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              borderRadius: "4px",
+                              color: copiedPePrompt ? "#10b981" : "rgba(255, 255, 255, 0.75)",
+                              cursor: "pointer",
+                              fontSize: "10px",
+                              padding: "2px 6px",
+                            }}
+                            title="复制 PE 重写的提示词"
+                          >
+                            {copiedPePrompt ? "✓ 已复制" : "复制"}
+                          </button>
+                        </div>
+                      </div>
+                      {pePromptOpen ? (
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            color: "rgba(255, 255, 255, 0.85)",
+                            lineHeight: 1.55,
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            maxHeight: "130px",
+                            overflowY: "auto",
+                            fontSize: "11px",
+                            background: "rgba(0, 0, 0, 0.2)",
+                            padding: "6px 8px",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          {peOptimizedPrompt}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {workflow?.inputs.includes("negative_prompt") ? (
                     <label className="negative-field">
                       <span>负面提示词</span>
@@ -983,22 +1090,286 @@ export function Inspector({
                   {profile.slots.length > 0 ? (
                     <div className="frame-slots model-driven-slots">
                       {profile.slots.map((slot) => {
-                        const connectedCount = inputCounts[slot.id];
+                        const directCount = (inputCounts as Record<string, number>)[slot.id] ?? 0;
+                        const firstFrameAsset = assets.find(
+                          (asset) => asset.id === settings.firstFrameAssetId,
+                        );
+                        const lastFrameAsset = assets.find(
+                          (asset) => asset.id === settings.lastFrameAssetId,
+                        );
+                        const maskAsset = assets.find(
+                          (asset) => asset.id === settings.maskAssetId,
+                        );
+                        const isMaskSlot = slot.id === "mask";
+                        const isAttachedMask = isMaskSlot && Boolean(firstFrameAsset?.maskPath);
+                        const effectiveCount = directCount > 0 ? directCount : (isAttachedMask ? 1 : 0);
+
+                        let thumbUrl: string | undefined = undefined;
+                        let maskOverlayUrl: string | undefined = undefined;
+
+                        if (slot.id === "first_frame") {
+                          thumbUrl = firstFrameAsset && projectKey
+                            ? projectApi.assetUrl(projectKey, firstFrameAsset.id, true)
+                            : undefined;
+                        } else if (slot.id === "last_frame") {
+                          thumbUrl = lastFrameAsset && projectKey
+                            ? projectApi.assetUrl(projectKey, lastFrameAsset.id, true)
+                            : undefined;
+                        } else if (slot.id === "mask") {
+                          if (firstFrameAsset?.maskPath) {
+                            thumbUrl = projectKey
+                              ? projectApi.assetUrl(projectKey, firstFrameAsset.id, true)
+                              : undefined;
+                            maskOverlayUrl = projectKey
+                              ? projectApi.assetMaskUrl(
+                                  projectKey,
+                                  firstFrameAsset.id,
+                                  firstFrameAsset.updatedAt,
+                                )
+                              : undefined;
+                          } else if (maskAsset) {
+                            thumbUrl = projectKey
+                              ? projectApi.assetUrl(projectKey, maskAsset.id, true)
+                              : undefined;
+                          }
+                        } else if (slot.id === "reference") {
+                          const ref = mentions.find(
+                            (m) => m.role.startsWith("参考") && m.thumbnailUrl,
+                          );
+                          thumbUrl = ref?.thumbnailUrl;
+                        } else if (slot.id === "reference_video") {
+                          const ref = mentions.find((m) => m.role.startsWith("参考视频"));
+                          const asset = ref ? assets.find((a) => a.id === ref.assetId) : null;
+                          thumbUrl =
+                            asset?.proxyPath && projectKey
+                              ? projectApi.assetUrl(projectKey, asset.id, true)
+                              : undefined;
+                        }
+
                         return (
-                          <button
-                            type="button"
-                            className={connectedCount > 0 ? "filled" : ""}
-                            onClick={onOpenAssets}
+                          <div
                             key={slot.id}
+                            style={{ display: "flex", flexDirection: "column", gap: "4px" }}
                           >
-                            <span>{connectedCount > 0 ? connectedCount : "+"}</span>
-                            <div>
-                              <small>
-                                {slot.required ? "必需" : "可选"} · {connectedCount}/{slot.maxCount}
-                              </small>
-                              <strong>{slot.label}</strong>
-                            </div>
-                          </button>
+                            <button
+                              type="button"
+                              className={`slot-card ${effectiveCount > 0 ? "filled" : ""} ${thumbUrl ? "has-thumb" : ""} ${isMaskSlot ? "is-mask-slot" : ""}`}
+                              onClick={() => {
+                                if (isMaskSlot && firstFrameAsset && onEditMask) {
+                                  onEditMask(firstFrameAsset);
+                                } else {
+                                  onOpenAssets();
+                                }
+                              }}
+                              style={{
+                                position: "relative",
+                                width: "100%",
+                                height: "56px",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                                border: isAttachedMask
+                                  ? "1.5px solid rgba(40, 214, 111, 0.7)"
+                                  : effectiveCount > 0
+                                    ? "1px solid rgba(255, 255, 255, 0.25)"
+                                    : "1px dashed var(--line)",
+                                background: thumbUrl
+                                  ? "#101216"
+                                  : effectiveCount > 0
+                                    ? "var(--surface-2)"
+                                    : "transparent",
+                                padding: 0,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                              title={
+                                isAttachedMask
+                                  ? "遮罩已就绪 (来自源图，点击编辑)"
+                                  : effectiveCount > 0
+                                    ? `${slot.label} (已就绪)`
+                                    : `点击添加${slot.label}`
+                              }
+                            >
+                              {thumbUrl ? (
+                                <>
+                                  <img
+                                    src={thumbUrl}
+                                    alt={slot.label}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                      display: "block",
+                                    }}
+                                  />
+                                  {maskOverlayUrl ? (
+                                    <img
+                                      src={maskOverlayUrl}
+                                      alt="遮罩"
+                                      style={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        opacity: 0.65,
+                                        pointerEvents: "none",
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      inset: 0,
+                                      background:
+                                        "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)",
+                                      pointerEvents: "none",
+                                    }}
+                                  />
+                                  <span
+                                    style={{
+                                      position: "absolute",
+                                      left: "6px",
+                                      bottom: "4px",
+                                      fontSize: "10px",
+                                      fontWeight: 700,
+                                      color: isMaskSlot ? "#28d66f" : "#ffffff",
+                                      textShadow: "0 1px 2px rgba(0,0,0,0.9)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px",
+                                    }}
+                                  >
+                                    {isMaskSlot ? "● 遮罩" : slot.label}
+                                  </span>
+                                  {effectiveCount > 1 ? (
+                                    <span
+                                      style={{
+                                        position: "absolute",
+                                        right: "5px",
+                                        top: "4px",
+                                        padding: "1px 4px",
+                                        borderRadius: "4px",
+                                        background: "rgba(0,0,0,0.7)",
+                                        color: "#ffffff",
+                                        fontSize: "9px",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      {effectiveCount}
+                                    </span>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "2px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: "16px",
+                                      lineHeight: 1,
+                                      color: "var(--accent, #6366f1)",
+                                    }}
+                                  >
+                                    +
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "10px",
+                                      color: "var(--faint)",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {slot.label}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                            {isMaskSlot && firstFrameAsset && !readOnly ? (
+                              <div
+                                className="mask-action-row"
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  flexWrap: "nowrap",
+                                  gap: "4px",
+                                  width: "100%",
+                                  marginTop: "2px",
+                                }}
+                              >
+                                {onEditMask ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onEditMask(firstFrameAsset);
+                                    }}
+                                    style={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                      background: firstFrameAsset.maskPath
+                                        ? "rgba(40, 214, 111, 0.16)"
+                                        : "rgba(99, 102, 241, 0.15)",
+                                      border: firstFrameAsset.maskPath
+                                        ? "1px solid rgba(40, 214, 111, 0.45)"
+                                        : "1px solid rgba(99, 102, 241, 0.35)",
+                                      color: firstFrameAsset.maskPath
+                                        ? "#28d66f"
+                                        : "var(--accent, #818cf8)",
+                                      borderRadius: "6px",
+                                      padding: "4px 6px",
+                                      fontSize: "11px",
+                                      cursor: "pointer",
+                                      fontWeight: 600,
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "2px",
+                                    }}
+                                  >
+                                    ✎ {firstFrameAsset.maskPath ? "编辑遮罩" : "画遮罩"}
+                                  </button>
+                                ) : null}
+                                {firstFrameAsset.maskPath && onDeleteMask ? (
+                                  <button
+                                    type="button"
+                                    title="清除遮罩"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteMask(firstFrameAsset);
+                                    }}
+                                    style={{
+                                      flexShrink: 0,
+                                      background: "rgba(239, 68, 68, 0.15)",
+                                      border: "1px solid rgba(239, 68, 68, 0.35)",
+                                      color: "#f87171",
+                                      borderRadius: "6px",
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      cursor: "pointer",
+                                      fontWeight: 600,
+                                      whiteSpace: "nowrap",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    清除
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
                         );
                       })}
                     </div>

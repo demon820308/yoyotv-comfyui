@@ -76,3 +76,66 @@ it("allows prompt to be empty for upscale workflows if source asset is available
   });
   expect(problem).toBeNull();
 });
+
+it("allows prompt to be empty for mask workflows if mask asset and first frame are available", () => {
+  const maskWorkflow = {
+    ...workflow,
+    capability: "image_to_image" as const,
+    inputs: ["first_frame", "mask"],
+  };
+  const problemWithoutMask = generationProblem({
+    projectMode: "project",
+    selectedWorkflow: maskWorkflow,
+    generationSettings: {
+      ...defaultGenerationSettings,
+      prompt: "",
+      firstFrameAssetId: "asset-img",
+      maskAssetId: null,
+    },
+    selectedModelProfile: modelProfile(maskWorkflow, "16:9"),
+    selectedInputCounts: { reference: 0, reference_video: 0, reference_audio: 0 },
+    assets: [
+      { id: "asset-img", mediaType: "image" } as ProjectSnapshot["assets"][number],
+    ],
+  });
+  expect(problemWithoutMask).toBe("请先绘制或连接遮罩");
+
+  const problemWithMask = generationProblem({
+    projectMode: "project",
+    selectedWorkflow: maskWorkflow,
+    generationSettings: {
+      ...defaultGenerationSettings,
+      prompt: "",
+      firstFrameAssetId: "asset-img",
+      maskAssetId: "asset-mask",
+    },
+    selectedModelProfile: modelProfile(maskWorkflow, "16:9"),
+    selectedInputCounts: { reference: 0, reference_video: 0, reference_audio: 0 },
+    assets: [
+      { id: "asset-img", mediaType: "image" } as ProjectSnapshot["assets"][number],
+      { id: "asset-mask", mediaType: "image" } as ProjectSnapshot["assets"][number],
+    ],
+  });
+  expect(problemWithMask).toBeNull();
+
+  const problemWithAttachedMask = generationProblem({
+    projectMode: "project",
+    selectedWorkflow: maskWorkflow,
+    generationSettings: {
+      ...defaultGenerationSettings,
+      prompt: "",
+      firstFrameAssetId: "asset-img",
+      maskAssetId: null,
+    },
+    selectedModelProfile: modelProfile(maskWorkflow, "16:9"),
+    selectedInputCounts: { reference: 0, reference_video: 0, reference_audio: 0 },
+    assets: [
+      {
+        id: "asset-img",
+        mediaType: "image",
+        maskPath: "assets/masks/asset-img.mask.png",
+      } as ProjectSnapshot["assets"][number],
+    ],
+  });
+  expect(problemWithAttachedMask).toBeNull();
+});

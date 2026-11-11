@@ -84,6 +84,12 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
         selectedModelProfile.slots.some((slot) => slot.id === "last_frame")
           ? connectedAssetId(snapshot, selectedShotId, "last_frame")
           : null,
+      maskAssetId:
+        snapshot &&
+        selectedShotId &&
+        selectedModelProfile.slots.some((slot) => slot.id === "mask")
+          ? connectedAssetId(snapshot, selectedShotId, "mask")
+          : null,
       referenceAssetId:
         snapshot &&
         selectedShotId &&
@@ -213,7 +219,9 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
               : "首帧"
             : edge.targetSlot === "last_frame"
               ? "尾帧"
-              : edge.targetSlot === "reference_video"
+              : edge.targetSlot === "mask"
+                ? "遮罩"
+                : edge.targetSlot === "reference_video"
                 ? selectedWorkflow?.capability === "upscale_video"
                   ? "源视频"
                   : `参考视频 ${edge.targetSlotIndex + 1}`
@@ -235,11 +243,28 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
     selectedWorkflow?.capability,
     generationSettings.referenceVideoAudio,
   ]);
-  const selectedInputCounts = useMemo(
-    () => ({
+  const selectedInputCounts = useMemo(() => {
+    const firstFrameEdge = selectedShotInputEdges.find(
+      (edge) => edge.targetSlot === "first_frame",
+    );
+    const firstFrameItem =
+      firstFrameEdge && snapshot
+        ? snapshot.canvasItems.find((ci) => ci.id === firstFrameEdge.sourceItemId)
+        : null;
+    const firstFrameAsset =
+      firstFrameItem?.refType === "asset" && snapshot
+        ? snapshot.assets.find((a) => a.id === firstFrameItem.refId)
+        : null;
+    const hasFirstFrameMask = Boolean(firstFrameAsset?.maskPath);
+    const directMaskCount = selectedShotInputEdges.filter(
+      (edge) => edge.targetSlot === "mask",
+    ).length;
+
+    return {
       first_frame: selectedShotInputEdges.filter((edge) => edge.targetSlot === "first_frame")
         .length,
       last_frame: selectedShotInputEdges.filter((edge) => edge.targetSlot === "last_frame").length,
+      mask: directMaskCount > 0 ? directMaskCount : (hasFirstFrameMask ? 1 : 0),
       reference: selectedShotInputEdges.filter((edge) => edge.targetSlot === "reference").length,
       reference_video: selectedShotInputEdges.filter(
         (edge) => edge.targetSlot === "reference_video",
@@ -247,9 +272,8 @@ export function useGenerationDraft(context: GenerationContext, workflows: Workfl
       reference_audio: selectedShotInputEdges.filter(
         (edge) => edge.targetSlot === "reference_audio",
       ).length,
-    }),
-    [selectedShotInputEdges],
-  );
+    };
+  }, [selectedShotInputEdges, snapshot]);
   const selectedReferenceVideoIds = useMemo(
     () =>
       selectedShotInputEdges.flatMap((edge) => {

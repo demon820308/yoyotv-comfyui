@@ -13,6 +13,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type {
+  Asset,
   CommandAuditEntry,
   ProjectCommand,
   ProjectCommandPreview,
@@ -93,6 +94,7 @@ const ExtensionLibrary = lazy(() =>
 const OperationsCenter = lazy(() =>
   import("./operations-center").then((module) => ({ default: module.OperationsCenter })),
 );
+import { MaskEditor } from "./mask-editor";
 const ProjectHub = lazy(() =>
   import("./project-hub").then((module) => ({ default: module.ProjectHub })),
 );
@@ -192,6 +194,7 @@ export function App() {
   const [trashedProjects, setTrashedProjects] = useState<TrashedProjectItem[]>([]);
   const [showHub, setShowHub] = useState(true);
   const [recipeOpen, setRecipeOpen] = useState(false);
+  const [maskEditorAsset, setMaskEditorAsset] = useState<Asset | null>(null);
   const [assetLibraryOpen, setAssetLibraryOpen] = useState(false);
   const [assetReveal, setAssetReveal] = useState<{ assetId: string; requestId: number } | null>(
     null,
@@ -1252,6 +1255,7 @@ export function App() {
         snapshotEdge?.targetSlot ??
         (edge.targetHandle === "first_frame" ||
         edge.targetHandle === "last_frame" ||
+        edge.targetHandle === "mask" ||
         edge.targetHandle === "reference" ||
         edge.targetHandle === "reference_video" ||
         edge.targetHandle === "reference_audio"
@@ -1297,7 +1301,7 @@ export function App() {
         selection.item(targetItem.id);
       }
       setNotice(
-        `已连接${slot === "first_frame" ? "输入图" : slot === "last_frame" ? "尾帧" : slot === "reference_video" ? "参考视频" : slot === "reference_audio" ? "参考音频" : "参考图"}`,
+        `已连接${slot === "first_frame" ? "输入图" : slot === "last_frame" ? "尾帧" : slot === "mask" ? "遮罩" : slot === "reference_video" ? "参考视频" : slot === "reference_audio" ? "参考音频" : "参考图"}`,
       );
     },
     [acceptPayload, selection.item],
@@ -1330,12 +1334,14 @@ export function App() {
       let slot:
         | "first_frame"
         | "last_frame"
+        | "mask"
         | "reference"
         | "reference_video"
         | "reference_audio"
         | null =
         connection.targetHandle === "first_frame" ||
         connection.targetHandle === "last_frame" ||
+        connection.targetHandle === "mask" ||
         connection.targetHandle === "reference" ||
         connection.targetHandle === "reference_video" ||
         connection.targetHandle === "reference_audio"
@@ -1360,7 +1366,7 @@ export function App() {
   const connectAssetFromLibrary = useCallback(
     async (
       assetId: string,
-      slot: "first" | "last" | "reference" | "referenceVideo" | "referenceAudio",
+      slot: "first" | "last" | "mask" | "reference" | "referenceVideo" | "referenceAudio",
     ) => {
       if (!projectKey || projectMode !== "project" || !snapshot || !selectedShot || !canEditProject)
         return;
@@ -1396,11 +1402,13 @@ export function App() {
             ? "first_frame"
             : slot === "last"
               ? "last_frame"
-              : slot === "referenceVideo"
-                ? "reference_video"
-                : slot === "referenceAudio"
-                  ? "reference_audio"
-                  : "reference";
+              : slot === "mask"
+                ? "mask"
+                : slot === "referenceVideo"
+                  ? "reference_video"
+                  : slot === "referenceAudio"
+                    ? "reference_audio"
+                    : "reference";
         await connectCanvasItems(source.id, target.id, targetSlot);
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "素材连接失败");
@@ -1566,6 +1574,62 @@ export function App() {
       }
     },
     [acceptPayload, canEditProject, projectKey, projectMode, setError],
+  );
+
+  const deleteAsset = useCallback(
+    async (assetId: string) => {
+      if (!canEditProject) {
+        return { ok: false, error: "只读模式无法删除资产" };
+      }
+      if (projectMode !== "project" || !projectKey) {
+        editLocalSnapshot((current) => {
+          const canvasItemIdsToRemove = new Set(
+            current.canvasItems
+              .filter((item) => item.refType === "asset" && item.refId === assetId)
+              .map((item) => item.id),
+          );
+          return {
+            ...current,
+            assets: current.assets.filter((candidate) => candidate.id !== assetId),
+            canvasItems: current.canvasItems.filter(
+              (item) => !canvasItemIdsToRemove.has(item.id),
+            ),
+            canvasEdges: current.canvasEdges.filter(
+              (edge) =>
+                !canvasItemIdsToRemove.has(edge.sourceItemId) &&
+                !canvasItemIdsToRemove.has(edge.targetItemId),
+            ),
+            entities: current.entities.map((entity) => ({
+              ...entity,
+              referenceAssetIds: entity.referenceAssetIds.filter((id) => id !== assetId),
+            })),
+            runs: current.runs.map((run) => ({
+              ...run,
+              inputs: run.inputs.filter(
+                (input) => !(input.refType === "asset" && input.refId === assetId),
+              ),
+            })),
+          };
+        });
+        setNotice("素材已从资产库移除");
+        return { ok: true };
+      }
+      setBusy(true);
+      setError(null);
+      try {
+        const payload = await projectApi.deleteAsset(projectKey, assetId);
+        acceptPayload(payload);
+        setNotice("素材已从资产库移除");
+        return { ok: true };
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : "移除素材失败";
+        setError(message);
+        return { ok: false, error: message };
+      } finally {
+        setBusy(false);
+      }
+    },
+    [acceptPayload, canEditProject, editLocalSnapshot, projectKey, projectMode, setError],
   );
 
   const inspectHistoricalAssetMetadata = useCallback(async () => {
@@ -1988,6 +2052,43 @@ export function App() {
     [acceptPayload, canEditProject, projectKey, visibleCanvasPosition, setError],
   );
 
+  const saveMaskForAsset = useCallback(
+    async (maskBlob: Blob) => {
+      if (!maskEditorAsset || !projectKey || !snapshot) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const payload = await projectApi.saveAssetMask(projectKey, maskEditorAsset.id, maskBlob);
+        acceptPayload(payload);
+        setMaskEditorAsset(null);
+        setNotice("遮罩已保存到当前素材");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "保存遮罩失败");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [acceptPayload, maskEditorAsset, projectKey, snapshot],
+  );
+
+  const deleteMaskForAsset = useCallback(
+    async (asset: Asset) => {
+      if (!projectKey || !snapshot) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const payload = await projectApi.deleteAssetMask(projectKey, asset.id);
+        acceptPayload(payload);
+        setNotice("遮罩已清除");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "清除遮罩失败");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [acceptPayload, projectKey, snapshot],
+  );
+
   const runAction = useCallback(
     async (action: () => ReturnType<typeof demoApi.get>, message: string) => {
       setBusy(true);
@@ -2107,6 +2208,13 @@ export function App() {
           ? (params: { x: number; y: number; width: number; height: number }) =>
               handleResizeCanvasItem(node.id, params)
           : undefined,
+        onEditMask:
+          canEditProject && node.data.kind === "asset" && node.data.assetId
+            ? () => {
+                const asset = snapshot.assets.find((item) => item.id === node.data.assetId);
+                if (asset) setMaskEditorAsset(asset);
+              }
+            : undefined,
       },
     }));
     setNodes((previous) => retainNodeMeasurements(previous, interactiveNodes));
@@ -2792,6 +2900,7 @@ export function App() {
                   snapshotEdge?.targetSlot ??
                   (edge.targetHandle === "first_frame" ||
                   edge.targetHandle === "last_frame" ||
+                  edge.targetHandle === "mask" ||
                   edge.targetHandle === "reference" ||
                   edge.targetHandle === "reference_video" ||
                   edge.targetHandle === "reference_audio"
@@ -3275,6 +3384,8 @@ export function App() {
               appendPrompt(body);
               setNotice("文本已追加到当前镜头提示词");
             }}
+            onEditMask={(asset) => setMaskEditorAsset(asset)}
+            onDeleteMask={(asset) => void deleteMaskForAsset(asset)}
           />
         ) : selectedShot ? (
           <Inspector
@@ -3309,6 +3420,8 @@ export function App() {
             candidateCount={candidateCount}
             onCandidateCountChange={setCandidateCount}
             onRetryRun={(run) => void retryGenerationRun(run)}
+            onEditMask={(asset) => setMaskEditorAsset(asset)}
+            onDeleteMask={(asset) => void deleteMaskForAsset(asset)}
             readOnly={!canEditProject}
             onClose={() => selection.inspect(false)}
             onGenerate={() => void requestShotGeneration(selectedShot)}
@@ -3445,6 +3558,7 @@ export function App() {
             onPickFrame={(assetId, slot) => void connectAssetFromLibrary(assetId, slot)}
             onInspectMetadata={inspectHistoricalAssetMetadata}
             onUpdateAsset={updateAssetMetadata}
+            onDeleteAsset={deleteAsset}
             onUpload={async (file, metadata) =>
               await uploadAsset(file, { ...metadata, addToCanvas: false })
             }
@@ -3476,6 +3590,23 @@ export function App() {
             projectKey={projectKey}
             snapshot={snapshot}
             onClose={() => setExportManagerOpen(false)}
+          />
+        ) : null}
+        {maskEditorAsset && projectKey ? (
+          <MaskEditor
+            imageUrl={projectApi.assetUrl(projectKey, maskEditorAsset.id, false)}
+            imageName={maskEditorAsset.originalName}
+            maskUrl={
+              maskEditorAsset.maskPath
+                ? projectApi.assetMaskUrl(
+                    projectKey,
+                    maskEditorAsset.id,
+                    maskEditorAsset.updatedAt,
+                  )
+                : undefined
+            }
+            onClose={() => setMaskEditorAsset(null)}
+            onSave={saveMaskForAsset}
           />
         ) : null}
       </Suspense>

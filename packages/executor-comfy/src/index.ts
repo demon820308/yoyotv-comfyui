@@ -583,6 +583,7 @@ type UiWorkflowNode = {
     widget?: { name: string };
   }>;
   widgets_values?: unknown[] | Record<string, unknown> | null;
+  widgets_values_named?: Record<string, unknown> | null;
 };
 
 export type ComfyObjectInfo = Record<
@@ -633,6 +634,34 @@ function normalizedLinks(
         }
       : link,
   );
+}
+
+// Canvas-only nodes: the ComfyUI frontend drops or rewires them before queueing.
+const frontendOnlyNodeTypes = new Set([
+  "Reroute",
+  "Note",
+  "MarkdownNote",
+  "孤海注释",
+  "SetNode",
+  "GetNode",
+]);
+
+/** For pass-through canvas nodes, the link feeding them; undefined for real nodes. */
+function passThroughLink(
+  origin: UiWorkflowNode,
+  graphNodes: UiWorkflowNode[],
+  links: UiWorkflowLink[],
+): UiWorkflowLink | null | undefined {
+  let source: UiWorkflowNode | undefined = origin;
+  if (origin.type === "GetNode") {
+    // KJNodes GetNode reads the SetNode that declares the same constant name.
+    const name = widgetValues(origin)[0];
+    source = graphNodes.find(
+      (node) => node.type === "SetNode" && node.mode !== 4 && widgetValues(node)[0] === name,
+    );
+  } else if (origin.type !== "Reroute" && origin.type !== "SetNode") return undefined;
+  const upstreamId = source?.inputs?.[0]?.link;
+  return links.find((candidate) => candidate.id === upstreamId) ?? null;
 }
 
 function widgetValues(node: UiWorkflowNode) {
@@ -709,13 +738,22 @@ function completeWidgetInputs(
   definition: ComfyObjectInfo[string] | undefined,
   hasUnmappedValues = false,
 ) {
-  const named =
-    node.widgets_values && !Array.isArray(node.widgets_values) ? node.widgets_values : null;
+  const named: Record<string, unknown> | null =
+    node.widgets_values && !Array.isArray(node.widgets_values)
+      ? (node.widgets_values as Record<string, unknown>)
+      : node.widgets_values_named && typeof node.widgets_values_named === "object"
+        ? (node.widgets_values_named as Record<string, unknown>)
+        : null;
   if (named) {
     for (const source of node.inputs ?? []) {
       const field = source.widget?.name || source.name;
       if (source.widget && source.link == null && Object.hasOwn(named, field))
         inputs[field] = structuredClone(named[field]);
+    }
+    for (const [field, val] of Object.entries(named)) {
+      if (!(field in inputs) && !hasInputLink(node, field)) {
+        inputs[field] = structuredClone(val);
+      }
     }
   }
   for (const [field, raw] of Object.entries({
@@ -779,7 +817,7 @@ function expandSubgraphWorkflow(workflow: UiWorkflow, objectInfo: ComfyObjectInf
       if (
         node.mode === 2 ||
         node.mode === 4 ||
-        ["Reroute", "Note", "MarkdownNote"].includes(node.type) ||
+        frontendOnlyNodeTypes.has(node.type) ||
         definitions.has(node.type)
       ) {
         return;
@@ -855,11 +893,8 @@ function expandSubgraphWorkflow(workflow: UiWorkflow, objectInfo: ComfyObjectInf
       if (link.origin_id === -10) return externalInput(link.origin_slot);
       const origin = nodes.get(String(link.origin_id));
       if (!origin || origin.mode === 2 || origin.mode === 4) return null;
-      if (origin.type === "Reroute") {
-        const upstreamId = origin.inputs?.[0]?.link;
-        const upstream = graphLinks.find((candidate) => candidate.id === upstreamId);
-        return upstream ? resolveOrigin(upstream) : null;
-      }
+      const upstream = passThroughLink(origin, graphNodes, graphLinks);
+      if (upstream !== undefined) return upstream ? resolveOrigin(upstream) : null;
       if (definitions.has(origin.type)) return expandInstance(origin)[link.origin_slot] ?? null;
       serialize(origin);
       return [`${prefix}${origin.id}`, link.origin_slot];
@@ -896,11 +931,8 @@ export function convertUiWorkflowToPrompt(
   const prompt: ComfyPrompt = {};
   const resolveOrigin = (link: UiWorkflowLink): [string, number] | null => {
     const origin = nodes.get(String(link.origin_id));
-    if (origin?.type === "Reroute") {
-      const upstreamId = origin.inputs?.[0]?.link;
-      const upstream = links.find((candidate) => candidate.id === upstreamId);
-      return upstream ? resolveOrigin(upstream) : null;
-    }
+    const upstream = origin ? passThroughLink(origin, workflow.nodes, links) : undefined;
+    if (upstream !== undefined) return upstream ? resolveOrigin(upstream) : null;
     if (!origin || origin.mode === 2 || origin.mode === 4) return null;
     return [String(origin.id), link.origin_slot];
   };
@@ -909,7 +941,7 @@ export function convertUiWorkflowToPrompt(
     if (
       node.mode === 2 ||
       node.mode === 4 ||
-      ["Reroute", "Note", "MarkdownNote"].includes(node.type)
+      frontendOnlyNodeTypes.has(node.type)
     ) {
       continue;
     }
@@ -998,7 +1030,7 @@ export function expandSingleSubgraphWorkflow(
     if (
       node.mode === 4 ||
       node.mode === 2 ||
-      ["Reroute", "Note", "MarkdownNote"].includes(node.type)
+      frontendOnlyNodeTypes.has(node.type)
     ) {
       return;
     }
@@ -1099,7 +1131,7 @@ export class ComfyClient {
     this.progressTracker = new ComfyProgressTracker(baseUrl, options.liveProgress ?? true);
   }
 
-  async uploadInput(bytes: Uint8Array, filename: string, mimeType: string) {
+  async uploadInput(bytes: Uint8Array, filename: string, mimeType: string, subfolder?: string) {
     const body = new FormData();
     const copy = new Uint8Array(bytes.byteLength);
     copy.set(bytes);
@@ -1108,6 +1140,7 @@ export class ComfyClient {
     // from the same protected input directory.
     body.set("image", new Blob([copy.buffer], { type: mimeType }), filename);
     body.set("overwrite", "true");
+    if (subfolder) body.set("subfolder", subfolder);
     const response = await fetch(`${this.baseUrl}/upload/image`, {
       method: "POST",
       body,
@@ -1118,8 +1151,8 @@ export class ComfyClient {
     return result.subfolder ? `${result.subfolder}/${result.name}` : result.name;
   }
 
-  async uploadImage(bytes: Uint8Array, filename: string, mimeType: string) {
-    return await this.uploadInput(bytes, filename, mimeType);
+  async uploadImage(bytes: Uint8Array, filename: string, mimeType: string, subfolder?: string) {
+    return await this.uploadInput(bytes, filename, mimeType, subfolder);
   }
 
   createClientId() {

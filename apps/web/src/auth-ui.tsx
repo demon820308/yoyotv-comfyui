@@ -180,7 +180,7 @@ function AuthScreen({
                 <span>设置密码</span>
                 <input
                   autoComplete="new-password"
-                  minLength={12}
+                  minLength={10}
                   maxLength={256}
                   required
                   type="password"
@@ -192,7 +192,7 @@ function AuthScreen({
                 <span>确认密码</span>
                 <input
                   autoComplete="new-password"
-                  minLength={12}
+                  minLength={10}
                   maxLength={256}
                   required
                   type="password"
@@ -293,9 +293,9 @@ function AuthScreen({
             <input
               autoComplete={configured ? "current-password" : "new-password"}
               maxLength={256}
-              minLength={12}
+              minLength={10}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={configured ? "输入密码" : "至少 12 个字符，推荐使用长口令"}
+              placeholder={configured ? "输入密码" : "至少 10 个字符，推荐使用长口令"}
               required
               type="password"
               value={password}
@@ -307,7 +307,7 @@ function AuthScreen({
               <input
                 autoComplete="new-password"
                 maxLength={256}
-                minLength={12}
+                minLength={10}
                 onChange={(event) => setConfirmation(event.target.value)}
                 required
                 type="password"
@@ -408,7 +408,7 @@ function RecoveryScreen({ onBack, onRecovered }: { onBack: () => void; onRecover
             <span>新密码</span>
             <input
               autoComplete="new-password"
-              minLength={12}
+              minLength={10}
               maxLength={256}
               type="password"
               required
@@ -420,7 +420,7 @@ function RecoveryScreen({ onBack, onRecovered }: { onBack: () => void; onRecover
             <span>确认新密码</span>
             <input
               autoComplete="new-password"
-              minLength={12}
+              minLength={10}
               maxLength={256}
               type="password"
               required
@@ -496,7 +496,7 @@ export function ChangePassword({
         <input
           type="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={10}
           maxLength={256}
           required
           value={newPassword}
@@ -508,7 +508,7 @@ export function ChangePassword({
         <input
           type="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={10}
           maxLength={256}
           required
           value={confirmation}

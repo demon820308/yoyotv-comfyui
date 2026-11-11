@@ -42,6 +42,24 @@ describe("generic ComfyUI workflow conversion", () => {
     expect(prompt["2"]?.inputs.width).toBe(768);
   });
 
+  it("wires KJNodes Set/Get pairs and drops canvas-only notes", () => {
+    const prompt = convertUiWorkflowToPrompt({
+      nodes: [
+        { id: 1, type: "LoadImage", inputs: [], widgets_values: ["source.png"] },
+        { id: 2, type: "SetNode", inputs: [{ name: "IMAGE", link: 10 }], widgets_values: ["image"] },
+        { id: 3, type: "GetNode", inputs: [], widgets_values: ["image"] },
+        { id: 4, type: "PreviewImage", inputs: [{ name: "images", link: 11 }] },
+        { id: 5, type: "孤海注释", inputs: [], widgets_values: null },
+      ],
+      links: [
+        [10, 1, 0, 2, 0, "IMAGE"],
+        [11, 3, 0, 4, 0, "IMAGE"],
+      ],
+    } as never);
+    expect(Object.keys(prompt).sort()).toEqual(["1", "4"]);
+    expect(prompt["4"]?.inputs.images).toEqual(["1", 0]);
+  });
+
   it("skips ComfyUI's serialized seed control when aligning numeric widgets", () => {
     const prompt = convertUiWorkflowToPrompt({
       nodes: [

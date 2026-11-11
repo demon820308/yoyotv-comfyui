@@ -4581,6 +4581,27 @@ button.save-status {
 .frame-slots > button.filled {
   background: var(--surface-2);
 }
+.frame-slots > button.has-thumb {
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  height: 56px;
+  background: #14161a;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.frame-slots > button.has-thumb:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.frame-slots > button.has-thumb.is-mask-slot {
+  border-color: rgba(40, 214, 111, 0.55);
+}
+.frame-slots .mask-action-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 4px;
+}
 
 .frame-slots > button > span {
   display: grid;
@@ -6812,6 +6833,14 @@ html[data-theme="chroma"] .loading-mark {
 }
 .shot-input .slot-reference_audio {
   border-color: #dd8bb5;
+}
+.shot-input .slot-mask {
+  border-color: #28d66f;
+}
+.shot-input.from-source .slot-mask {
+  border-color: #28d66f;
+  background: #28d66f;
+  box-shadow: 0 0 8px rgba(40, 214, 111, 0.7);
 }
 .shot-input.connected .board-handle {
   box-shadow: 0 0 10px currentColor;
@@ -10827,6 +10856,39 @@ html[data-theme="light"] .project-card-art {
   height: 13px;
 }
 
+.asset-danger-action-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, #f87171 28%, var(--line));
+  border-radius: 6px;
+  color: color-mix(in srgb, #f87171 90%, var(--text-1));
+  background: color-mix(in srgb, #ef4444 6%, transparent);
+  text-decoration: none;
+  font-size: 9px;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.asset-danger-action-link:hover:not(:disabled) {
+  color: #fff;
+  background: color-mix(in srgb, #ef4444 85%, transparent);
+  border-color: #ef4444;
+}
+
+.asset-danger-action-link:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.asset-danger-action-link svg {
+  width: 13px;
+  height: 13px;
+  color: currentColor;
+}
+
 .asset-detail-empty {
   display: grid;
   height: 100%;
@@ -10928,6 +10990,97 @@ html[data-theme="light"] .project-card-art {
   width: 13px;
   height: 13px;
   color: var(--accent-strong);
+}
+
+.asset-context-menu > button.asset-context-danger {
+  color: color-mix(in srgb, #f87171 90%, var(--text-2));
+}
+
+.asset-context-menu > button.asset-context-danger:hover:not(:disabled) {
+  color: #fff;
+  background: color-mix(in srgb, #ef4444 80%, var(--surface-3));
+}
+
+.asset-context-menu > button.asset-context-danger svg {
+  color: currentColor;
+}
+
+.asset-delete-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--shadow) 65%, transparent);
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.asset-delete-confirm-dialog {
+  width: min(380px, 100%);
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-root) 96%, var(--surface-glass));
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--shadow) 75%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.asset-delete-confirm-dialog h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.asset-delete-confirm-dialog p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.asset-delete-confirm-dialog .asset-delete-warning {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent);
+  color: color-mix(in srgb, #fbbf24 95%, var(--text-1));
+  font-size: 11px;
+}
+
+.asset-delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.asset-delete-dialog-actions button {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.asset-delete-dialog-actions button:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.asset-delete-dialog-actions .asset-delete-button-danger {
+  border-color: #ef4444;
+  background: #dc2626;
+  color: #fff;
+}
+
+.asset-delete-dialog-actions .asset-delete-button-danger:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 .asset-context-group {

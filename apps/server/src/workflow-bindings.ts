@@ -801,6 +801,11 @@ export function applyWorkflowBinding(
   ];
   for (const [targets, files] of mediaValues) {
     (targets ?? []).forEach((target, index) => {
+      const isBoundToFirstOrLast =
+        binding.media.first_frame?.some((t) => t.nodeId === target.nodeId) ||
+        binding.media.last_frame?.some((t) => t.nodeId === target.nodeId);
+      if (isBoundToFirstOrLast) return;
+
       const file = files?.[index];
       if (file !== undefined) {
         applyTargets(prompt, [target], file);

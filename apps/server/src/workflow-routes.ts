@@ -57,6 +57,7 @@ type WorkflowNode = {
   _meta?: { title?: string };
   widgets_values?: unknown[] | Record<string, unknown> | null;
   inputs?: Record<string, unknown>;
+  outputs?: Array<{ name?: string; links?: unknown[] | null }>;
 };
 
 type WorkflowJson = {
@@ -178,6 +179,22 @@ function detectInputs(capability: Capability, nodes: WorkflowNode[]) {
     slots.add("steps");
     slots.add("cfg");
   }
+  if (
+    nodes.some(
+      (node) =>
+        node.type === "GH_MaskCropV2" ||
+        node.type === "InpaintModelConditioning" ||
+        node.type === "VAEEncodeForInpaint" ||
+        node.outputs?.some(
+          (output) =>
+            output.name === "MASK" &&
+            Array.isArray(output.links) &&
+            output.links.length > 0,
+        ),
+    )
+  ) {
+    slots.add("mask");
+  }
   slots.add("resolution");
   return [...slots];
 }
@@ -246,6 +263,16 @@ function installedModels(value: unknown) {
 function displayName(path: string) {
   const filename = path.split("/").at(-1) ?? path;
   const curatedNames: Record<string, string> = {
+    "Pika+MiniMax-H3-参考生视频.json": "Pika + MiniMax H3 · 参考生视频",
+    "Pika_MiniMax_H3-首尾帧生视频.json": "Pika + MiniMax H3 · 首尾帧生视频",
+    "image_z_image_turbo.json": "Z-Image Turbo · 极速文生图",
+    "image_krea2_turbo_t2i.json": "Krea2 Turbo · 极速文生图",
+    "Qwen2.1 Tubro文生图-T2I.json": "Qwen 2.1 Turbo · 文生图",
+    "Qwen2.1 Tubro修改-I2I.json": "Qwen 2.1 Turbo · 图生图修改",
+    "Qwen+2.1+移除+_+局部重绘++Turbo.json": "Qwen 2.1 Turbo · 局部重绘与消除",
+    "Qwen2.1 修图.json": "Qwen 2.1 · 智能修图",
+    "RealEsRGAN.json": "RealEsRGAN · 图片超分放大",
+    "RelayVSR_Workflow.json": "RelayVSR · 视频时序超分放大",
     "Kino_Wan22_I2V.json": "Wan 2.2 I2V · 高质量",
     "Kino_Wan22_FLF2V.json": "Wan 2.2 首尾帧 · 高质量",
     "Kino_Wan22_I2V_Preview.json": "Wan 2.2 I2V · 快速预演",
@@ -328,10 +355,26 @@ function workflowSummary(
     }
     return true;
   });
+  const usesMask = nodes.some(
+    (node) =>
+      node.type === "GH_MaskCropV2" ||
+      node.type === "InpaintModelConditioning" ||
+      node.type === "VAEEncodeForInpaint" ||
+      node.outputs?.some(
+        (output) =>
+          output.name === "MASK" &&
+          Array.isArray(output.links) &&
+          output.links.length > 0,
+      ),
+  );
+  if (usesMask && inputs.includes("first_frame") && !inputs.includes("mask")) {
+    inputs.push("mask");
+  }
   const models = detectModels(nodes);
   const mediaInputs = {
     first_frame: inputs.includes("first_frame") ? 1 : 0,
     last_frame: inputs.includes("last_frame") ? 1 : 0,
+    mask: inputs.includes("mask") ? 1 : 0,
     reference: isUpscaleCapability
       ? 0
       : activeBinding
@@ -387,7 +430,7 @@ function workflowSummary(
       : activeBinding
         ? ("bound" as const)
         : ("comfy_only" as const),
-    bindingStatus: native
+    bindingStatus: native || Boolean(trustSnapshot)
       ? ("built_in" as const)
       : activeBinding
         ? ("ready" as const)
@@ -396,7 +439,10 @@ function workflowSummary(
           : ("needs_binding" as const),
     workflowHash: hash,
     origin:
-      path.startsWith("Kino/") || path.startsWith("Trust-Workflow/") || path.startsWith("YoYo/")
+      path.startsWith("Kino/") ||
+      path.startsWith("Trust-Workflow/") ||
+      path.startsWith("YoYo/") ||
+      Boolean(trustSnapshot)
         ? ("built_in" as const)
         : path.startsWith("TakeBoard/") || path.startsWith("YoYoTV/")
           ? ("imported" as const)
@@ -705,7 +751,11 @@ export function registerWorkflowRoutes(
             ...rawSummary,
             name: library.name ?? rawSummary.name,
             libraryError,
-            library: { included: rawSummary.origin !== "built_in", favorite: false, ...library },
+            library: {
+              included: rawSummary.origin !== "built_in" || Boolean(rawSummary.trustSnapshot),
+              favorite: false,
+              ...library,
+            },
           };
           if (!objectInfo) return summary;
           const trustSnapshot = readTrustWorkflow(path);

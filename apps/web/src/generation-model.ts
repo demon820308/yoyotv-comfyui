@@ -27,6 +27,7 @@ export type GenerationSettings = {
   negativePrompt: string;
   firstFrameAssetId: string | null;
   lastFrameAssetId: string | null;
+  maskAssetId: string | null;
   referenceAssetId: string | null;
   referenceImageSize: "match" | "max";
   referenceVideoAudio: boolean;
@@ -73,6 +74,7 @@ export const defaultGenerationSettings: GenerationSettings = {
   negativePrompt: "",
   firstFrameAssetId: null,
   lastFrameAssetId: null,
+  maskAssetId: null,
   referenceAssetId: null,
   referenceImageSize: "match",
   referenceVideoAudio: false,
@@ -310,6 +312,7 @@ export type GenerationLaunchOptions = {
   compiledPrompt?: string;
   firstFrameAssetId?: string | null;
   lastFrameAssetId?: string | null;
+  maskAssetId?: string | null;
   referenceImageAssetIds?: string[];
   referenceVideoAssetIds?: string[];
   referenceAudioAssetIds?: string[];

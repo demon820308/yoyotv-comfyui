@@ -50,12 +50,13 @@ export type BoardNodeData = {
     | null
     | undefined;
   inputSlots?: Array<{
-    id: "first_frame" | "last_frame" | "reference" | "reference_video" | "reference_audio";
+    id: "first_frame" | "last_frame" | "mask" | "reference" | "reference_video" | "reference_audio";
     label: string;
     connectedCount: number;
     maxCount: number;
     required: boolean;
     mediaType: "image" | "video" | "audio";
+    fromFirstFrameMask?: boolean;
   }>;
   inlineControls?: {
     workflowPath: string;
@@ -124,6 +125,10 @@ export type BoardNodeData = {
   onResizeItem?:
     | ((params: { x: number; y: number; width: number; height: number }) => void)
     | undefined;
+  maskUrl?: string | undefined;
+  hasMask?: boolean | undefined;
+  assetId?: string | undefined;
+  onEditMask?: (() => void) | undefined;
 };
 
 export type BoardNode = Node<BoardNodeData>;
@@ -283,16 +288,34 @@ function AssetNode({ id, data, selected }: NodeProps<BoardNode>) {
               <audio src={data.mediaUrl} controls preload="metadata" />
             </div>
           ) : data.mediaUrl ? (
-            <img
-              src={data.mediaUrl}
-              alt={data.title}
-              onLoad={(event) => {
-                const img = event.currentTarget;
-                if (!data.mediaWidth && img.naturalWidth && img.naturalHeight) {
-                  setNaturalResolution({ width: img.naturalWidth, height: img.naturalHeight });
-                }
-              }}
-            />
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <img
+                src={data.mediaUrl}
+                alt={data.title}
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                onLoad={(event) => {
+                  const img = event.currentTarget;
+                  if (!data.mediaWidth && img.naturalWidth && img.naturalHeight) {
+                    setNaturalResolution({ width: img.naturalWidth, height: img.naturalHeight });
+                  }
+                }}
+              />
+              {data.maskUrl ? (
+                <img
+                  src={data.maskUrl}
+                  alt="遮罩"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    pointerEvents: "none",
+                    opacity: 0.55,
+                  }}
+                />
+              ) : null}
+            </div>
           ) : (
             <>
               <span className="harbor-sun" />
@@ -304,6 +327,45 @@ function AssetNode({ id, data, selected }: NodeProps<BoardNode>) {
           <span className="asset-label">SOURCE</span>
           {resolutionText ? (
             <span className="asset-label asset-resolution">{resolutionText}</span>
+          ) : null}
+          {data.mediaType === "image" && data.onEditMask ? (
+            <button
+              type="button"
+              className="nodrag nopan"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onEditMask?.();
+              }}
+              title={data.hasMask ? "编辑遮罩" : "绘制遮罩"}
+              style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                zIndex: 5,
+                padding: "2px 8px",
+                borderRadius: "999px",
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: data.hasMask ? "rgba(40, 214, 111, 0.9)" : "rgba(20, 22, 26, 0.75)",
+                color: data.hasMask ? "#0b2616" : "#e0e4eb",
+                fontSize: "11px",
+                fontWeight: 700,
+                cursor: "pointer",
+                backdropFilter: "blur(4px)",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: data.hasMask ? "#0b2616" : "#28d66f",
+                }}
+              />
+              {data.hasMask ? "遮罩" : "画遮罩"}
+            </button>
           ) : null}
         </div>
       </article>
@@ -501,38 +563,49 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
         !Number.isFinite(settingsDraft.denoise) ||
         settingsDraft.denoise < (data.inlineControls?.denoiseMin ?? 0.05) ||
         settingsDraft.denoise > (data.inlineControls?.denoiseMax ?? 16)));
+  const isMaskWorkflow = Boolean(
+    (data.inputSlots ?? []).some((slot) => slot.id === "mask"),
+  );
   const draftDisabledReason =
-    !isUpscale && !settingsDraft.prompt.trim()
+    !isUpscale && !isMaskWorkflow && !settingsDraft.prompt.trim()
       ? "请先输入镜头提示词"
       : draftParameterInvalid
-        ? isUpscale
+        ? isUpscale || isMaskWorkflow
           ? "请检查参数设置"
           : "请检查分辨率、时长、帧率和 Seed"
         : data.inlineControls?.disabledReason === "请先输入镜头提示词"
-          ? null
+          ? (isMaskWorkflow ? null : "请先输入镜头提示词")
           : data.inlineControls?.disabledReason;
   return (
     <NodeShell selected={data.selected}>
       <Port type="target" position={Position.Left} className="board-provenance-handle" />
       <div className="shot-inputs">
-        {(data.inputSlots ?? []).map((slot, index) => (
-          <div
-            className={`shot-input ${slot.connectedCount > 0 ? "connected" : ""}`}
-            style={{ top: `${((index + 1) / ((data.inputSlots?.length ?? 0) + 1)) * 100}%` }}
-            key={slot.id}
-          >
-            <Port
-              id={slot.id}
-              type="target"
-              position={Position.Left}
-              className={`slot-${slot.id}`}
-            />
-            <span>
-              {slot.label} {slot.connectedCount}/{slot.maxCount}
-              {slot.required ? <i>必需</i> : null}
-            </span>
-          </div>
-        ))}
+        {(data.inputSlots ?? []).map((slot, index) => {
+          const isFromSource = Boolean(slot.fromFirstFrameMask);
+          return (
+            <div
+              className={`shot-input ${slot.connectedCount > 0 ? "connected" : ""} ${isFromSource ? "from-source" : ""}`}
+              style={{ top: `${((index + 1) / ((data.inputSlots?.length ?? 0) + 1)) * 100}%` }}
+              key={slot.id}
+              title={isFromSource ? "遮罩已随源图接入" : undefined}
+            >
+              <Port
+                id={slot.id}
+                type="target"
+                position={Position.Left}
+                className={`slot-${slot.id} ${isFromSource ? "slot-from-source" : ""}`}
+              />
+              <span style={isFromSource ? { color: "#28d66f", fontWeight: 700 } : undefined}>
+                {slot.label} {slot.connectedCount}/{slot.maxCount}
+                {isFromSource ? (
+                  <i style={{ color: "#28d66f", fontStyle: "normal", marginLeft: "4px" }}>源图</i>
+                ) : slot.required ? (
+                  <i>必需</i>
+                ) : null}
+              </span>
+            </div>
+          );
+        })}
       </div>
       <article
         className={`board-card shot-node ${data.mediaUrl ? "has-generated-media" : "is-planning"} ${data.selected ? "selected" : ""}`}

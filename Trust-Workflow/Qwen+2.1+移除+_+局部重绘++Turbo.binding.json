@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "workflowPath": "Qwen+2.1+移除+_+局部重绘++Turbo.json",
+  "workflowHash": "c0256401c3ee2a06dfa5ce1a4df3b448beb76d6236130871aae6d1a062852628",
+  "capability": "image_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "22",
+        "input": "Text"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "267",
+        "input": "noise_seed"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "193",
+        "input": "image"
+      }
+    ],
+    "reference_image": [
+      {
+        "nodeId": "290",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-11T09:57:00.087Z"
+}

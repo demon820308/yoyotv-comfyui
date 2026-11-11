@@ -23,7 +23,7 @@ export function csrfForSessionToken(token: string) {
 }
 
 export function validatePassword(password: string) {
-  if (password.length < 12) return "密码至少需要 12 个字符，推荐使用便于记忆的长口令";
+  if (password.length < 10) return "密码至少需要 10 个字符，推荐使用便于记忆的长口令";
   if (password.length > 256 || Buffer.byteLength(password, "utf8") > 1_024) {
     return "密码不能超过 256 个字符";
   }

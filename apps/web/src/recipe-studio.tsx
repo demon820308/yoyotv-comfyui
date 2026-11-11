@@ -599,16 +599,16 @@ export function RecipeStudio({
                           borderRadius: "3px",
                           fontSize: "11px",
                           fontWeight: 600,
-                          backgroundColor: workflow.trustSnapshot
+                          backgroundColor: (workflow.trustSnapshot || workflow.origin === "built_in")
                             ? "rgba(46, 160, 67, 0.15)"
                             : "rgba(110, 118, 129, 0.15)",
-                          color: workflow.trustSnapshot ? "#3fb950" : "var(--muted)",
-                          border: workflow.trustSnapshot
+                          color: (workflow.trustSnapshot || workflow.origin === "built_in") ? "#3fb950" : "var(--muted)",
+                          border: (workflow.trustSnapshot || workflow.origin === "built_in")
                             ? "1px solid rgba(46, 160, 67, 0.4)"
                             : "1px solid var(--line)",
                         }}
                       >
-                        {workflow.trustSnapshot ? "[Trust]" : "[ComfyUI内置]"}
+                        {(workflow.trustSnapshot || workflow.origin === "built_in") ? "[内置]" : "[ComfyUI]"}
                       </span>
                     </small>
                   </span>
@@ -790,7 +790,14 @@ export function RecipeStudio({
             <section className="binding-editor">
               <header>
                 <div>
-                  <h3>{inspection.status === "built_in" ? "工作流检查" : "工作流配置"}</h3>
+                  <h3>
+                    {inspection.status === "built_in" ||
+                    inspection.trustSnapshot ||
+                    workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
+                    workflows.find((item) => item.path === inspection.path)?.origin === "built_in"
+                      ? "内置工作流检查"
+                      : "工作流配置"}
+                  </h3>
                   <p
                     style={{
                       display: "flex",
@@ -811,26 +818,34 @@ export function RecipeStudio({
                         fontSize: "12px",
                         fontWeight: 600,
                         backgroundColor:
-                          (inspection.trustSnapshot ??
-                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                          (inspection.trustSnapshot ||
+                          inspection.status === "built_in" ||
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
+                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
                             ? "rgba(46, 160, 67, 0.15)"
                             : "rgba(110, 118, 129, 0.15)",
                         color:
-                          (inspection.trustSnapshot ??
-                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                          (inspection.trustSnapshot ||
+                          inspection.status === "built_in" ||
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
+                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
                             ? "#3fb950"
                             : "var(--muted)",
                         border:
-                          (inspection.trustSnapshot ??
-                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
+                          (inspection.trustSnapshot ||
+                          inspection.status === "built_in" ||
+                          workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
+                          workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
                             ? "1px solid rgba(46, 160, 67, 0.4)"
                             : "1px solid var(--line)",
                       }}
                     >
-                      {(inspection.trustSnapshot ??
-                      workflows.find((item) => item.path === inspection.path)?.trustSnapshot)
-                        ? "[Trust]"
-                        : "[ComfyUI内置]"}
+                      {(inspection.trustSnapshot ||
+                      inspection.status === "built_in" ||
+                      workflows.find((item) => item.path === inspection.path)?.trustSnapshot ||
+                      workflows.find((item) => item.path === inspection.path)?.origin === "built_in")
+                        ? "[内置]"
+                        : "[ComfyUI]"}
                     </span>
                   </p>
                   <div
@@ -1119,7 +1134,9 @@ export function RecipeStudio({
                     使用此工作流
                   </button>
                 ) : null}
-                {inspection.status === "built_in" ? (
+                {inspection.status === "built_in" ||
+                inspection.trustSnapshot ||
+                workflows.find((item) => item.path === inspection.path)?.trustSnapshot ? (
                   <span>内置工作流</span>
                 ) : canManageWorkflows ? (
                   <>

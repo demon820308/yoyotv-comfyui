@@ -8,7 +8,9 @@ import { completionFor, hasUnfinishedWork } from "./background-completion.js";
 import { acquireInstanceLease } from "./instance-lease.js";
 import { assertSafeBindHost } from "./request-security.js";
 
-process.env.TAKEBOARD_AUTH_MODE ??= "off";
+// Match runtime-launcher: local device access stays login-free, accounts become available.
+// Updated: executor-comfy & workflow-bindings compatibility sync v2
+process.env.TAKEBOARD_AUTH_MODE ??= "optional";
 
 const host = process.env.TAKEBOARD_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.TAKEBOARD_PORT ?? "48120", 10);

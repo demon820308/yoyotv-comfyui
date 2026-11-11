@@ -81,7 +81,7 @@ export function recoveryGuidance(message: string, code = ""): RecoveryGuidance {
     };
   if (/提示词|没有对应.*素材/i.test(text))
     return { title: "需要调整提示词", next: message, action: "prompt", label: "编辑提示词" };
-  if (/起始帧|结束帧|参考图|参考视频|输入端口|连线|可用素材|最多连接.*参考/i.test(text))
+  if (/起始帧|结束帧|参考图|参考视频|输入端口|连线|可用素材|最多连接.*参考|遮罩/i.test(text))
     return { title: "检查镜头输入", next: message, action: "assets", label: "查看素材" };
   if (/分辨率|帧率|时长|Seed|Steps|重绘强度/i.test(text))
     return { title: "检查生成参数", next: message, action: "parameters", label: "调整参数" };

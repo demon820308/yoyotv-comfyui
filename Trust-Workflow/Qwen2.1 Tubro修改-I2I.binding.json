@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "workflowPath": "Qwen2.1 Tubro修改-I2I.json",
+  "workflowHash": "ef7771ad200a45454740b93bcdbade0b4af7e4702deaf734e6a24b4631a9c7d3",
+  "capability": "image_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "508",
+        "input": "prompt"
+      }
+    ],
+    "negative_prompt": [
+      {
+        "nodeId": "508",
+        "input": "negative_prompt"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "505",
+        "input": "noise_seed"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "480",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "480",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "509",
+        "input": "image"
+      },
+      {
+        "nodeId": "510",
+        "input": "image"
+      }
+    ],
+    "reference_image": [
+      {
+        "nodeId": "510",
+        "input": "image"
+      },
+      {
+        "nodeId": "509",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-11T07:37:58.503Z"
+}

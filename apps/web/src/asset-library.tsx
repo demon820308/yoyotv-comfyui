@@ -65,12 +65,20 @@ function VaultIcon({
     | "list"
     | "search"
     | "tag"
+    | "trash"
     | "upload"
     | "video";
 }) {
   const paths = {
     download: <path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4" />,
     audio: <path d="M5 9v6m5-10v14m4-12v10m5-8v6" />,
+    trash: (
+      <>
+        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        <line x1="10" y1="11" x2="10" y2="17" />
+        <line x1="14" y1="11" x2="14" y2="17" />
+      </>
+    ),
     canvas: (
       <>
         <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -170,6 +178,7 @@ export function AssetLibrary({
   onInspectMetadata,
   onPickFrame,
   onUpdateAsset,
+  onDeleteAsset,
   onUpload,
   open,
   projectKey,
@@ -208,6 +217,7 @@ export function AssetLibrary({
       libraryKind?: AssetKind | null;
     },
   ) => Promise<{ ok: boolean; error?: string }>;
+  onDeleteAsset?: (assetId: string) => Promise<{ ok: boolean; error?: string }>;
   onUpload: (
     file: File,
     metadata?: { kind?: AssetKind; name?: string },
@@ -243,6 +253,7 @@ export function AssetLibrary({
   const [renameValue, setRenameValue] = useState("");
   const [tagValue, setTagValue] = useState("");
   const [actionStatus, setActionStatus] = useState("");
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     assetId: string;
     x: number;
@@ -315,6 +326,7 @@ export function AssetLibrary({
       ),
     [locations],
   );
+  const takeAssetIds = useMemo(() => new Set(takes.map((take) => take.assetId)), [takes]);
   const actionLabel = (assetId: string) =>
     locations.get(assetId)?.state === "canvas"
       ? "在画布中查看"
@@ -1230,6 +1242,24 @@ export function AssetLibrary({
                   <VaultIcon name="link" />
                   查看原文件
                 </a>
+                {!readOnly ? (
+                  <button
+                    type="button"
+                    className="asset-danger-action-link"
+                    disabled={busy || takeAssetIds.has(selectedAsset.id)}
+                    onClick={() => setAssetToDelete(selectedAsset)}
+                    title={
+                      takeAssetIds.has(selectedAsset.id)
+                        ? "镜头生成结果请在对应镜头中处理"
+                        : "从项目资产库中移除此素材"
+                    }
+                  >
+                    <VaultIcon name="trash" />
+                    {takeAssetIds.has(selectedAsset.id)
+                      ? "镜头生成素材（不可直接移除）"
+                      : "从资产库移除素材"}
+                  </button>
+                ) : null}
               </div>
             ) : (
               <div className="asset-detail-empty">
@@ -1395,6 +1425,81 @@ export function AssetLibrary({
               <VaultIcon name="link" />
               查看原文件
             </a>
+            {!readOnly ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="asset-context-danger"
+                disabled={busy || takeAssetIds.has(contextAsset.id)}
+                onClick={() => {
+                  setContextMenu(null);
+                  setAssetToDelete(contextAsset);
+                }}
+                title={
+                  takeAssetIds.has(contextAsset.id)
+                    ? "镜头生成结果请在对应镜头中处理"
+                    : "从项目资产库中移除此素材"
+                }
+              >
+                <VaultIcon name="trash" />
+                {takeAssetIds.has(contextAsset.id)
+                  ? "镜头生成素材（不可直接移除）"
+                  : "从资产库移除"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {assetToDelete ? (
+          <div
+            className="asset-delete-confirm-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-delete-dialog-title"
+          >
+            <div className="asset-delete-confirm-dialog">
+              <h3 id="asset-delete-dialog-title">从资产库移除素材</h3>
+              <p>
+                确定要从项目资产库中移除“
+                <strong>
+                  {displayNames.get(assetToDelete.id) ?? assetToDelete.originalName}
+                </strong>
+                ”吗？
+              </p>
+              {locations.get(assetToDelete.id)?.state === "canvas" ? (
+                <p className="asset-delete-warning">
+                  ⚠️ 该素材当前已放置在画布上，移除素材将同步从画布中移出该卡片与连线。
+                </p>
+              ) : null}
+              <div className="asset-delete-dialog-actions">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setAssetToDelete(null)}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="asset-delete-button-danger"
+                  disabled={busy}
+                  onClick={async () => {
+                    const targetId = assetToDelete.id;
+                    const result = await onDeleteAsset?.(targetId);
+                    if (result?.ok) {
+                      setAssetToDelete(null);
+                      if (selectedAssetId === targetId) {
+                        setSelectedAssetId(null);
+                      }
+                      setActionStatus("素材已从资产库移除");
+                    } else {
+                      setActionStatus(result?.error ?? "移除素材失败");
+                    }
+                  }}
+                >
+                  {busy ? "正在移除…" : "确认移除"}
+                </button>
+              </div>
+            </div>
           </div>
         ) : null}
       </aside>

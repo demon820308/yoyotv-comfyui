@@ -67,6 +67,7 @@ export const assetSchema = timestampsSchema.extend({
   metadataInspectedAt: isoTimestampSchema.nullable().optional(),
   metadataInspectionError: z.string().max(500).nullable().optional(),
   libraryKind: z.enum(["character", "location", "prop"]).nullable().optional(),
+  maskPath: relativeStoragePathSchema.nullable().optional().default(null),
   customTags: z.array(z.string().trim().min(1).max(40)).max(24).default([]),
 });
 

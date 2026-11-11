@@ -320,6 +320,39 @@ describe("TakeBoard project API", () => {
       payload: { libraryKind: "archive" },
     });
     expect(invalidKind.statusCode).toBe(400);
+
+    // Delete the asset from the project
+    const deleted = await app.inject({
+      method: "DELETE",
+      url: `/api/projects/${key}/assets/${assetId}`,
+    });
+    expect(deleted.statusCode, deleted.body).toBe(200);
+    expect(deleted.json().snapshot.assets).toHaveLength(0);
+    expect(deleted.json().snapshot.entities[0].referenceAssetIds).toHaveLength(0);
+
+    const deletedAgain = await app.inject({
+      method: "DELETE",
+      url: `/api/projects/${key}/assets/${assetId}`,
+    });
+    expect(deletedAgain.statusCode).toBe(404);
+
+    // Upload with canvas placement, then delete and verify canvas item is cleaned up
+    const uploadedToCanvas = await app.inject({
+      method: "POST",
+      url: `/api/projects/${key}/assets`,
+      ...imageUpload(),
+    });
+    expect(uploadedToCanvas.statusCode).toBe(201);
+    const canvasAssetId = uploadedToCanvas.json().snapshot.assets[0].id as string;
+    expect(uploadedToCanvas.json().snapshot.canvasItems).toHaveLength(1);
+
+    const deletedFromCanvas = await app.inject({
+      method: "DELETE",
+      url: `/api/projects/${key}/assets/${canvasAssetId}`,
+    });
+    expect(deletedFromCanvas.statusCode).toBe(200);
+    expect(deletedFromCanvas.json().snapshot.assets).toHaveLength(0);
+    expect(deletedFromCanvas.json().snapshot.canvasItems).toHaveLength(0);
   });
 
   it("creates a named blank workspace without forcing a shot or project format", async () => {

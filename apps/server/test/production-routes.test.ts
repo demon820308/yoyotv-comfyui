@@ -55,6 +55,7 @@ describe("production accounting and cross-shot approval routes", () => {
         proxyPath: null,
         width: 1280,
         height: 720,
+        maskPath: null,
         customTags: [],
         createdAt: timestamp,
         updatedAt: timestamp,

@@ -29,7 +29,10 @@ export function workflowCheckGuidance(check: Pick<WorkflowDiagnosticCheck, "code
 }
 
 export function isLibraryWorkflow(workflow: WorkflowSummary) {
-  return workflow.library?.included ?? workflow.origin !== "built_in";
+  return (
+    workflow.library?.included ??
+    (workflow.origin !== "built_in" || Boolean(workflow.trustSnapshot))
+  );
 }
 
 /** Readiness describes checked dependencies, not a promise about model quality. */

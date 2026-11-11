@@ -13,6 +13,7 @@ export const commandRequestIdSchema = z
 export const canvasTargetSlotSchema = z.enum([
   "first_frame",
   "last_frame",
+  "mask",
   "reference",
   "reference_video",
   "reference_audio",

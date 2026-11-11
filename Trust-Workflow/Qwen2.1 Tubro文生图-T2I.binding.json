@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "workflowPath": "Qwen2.1 Tubro文生图-T2I.json",
+  "workflowHash": "dc045ae01e9effc6216c95d0611aefea39906b823e8e3eccf0dbbf8b486e2a99",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "486",
+        "input": "prompt"
+      }
+    ],
+    "negative_prompt": [
+      {
+        "nodeId": "486",
+        "input": "negative_prompt"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "505",
+        "input": "noise_seed"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "480",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "480",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-11T07:29:23.030Z"
+}

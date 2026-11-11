@@ -19,22 +19,31 @@ export function generationProblem({
   selectedInputCounts: { reference: number; reference_video: number; reference_audio: number };
   assets: ProjectSnapshot["assets"];
 }) {
-  const firstFrameAvailable = assets.some(
+  const firstFrameAsset = assets.find(
     (asset) => asset.mediaType === "image" && asset.id === generationSettings.firstFrameAssetId,
   );
+  const firstFrameAvailable = Boolean(firstFrameAsset);
   const lastFrameAvailable = assets.some(
     (asset) => asset.mediaType === "image" && asset.id === generationSettings.lastFrameAssetId,
   );
+  const maskAvailable =
+    assets.some(
+      (asset) => asset.mediaType === "image" && asset.id === generationSettings.maskAssetId,
+    ) || Boolean(firstFrameAsset?.maskPath);
   if (projectMode === "demo") return null;
   if (!selectedWorkflow) return "请先选择可用模型";
   const availability = workflowAvailability(selectedWorkflow);
   if (!availability.ready) return `工作流${availability.label}：${availability.reason}`;
   const isUpscale = ["upscale_image", "upscale_video"].includes(selectedWorkflow.capability);
-  if (!isUpscale && !generationSettings.prompt.trim()) return "请先输入镜头提示词";
+  const isMaskWorkflow = selectedWorkflow.inputs.includes("mask");
+  if (!isUpscale && !isMaskWorkflow && !generationSettings.prompt.trim()) return "请先输入镜头提示词";
   if (selectedWorkflow.inputs.includes("first_frame") && !firstFrameAvailable) {
     return ["image_to_image", "upscale_image"].includes(selectedWorkflow.capability)
       ? "请连接一张源图"
       : "请从资产库选择一张起始帧";
+  }
+  if (isMaskWorkflow && !maskAvailable) {
+    return "请先绘制或连接遮罩";
   }
   if (
     selectedWorkflow.capability === "upscale_video" &&

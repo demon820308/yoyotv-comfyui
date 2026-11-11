@@ -144,6 +144,12 @@ export function boardNodes(
           body: "",
           selected: selectedCanvasItemId === item.id,
           mediaUrl: projectKey && asset ? projectApi.assetUrl(projectKey, asset.id) : undefined,
+          maskUrl:
+            projectKey && asset?.maskPath
+              ? projectApi.assetMaskUrl(projectKey, asset.id, asset.updatedAt)
+              : undefined,
+          hasMask: Boolean(asset?.maskPath),
+          assetId: asset?.id,
           mediaType: asset?.mediaType,
           mediaWidth: asset?.width ?? undefined,
           mediaHeight: asset?.height ?? undefined,
@@ -218,14 +224,33 @@ export function boardNodes(
           progressByShot?.[item.refId] ??
           batchGenerationProgress(snapshot.runs, item.refId) ??
           null,
-        inputSlots: profile.slots.map(({ id, label, maxCount, required, mediaType }) => ({
-          id,
-          label,
-          connectedCount: inputCounts.get(item.id)?.get(id) ?? 0,
-          maxCount,
-          required,
-          mediaType,
-        })),
+        inputSlots: (() => {
+          const firstFrameEdge = snapshot.canvasEdges.find(
+            (edge) => edge.targetItemId === item.id && edge.targetSlot === "first_frame",
+          );
+          const firstFrameSourceItem = firstFrameEdge
+            ? snapshot.canvasItems.find((ci) => ci.id === firstFrameEdge.sourceItemId)
+            : null;
+          const firstFrameAsset =
+            firstFrameSourceItem?.refType === "asset"
+              ? assets.get(firstFrameSourceItem.refId)
+              : null;
+          const firstFrameHasMask = Boolean(firstFrameAsset?.maskPath);
+
+          return profile.slots.map(({ id, label, maxCount, required, mediaType }) => {
+            const directCount = inputCounts.get(item.id)?.get(id) ?? 0;
+            const isAttachedMask = id === "mask" && directCount === 0 && firstFrameHasMask;
+            return {
+              id,
+              label,
+              connectedCount: isAttachedMask ? 1 : directCount,
+              maxCount,
+              required,
+              mediaType,
+              fromFirstFrameMask: isAttachedMask,
+            };
+          });
+        })(),
         ...(selectedCanvasItemId === item.id && controls
           ? {
               inlineControls: {
@@ -327,6 +352,7 @@ export function boardEdges(
   const slotMeta = {
     first_frame: { label: "首帧", color: "#65cba5" },
     last_frame: { label: "尾帧", color: "#d6a95f" },
+    mask: { label: "遮罩", color: "#f26d6d" },
     reference: { label: "参考", color: "#9e8cff" },
     reference_video: { label: "参考视频", color: "#63a9d8" },
     reference_audio: { label: "参考音频", color: "#dd8bb5" },
@@ -414,9 +440,11 @@ export function edgeIdentityFromPointer(event: ReactMouseEvent): CanvasEdgeIdent
         ? "first_frame"
         : visibleLabel.includes("尾帧")
           ? "last_frame"
-          : visibleLabel.includes("参考")
-            ? "reference"
-            : null;
+          : visibleLabel.includes("遮罩")
+            ? "mask"
+            : visibleLabel.includes("参考")
+              ? "reference"
+              : null;
   return { sourceItemId: match[1] as string, targetItemId: match[2] as string, targetSlot };
 }
 
@@ -500,7 +528,7 @@ export function sourceAssetId(
 export function connectedAssetId(
   snapshot: ProjectSnapshot,
   targetShotId: string,
-  slot: "first_frame" | "last_frame" | "reference" | "reference_video" | "reference_audio",
+  slot: "first_frame" | "last_frame" | "mask" | "reference" | "reference_video" | "reference_audio",
 ) {
   const targetItem = snapshot.canvasItems.find(
     (item) => item.refType === "shot" && item.refId === targetShotId,

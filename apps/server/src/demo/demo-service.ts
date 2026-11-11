@@ -99,6 +99,7 @@ export class DemoService {
           proxyPath: null,
           width: null,
           height: null,
+          maskPath: null,
           customTags: [],
           createdAt: timestamp,
           updatedAt: timestamp,

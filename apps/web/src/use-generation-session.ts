@@ -121,6 +121,10 @@ export function useGenerationSession(
             launchOptions.lastFrameAssetId === undefined
               ? submittedSettings.lastFrameAssetId
               : launchOptions.lastFrameAssetId,
+          maskAssetId:
+            launchOptions.maskAssetId === undefined
+              ? submittedSettings.maskAssetId
+              : launchOptions.maskAssetId,
         },
         selectedInputCounts: {
           reference: (launchOptions.referenceImageAssetIds ?? selectedReferenceImageIds).length,
@@ -194,6 +198,10 @@ export function useGenerationSession(
                 launchOptions.lastFrameAssetId === undefined
                   ? submittedSettings.lastFrameAssetId
                   : launchOptions.lastFrameAssetId,
+              maskAssetId:
+                launchOptions.maskAssetId === undefined
+                  ? submittedSettings.maskAssetId
+                  : launchOptions.maskAssetId,
               referenceImageAssetIds:
                 launchOptions.referenceImageAssetIds ?? selectedReferenceImageIds,
               referenceVideoAssetIds:
@@ -337,6 +345,7 @@ export function useGenerationSession(
           compiledPrompt: stringParameter("prompt", generationSettings.prompt),
           firstFrameAssetId: inputIds("start_image")[0] ?? null,
           lastFrameAssetId: inputIds("last_image")[0] ?? null,
+          maskAssetId: inputIds("mask")[0] ?? null,
           referenceImageAssetIds: inputIds("reference_image_"),
           referenceVideoAssetIds: inputIds("reference_video_"),
           referenceAudioAssetIds: inputIds("reference_audio_"),

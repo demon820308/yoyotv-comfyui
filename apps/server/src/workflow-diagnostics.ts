@@ -216,8 +216,8 @@ export function buildWorkflowDiagnostic(input: BuildWorkflowDiagnosticInput): Wo
         "binding",
         "pass",
         "TAKEBOARD_NATIVE_ADAPTER",
-        "TakeBoard 原生适配",
-        "输入与输出由经过版本控制的内置执行器映射。",
+        "YoYoTV 内置工作流",
+        "输入与输出由受信任内置配置映射，开箱即用。",
       ),
     );
   } else if (input.bindingStatus === "ready" && bindingIssues.length === 0) {

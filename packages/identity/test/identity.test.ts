@@ -24,7 +24,7 @@ describe("shared identity primitives", () => {
 
   it("rejects weak passwords and derives stable one-way tokens", () => {
     expect(validatePassword("takeboard123")).toMatch(/常见/);
-    expect(validatePassword("short")).toMatch(/12/);
+    expect(validatePassword("short")).toMatch(/10/);
     expect(tokenDigest("secret")).toHaveLength(64);
     expect(csrfForSessionToken("session")).toBe(csrfForSessionToken("session"));
     expect(csrfForSessionToken("session")).not.toBe(csrfForSessionToken("another"));

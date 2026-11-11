@@ -329,6 +329,7 @@ export type WorkflowSummary = {
   mediaInputs?: {
     first_frame: number;
     last_frame: number;
+    mask?: number;
     reference: number;
     reference_video?: number;
     reference_audio?: number;
@@ -758,7 +759,13 @@ export const projectApi = {
     key: string,
     sourceItemId: string,
     targetItemId: string,
-    targetSlot: "first_frame" | "last_frame" | "reference" | "reference_video" | "reference_audio",
+    targetSlot:
+      | "first_frame"
+      | "last_frame"
+      | "mask"
+      | "reference"
+      | "reference_video"
+      | "reference_audio",
   ) =>
     executeProjectCommand(key, {
       type: "canvas.connect_items",
@@ -811,6 +818,24 @@ export const projectApi = {
       `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}`,
       { method: "PATCH", body: JSON.stringify(input) },
     ),
+  deleteAsset: (key: string, assetId: string) =>
+    jsonRequest<DemoPayload & { key: string }>(
+      `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}`,
+      { method: "DELETE" },
+    ),
+  saveAssetMask: async (key: string, assetId: string, maskBlob: Blob | File) => {
+    const body = new FormData();
+    body.set("file", maskBlob, "mask.png");
+    return await jsonRequest<DemoPayload & { key: string }>(
+      `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}/mask`,
+      { method: "PUT", body },
+    );
+  },
+  deleteAssetMask: (key: string, assetId: string) =>
+    jsonRequest<DemoPayload & { key: string }>(
+      `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}/mask`,
+      { method: "DELETE" },
+    ),
   inspectAssetMetadata: (key: string) =>
     jsonRequest<
       DemoPayload & {
@@ -830,6 +855,7 @@ export const projectApi = {
       negativePrompt: string;
       firstFrameAssetId: string | null;
       lastFrameAssetId: string | null;
+      maskAssetId?: string | null;
       referenceImageAssetIds?: string[];
       referenceVideoAssetIds?: string[];
       referenceAudioAssetIds?: string[];
@@ -978,6 +1004,8 @@ export const projectApi = {
     ),
   assetUrl: (key: string, assetId: string, proxy = false) =>
     `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}/content${proxy ? "?proxy=1" : ""}`,
+  assetMaskUrl: (key: string, assetId: string, version?: string | number) =>
+    `/api/projects/${encodeURIComponent(key)}/assets/${encodeURIComponent(assetId)}/mask${version ? `?v=${encodeURIComponent(version)}` : ""}`,
   worker: async () => {
     const [worker, fleet, connection] = await Promise.all([
       jsonRequest<WorkerStatus>("/api/workers/comfy"),

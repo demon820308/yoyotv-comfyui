@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readdir, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
-import { basename, extname, join, resolve, sep } from "node:path";
+import { mkdir, readdir, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, join, resolve, sep } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   executionPolicySchema,
@@ -46,6 +46,49 @@ import {
 import { type WorkerPool, WorkerSelectionError } from "./worker-pool.js";
 import { applyWorkflowBinding, loadExecutableWorkflow } from "./workflow-bindings.js";
 import { WorkflowExecutionError } from "./workflow-errors.js";
+import sharp from "sharp";
+
+async function compositeMaskImage(origBytes: Buffer, maskBytes: Buffer): Promise<Uint8Array> {
+  const origMeta = await sharp(origBytes).metadata();
+  if (!origMeta.width || !origMeta.height) throw new Error("无法读取原图尺寸");
+  const origRaw = await sharp(origBytes).removeAlpha().raw().toBuffer();
+
+  const maskMeta = await sharp(maskBytes).metadata();
+  let maskAlpha: Buffer;
+  if (maskMeta.hasAlpha) {
+    const resizedMask = await sharp(maskBytes)
+      .resize(origMeta.width, origMeta.height, { fit: "fill" })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    maskAlpha = Buffer.alloc(origMeta.width * origMeta.height);
+    for (let i = 0; i < origMeta.width * origMeta.height; i++) {
+      const a = resizedMask[i * 4 + 3]!;
+      maskAlpha[i] = 255 - a;
+    }
+  } else {
+    maskAlpha = await sharp(maskBytes)
+      .resize(origMeta.width, origMeta.height, { fit: "fill" })
+      .grayscale()
+      .negate({ alpha: false })
+      .raw()
+      .toBuffer();
+  }
+
+  const rgba = Buffer.alloc(origMeta.width * origMeta.height * 4);
+  for (let i = 0; i < origMeta.width * origMeta.height; i++) {
+    rgba[i * 4] = origRaw[i * 3]!;
+    rgba[i * 4 + 1] = origRaw[i * 3 + 1]!;
+    rgba[i * 4 + 2] = origRaw[i * 3 + 2]!;
+    rgba[i * 4 + 3] = maskAlpha[i]!;
+  }
+  const pngBuffer = await sharp(rgba, {
+    raw: { width: origMeta.width, height: origMeta.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+  return new Uint8Array(pngBuffer);
+}
 
 const sha256 = (value: Uint8Array | string) => createHash("sha256").update(value).digest("hex");
 
@@ -95,6 +138,31 @@ type GenerationStorageOptions = {
   inputRoot: string | null;
   outputRoot: string | null;
 };
+
+function extractOptimizedPrompt(outputs?: Record<string, unknown> | null): string | null {
+  if (!outputs || typeof outputs !== "object") return null;
+  for (const nodeOutput of Object.values(outputs)) {
+    if (!nodeOutput || typeof nodeOutput !== "object") continue;
+    const output = nodeOutput as Record<string, unknown>;
+    if (Array.isArray(output.gh_display)) {
+      for (const item of output.gh_display) {
+        if (item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string") {
+          const text = (item as { text: string }).text.trim();
+          if (text) return text;
+        }
+      }
+    }
+    if (Array.isArray(output.text)) {
+      const text = output.text.find((t): t is string => typeof t === "string" && Boolean(t.trim()));
+      if (text) return text.trim();
+    }
+    if (Array.isArray(output.string)) {
+      const text = output.string.find((t): t is string => typeof t === "string" && Boolean(t.trim()));
+      if (text) return text.trim();
+    }
+  }
+  return null;
+}
 
 const terminalRunStatuses = new Set(["completed", "failed", "cancelled", "orphaned"]);
 
@@ -361,6 +429,7 @@ export function registerGenerationRoutes(
         metadataInspectionError:
           kind === "video" && !videoInfo ? "当前视频封装未提供可读取的轨道信息" : null,
         libraryKind: entityKind,
+        maskPath: null,
         customTags: [],
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -548,6 +617,184 @@ export function registerGenerationRoutes(
           payload: { assetId: asset.id },
         });
         return { key, ...saved };
+      } finally {
+        store.close();
+      }
+    },
+  );
+
+  app.delete<{ Params: { key: string; assetId: string } }>(
+    "/api/projects/:key/assets/:assetId",
+    async (request, reply) => {
+      const key = projectKey(request.params.key);
+      if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+      const directory = projectDirectory(root, key);
+      const store = ProjectStore.openExisting(directory);
+      if (!store) return await reply.code(404).send({ error: "项目不存在" });
+      try {
+        const current = store.loadCurrent();
+        const asset = current?.snapshot.assets.find((item) => item.id === request.params.assetId);
+        if (!current || !asset) return await reply.code(404).send({ error: "素材不存在" });
+
+        if (current.snapshot.takes.some((take) => take.assetId === asset.id)) {
+          return await reply.code(409).send({
+            error: "该素材属于镜头生成结果（Take），不能直接从资产库删除",
+          });
+        }
+
+        const activeRuns = current.snapshot.runs.filter(
+          (run) => !["completed", "failed", "cancelled", "orphaned"].includes(run.status),
+        );
+        if (
+          activeRuns.some((run) =>
+            run.inputs.some((input) => input.refType === "asset" && input.refId === asset.id),
+          )
+        ) {
+          return await reply.code(409).send({
+            error: "该素材正用于进行中的生成任务，请等待完成或取消后再移除",
+          });
+        }
+
+        current.snapshot.assets = current.snapshot.assets.filter((item) => item.id !== asset.id);
+
+        const canvasItemsToRemove = current.snapshot.canvasItems.filter(
+          (item) => item.refType === "asset" && item.refId === asset.id,
+        );
+        const itemIdsToRemove = new Set(canvasItemsToRemove.map((item) => item.id));
+        if (itemIdsToRemove.size > 0) {
+          current.snapshot.canvasItems = current.snapshot.canvasItems.filter(
+            (item) => !itemIdsToRemove.has(item.id),
+          );
+          current.snapshot.canvasEdges = current.snapshot.canvasEdges.filter(
+            (edge) =>
+              !itemIdsToRemove.has(edge.sourceItemId) && !itemIdsToRemove.has(edge.targetItemId),
+          );
+        }
+
+        for (const entity of current.snapshot.entities) {
+          if (entity.referenceAssetIds.includes(asset.id)) {
+            entity.referenceAssetIds = entity.referenceAssetIds.filter((id) => id !== asset.id);
+          }
+        }
+
+        for (const run of current.snapshot.runs) {
+          run.inputs = run.inputs.filter(
+            (input) => !(input.refType === "asset" && input.refId === asset.id),
+          );
+        }
+
+        const filePaths = [
+          asset.storagePath ? join(directory, asset.storagePath) : null,
+          asset.proxyPath ? join(directory, asset.proxyPath) : null,
+          asset.maskPath ? join(directory, asset.maskPath) : null,
+        ].filter((path): path is string => Boolean(path));
+        await Promise.allSettled(
+          filePaths.map((filePath) => unlink(filePath).catch(() => undefined)),
+        );
+
+        const timestamp = toIsoTimestamp();
+        current.snapshot.project.updatedAt = timestamp;
+        current.snapshot.exportedAt = timestamp;
+        const saved = await store.save(current.snapshot, {
+          type: "asset.deleted",
+          payload: { assetId: asset.id, originalName: asset.originalName },
+        });
+        return { key, ...saved };
+      } finally {
+        store.close();
+      }
+    },
+  );
+
+  app.put<{ Params: { key: string; assetId: string } }>(
+    "/api/projects/:key/assets/:assetId/mask",
+    async (request, reply) => {
+      const key = projectKey(request.params.key);
+      if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+      const directory = projectDirectory(root, key);
+      const store = ProjectStore.openExisting(directory);
+      if (!store) return await reply.code(404).send({ error: "项目不存在" });
+      try {
+        const current = store.loadCurrent();
+        const asset = current?.snapshot.assets.find((item) => item.id === request.params.assetId);
+        if (!current || !asset) return await reply.code(404).send({ error: "素材不存在" });
+
+        const upload = await request.file();
+        if (!upload) return await reply.code(400).send({ error: "请上传遮罩文件" });
+        const bytes = await upload.toBuffer();
+
+        const maskRelPath = `assets/masks/${asset.id}.mask.png`;
+        const maskAbsPath = join(directory, maskRelPath);
+        await mkdir(dirname(maskAbsPath), { recursive: true });
+        await writeFile(maskAbsPath, bytes);
+
+        const timestamp = toIsoTimestamp();
+        asset.maskPath = maskRelPath;
+        asset.updatedAt = timestamp;
+        current.snapshot.project.updatedAt = timestamp;
+        current.snapshot.exportedAt = timestamp;
+
+        const saved = await store.save(current.snapshot, {
+          type: "asset.mask_updated",
+          payload: { assetId: asset.id, maskPath: maskRelPath },
+        });
+        return { key, asset, ...saved };
+      } finally {
+        store.close();
+      }
+    },
+  );
+
+  app.delete<{ Params: { key: string; assetId: string } }>(
+    "/api/projects/:key/assets/:assetId/mask",
+    async (request, reply) => {
+      const key = projectKey(request.params.key);
+      if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+      const directory = projectDirectory(root, key);
+      const store = ProjectStore.openExisting(directory);
+      if (!store) return await reply.code(404).send({ error: "项目不存在" });
+      try {
+        const current = store.loadCurrent();
+        const asset = current?.snapshot.assets.find((item) => item.id === request.params.assetId);
+        if (!current || !asset) return await reply.code(404).send({ error: "素材不存在" });
+
+        if (asset.maskPath) {
+          await unlink(join(directory, asset.maskPath)).catch(() => undefined);
+          asset.maskPath = null;
+          const timestamp = toIsoTimestamp();
+          asset.updatedAt = timestamp;
+          current.snapshot.project.updatedAt = timestamp;
+          current.snapshot.exportedAt = timestamp;
+          const saved = await store.save(current.snapshot, {
+            type: "asset.mask_deleted",
+            payload: { assetId: asset.id },
+          });
+          return { key, asset, ...saved };
+        }
+        return { key, asset };
+      } finally {
+        store.close();
+      }
+    },
+  );
+
+  app.get<{ Params: { key: string; assetId: string } }>(
+    "/api/projects/:key/assets/:assetId/mask",
+    async (request, reply) => {
+      const key = projectKey(request.params.key);
+      if (!key) return await reply.code(400).send({ error: "项目标识无效" });
+      const directory = projectDirectory(root, key);
+      const store = ProjectStore.openExisting(directory);
+      if (!store) return await reply.code(404).send({ error: "项目不存在" });
+      try {
+        const current = store.loadCurrent();
+        const asset = current?.snapshot.assets.find((item) => item.id === request.params.assetId);
+        if (!asset || !asset.maskPath) return await reply.code(404).send({ error: "遮罩不存在" });
+        const filePath = join(directory, asset.maskPath);
+        return reply
+          .header("cache-control", "no-cache")
+          .type("image/png")
+          .send(createReadStream(filePath));
       } finally {
         store.close();
       }
@@ -931,6 +1178,29 @@ export function registerGenerationRoutes(
           return await reply.code(409).send({ error: "选择的结束帧不是可用图片" });
         }
 
+        const shotItem = current.snapshot.canvasItems.find((item) => item.refId === shot.id);
+        const maskEdge = shotItem
+          ? current.snapshot.canvasEdges.find(
+              (edge) => edge.targetItemId === shotItem.id && edge.targetSlot === "mask",
+            )
+          : null;
+        const maskCanvasItem = maskEdge
+          ? current.snapshot.canvasItems.find((item) => item.id === maskEdge.sourceItemId)
+          : null;
+        const requestedMaskAssetId =
+          typeof (body as Record<string, unknown>).maskAssetId === "string"
+            ? ((body as Record<string, unknown>).maskAssetId as string)
+            : (maskCanvasItem?.refId ?? null);
+        const maskAsset = requestedMaskAssetId
+          ? current.snapshot.assets.find((asset) => asset.id === requestedMaskAssetId)
+          : null;
+        if (maskAsset && maskAsset.mediaType !== "image") {
+          return await reply.code(409).send({ error: "选择的遮罩必须是图片" });
+        }
+        if (maskAsset && !inputAsset) {
+          return await reply.code(409).send({ error: "遮罩必须配合首帧/输入图一起使用" });
+        }
+
         const referenceLists = [
           body.referenceImageAssetIds,
           body.referenceVideoAssetIds,
@@ -1084,10 +1354,15 @@ export function registerGenerationRoutes(
               : isUpscaleVideo
                 ? 1.0
                 : 0.65;
+        const isMaskWorkflow = Boolean(
+          maskAsset ||
+            Boolean(inputAsset?.maskPath) ||
+            Boolean(boundWorkflow?.binding && "mask" in boundWorkflow.binding.media),
+        );
         const positivePrompt =
           typeof body.prompt === "string" && body.prompt.trim()
             ? body.prompt.trim().slice(0, 20_000)
-            : isUpscale
+            : isUpscale || isMaskWorkflow || typeof body.prompt === "string"
               ? ""
               : shot.intent;
         const negativePrompt =
@@ -1179,13 +1454,41 @@ export function registerGenerationRoutes(
 
         let comfyImage: string | null = null;
         if (inputAsset?.mediaType === "image") {
-          const bytes = await readFile(join(directory, inputAsset.storagePath));
-          const extension = extname(inputAsset.originalName) || ".png";
+          let uploadBytes: Uint8Array;
+          let filename: string;
+          let subfolder: string | undefined = undefined;
+
+          let maskBytes: Buffer | null = null;
+          if (maskAsset?.mediaType === "image") {
+            maskBytes = await readFile(join(directory, maskAsset.storagePath));
+          } else if (inputAsset.maskPath) {
+            try {
+              maskBytes = await readFile(join(directory, inputAsset.maskPath));
+            } catch {
+              maskBytes = null;
+            }
+          }
+
+          if (maskBytes) {
+            const origBytes = await readFile(join(directory, inputAsset.storagePath));
+            uploadBytes = await compositeMaskImage(origBytes, maskBytes);
+            filename = `clipspace-mask-${current.snapshot.project.id}_${runId}.png`;
+            subfolder = "clipspace";
+          } else {
+            uploadBytes = new Uint8Array(await readFile(join(directory, inputAsset.storagePath)));
+            const extension = extname(inputAsset.originalName) || ".png";
+            filename = `yoyotv_${current.snapshot.project.id}_${runId}_${inputAsset.id}${extension}`;
+          }
+
           comfyImage = await comfy.uploadImage(
-            new Uint8Array(bytes),
-            `yoyotv_${current.snapshot.project.id}_${runId}_${inputAsset.id}${extension}`,
-            inputAsset.mimeType,
+            uploadBytes,
+            filename,
+            "image/png",
+            subfolder,
           );
+          if (subfolder === "clipspace") {
+            comfyImage = `${comfyImage} [input]`;
+          }
         }
         let lastComfyImage: string | null = null;
         if (lastAsset) {
@@ -1389,6 +1692,16 @@ export function registerGenerationRoutes(
                     refType: "asset" as const,
                     refId: lastAsset.id,
                     assetSha256: lastAsset.sha256,
+                  },
+                ]
+              : []),
+            ...(maskAsset
+              ? [
+                  {
+                    slot: "mask",
+                    refType: "asset" as const,
+                    refId: maskAsset.id,
+                    assetSha256: maskAsset.sha256,
                   },
                 ]
               : []),
@@ -1805,6 +2118,10 @@ export function registerGenerationRoutes(
       run.parameters.remoteOutput = output;
       run.parameters.remoteExecutionCompleted = history.status?.completed === true;
       run.parameters.outputAssetId = assetId;
+      const optimizedPrompt = extractOptimizedPrompt(history.outputs);
+      if (optimizedPrompt) {
+        run.parameters.optimizedPrompt = optimizedPrompt;
+      }
       run.status = "collecting_outputs";
       run.errorCode = null;
       run.errorMessage = null;
@@ -1920,6 +2237,7 @@ export function registerGenerationRoutes(
           metadataInspectedAt: expectsImage ? null : timestamp,
           metadataInspectionError:
             !expectsImage && !videoInfo ? "当前视频封装未提供可读取的轨道信息" : null,
+          maskPath: null,
           customTags: [],
           createdAt: timestamp,
           updatedAt: timestamp,

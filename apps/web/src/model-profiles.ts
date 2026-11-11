@@ -3,7 +3,7 @@ import type { WorkflowSummary } from "./api";
 import { optionalLocalStorage } from "./browser-storage";
 
 export type WorkflowInputSlot = {
-  id: "first_frame" | "last_frame" | "reference" | "reference_video" | "reference_audio";
+  id: "first_frame" | "last_frame" | "mask" | "reference" | "reference_video" | "reference_audio";
   label: string;
   required: boolean;
   hint: string;
@@ -75,6 +75,16 @@ export function workflowInputSlots(workflow: WorkflowSummary | null): WorkflowIn
       required: workflow.capability === "first_last_video",
       hint: "约束视频结束画面",
       maxCount: workflow.mediaInputs?.last_frame ?? 1,
+      mediaType: "image",
+    });
+  }
+  if (workflow.inputs.includes("mask")) {
+    slots.push({
+      id: "mask",
+      label: "遮罩",
+      required: false,
+      hint: "要移除或重绘的区域（黑色保留，白色重绘）",
+      maxCount: workflow.mediaInputs?.mask ?? 1,
       mediaType: "image",
     });
   }
