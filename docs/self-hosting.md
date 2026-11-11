@@ -1,8 +1,8 @@
-# TakeBoard 自托管部署
+# YoYoTV 自托管部署
 
 更新时间：2026-08-28
 
-TakeBoard 默认只监听服务器回环地址，并在首次打开时引导创建管理员。推荐使用用户级 systemd 保持服务稳定运行，再通过标准 SSH 隧道访问。可信团队也可以部署 HTTPS 反向代理，但不能绕过下文的认证、Host、Origin 与 Cookie 设置。
+YoYoTV 默认只监听服务器回环地址，并在首次打开时引导创建管理员。推荐使用用户级 systemd 保持服务稳定运行，再通过标准 SSH 隧道访问。可信团队也可以部署 HTTPS 反向代理，但不能绕过下文的认证、Host、Origin 与 Cookie 设置。
 
 ## 不需要维护服务的简易方式
 
@@ -15,7 +15,7 @@ npm run easy:stop    # 停止服务，不删除数据
 npm run easy:doctor  # 中文诊断与下一步建议
 ```
 
-启动器读取已有的 `~/.config/takeboard/env` 配置，自动避开 `48120–48139` 的端口冲突，并把日志写入用户状态目录。源码或依赖更新后会自动安装/重建；项目目录不可写时会在启动前阻止运行；日志超过 10 MB 后保留一份轮换副本。需要长期运行、开机恢复和集中运维时，再使用下面的 systemd 方案。
+启动器读取已有的 `~/.config/yoyotv/env`（兼容 `~/.config/takeboard/env`） 配置，自动避开 `48120–48139` 的端口冲突，并把日志写入用户状态目录。源码或依赖更新后会自动安装/重建；项目目录不可写时会在启动前阻止运行；日志超过 10 MB 后保留一份轮换副本。需要长期运行、开机恢复和集中运维时，再使用下面的 systemd 方案。
 
 ## 安装稳定服务
 
@@ -24,7 +24,7 @@ npm run easy:doctor  # 中文诊断与下一步建议
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
-./scripts/takeboard install
+./scripts/yoyotv install
 ```
 
 安装脚本会完成完整验证、生产构建、用户服务模板渲染、开机启用和健康检查。生成的文件包括：
@@ -37,7 +37,7 @@ pnpm install --frozen-lockfile
 
 ## 配置
 
-编辑 `~/.config/takeboard/env`：
+编辑 `~/.config/yoyotv/env`（兼容 `~/.config/takeboard/env`）：
 
 ```dotenv
 COMFY_URL=http://127.0.0.1:8188
@@ -49,7 +49,7 @@ COMFY_OUTPUT_ROOT=/opt/comfyui/output
 也可以在首次安装前设置：
 
 ```bash
-TAKEBOARD_DATA_ROOT=/srv/takeboard-data ./scripts/takeboard install
+TAKEBOARD_DATA_ROOT=/srv/takeboard-data ./scripts/yoyotv install
 ```
 
 变量说明：
@@ -64,16 +64,16 @@ TAKEBOARD_DATA_ROOT=/srv/takeboard-data ./scripts/takeboard install
 | `TAKEBOARD_BACKUP_KEEP_LOCAL` | `2` | 自动备份后在本机保留的最近完整快照数（1–5） |
 | `TAKEBOARD_BACKUP_KEEP_DAILY/WEEKLY/MONTHLY` | `7 / 4 / 6` | 外部恢复点保留窗口 |
 | `TAKEBOARD_BACKUP_DRILL_INTERVAL_DAYS` | `30` | 隔离恢复演练间隔 |
-| `COMFY_URL` | `http://127.0.0.1:8188` | TakeBoard 服务端调用的 ComfyUI API |
+| `COMFY_URL` | `http://127.0.0.1:8188` | YoYoTV 服务端调用的 ComfyUI API |
 | `COMFY_EDITOR_URL` | `http://127.0.0.1:48188` | 浏览器打开 ComfyUI 编辑器的地址 |
 | `COMFY_INPUT_ROOT` | 空 | 允许清理本次 Run 创建的输入临时文件 |
 | `COMFY_OUTPUT_ROOT` | 空 | 允许清理本次 Run 创建的输出临时文件 |
 
-修改配置后执行 `./scripts/takeboard restart`。
+修改配置后执行 `./scripts/yoyotv restart`。
 
 安全启动 ComfyUI 所需的 provider、进程参数和资源阈值见
-[`deploy/takeboard.env.example`](../deploy/takeboard.env.example)。未明确配置可验证的启动方式时，
-TakeBoard 只检测连接，不会尝试启动未知进程。
+[`deploy/yoyotv.env.example`](../deploy/yoyotv.env.example)（兼容 `deploy/takeboard.env.example`）。未明确配置可验证的启动方式时，
+YoYoTV 只检测连接，不会尝试启动未知进程。
 
 ## 日常维护
 
@@ -90,10 +90,10 @@ TakeBoard 只检测连接，不会尝试启动未知进程。
 离线恢复使用同一解析规则，不会自动创建空账号库或丢弃旧数据。
 
 ```bash
-./scripts/takeboard status
-./scripts/takeboard logs
-./scripts/takeboard restart
-./scripts/takeboard doctor
+./scripts/yoyotv status
+./scripts/yoyotv logs
+./scripts/yoyotv restart
+./scripts/yoyotv doctor
 ```
 
 更新代码时建议先确认没有正在生成的任务：
@@ -102,7 +102,7 @@ TakeBoard 只检测连接，不会尝试启动未知进程。
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm verify
-./scripts/takeboard restart
+./scripts/yoyotv restart
 ```
 
 `doctor` 会检查 Node.js、pnpm、服务状态、API、ComfyUI 和 SSH 客户端，适合作为故障排查入口。
@@ -110,7 +110,7 @@ pnpm verify
 ## 开发与稳定服务切换
 
 ```bash
-./scripts/takeboard dev
+./scripts/yoyotv dev
 ```
 
 如果稳定服务正在运行，脚本会先停止它，释放 API 端口；退出开发模式时会自动恢复。开发 UI 位于 <http://127.0.0.1:48110>，稳定 UI 位于 <http://127.0.0.1:48120>。
@@ -120,7 +120,7 @@ pnpm verify
 在 Mac 或 Linux 客户端执行：
 
 ```bash
-./scripts/takeboard-tunnel connect your-server
+./scripts/yoyotv-tunnel connect your-server
 ```
 
 终端退出时隧道和本地端口会一同释放。服务器可以通过普通公网 SSH、局域网或 Tailscale 网络抵达，隧道方式保持一致。详细说明和端口冲突处理见[远程访问指南](./remote-access.md)。
@@ -130,9 +130,9 @@ pnpm verify
 单项目迁移可以直接在首页项目卡下载带完整性清单的 `.takeboard.tgz`，再通过首页“导入”恢复。整机备份则复制完整的 `TAKEBOARD_DATA_ROOT`。如果要求严格一致，应先避免新的写入或短暂停止服务：
 
 ```bash
-./scripts/takeboard stop
+./scripts/yoyotv stop
 rsync -a ~/TakeBoardData/ /path/to/backup/TakeBoardData/
-./scripts/takeboard start
+./scripts/yoyotv start
 ```
 
 日常也可以由实例管理员打开“账号 → 备份与恢复”，创建带双层完整性校验的实例备份。它包含全部项目、素材、生成结果和身份数据库；生成任务未结束时会拒绝创建。界面可以验证并在线补回缺失项目；需要连账号与权限一起恢复时，先停止服务再执行：
@@ -177,7 +177,7 @@ TAKEBOARD_BACKUP_DRILL_INTERVAL_DAYS=30
 
 - 不要把 `8188` 直接映射到公网；
 - `48120` 的公网入口必须由 HTTPS 反向代理保护，个人使用优先选择 SSH 隧道；
-- `~/.config/takeboard/env` 可能包含私有路径或令牌，应保持 `0600`；
+- `~/.config/yoyotv/env`（兼容 `~/.config/takeboard/env`） 可能包含私有路径或令牌，应保持 `0600`；
 - `COMFY_INPUT_ROOT` 与 `COMFY_OUTPUT_ROOT` 必须精确指向对应目录，避免扩大清理范围；
 - 上线更新前先检查推理队列，避免中断正在运行的生成任务。
 

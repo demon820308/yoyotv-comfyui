@@ -1,6 +1,6 @@
 # YoYoTV · 产品短片
 
-[观看中文版 · 42 秒](https://fourques.github.io/Takeboard/zh/#demo) · [下载 MP4](https://fourques.github.io/Takeboard/media/takeboard-film.zh.mp4) · [媒体素材](media-kit.md)
+[媒体素材](media-kit.md) · [素材来源说明](assets/takeboard-film-credits.md)
 
 从喜欢的一帧，到下一幕的开始。这支短片展示一个真实 YoYoTV 项目：参考素材与备选方向放在画布上，连接输入，提交生成，选择满意的结果，再把它连接到下一镜头。
 
@@ -10,7 +10,7 @@
 
 ## English
 
-[Watch the English film · 42 sec](https://fourques.github.io/Takeboard/#demo) · [Download MP4](https://fourques.github.io/Takeboard/media/takeboard-film.en.mp4) · [Media kit](media-kit.md)
+[Media kit](media-kit.md) · [Film credits](assets/takeboard-film-credits.md)
 
 A reference becomes a result, and that result becomes the starting point for the next scene. The film follows a real YoYoTV project, with connected media, alternative directions and actual product interaction.
 

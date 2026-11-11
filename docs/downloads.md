@@ -43,9 +43,9 @@ DEB 面向 Debian/Ubuntu，并非所有 Linux 发行版通用；其他环境可�
 
 ## 连接服务器
 
-只需要远程生成、项目保存在本机时，在“设置 → 设备连接”添加远程 ComfyUI。TakeBoard 管理连接并将生成结果取回当前项目。配置细节见[生成设备与项目位置](generation-and-storage.md)。
+只需要远程生成、项目保存在本机时，在“设置 → 设备连接”添加远程 ComfyUI。YoYoTV 管理连接并将生成结果取回当前项目。配置细节见[生成设备与项目位置](generation-and-storage.md)。
 
-需要打开和管理服务器上的项目时，再使用远程 TakeBoard：
+需要打开和管理服务器上的项目时，再使用远程 YoYoTV：
 
 在“设置 → 远程项目”中连接 SSH、HTTPS 或自托管 Portal；桌面菜单“连接 → 远程项目设置…”也会进入同一设置。
 SSH 需要服务器可达、系统 OpenSSH、配置好的密钥和可信主机指纹，不要求使用 Tailscale。
@@ -58,6 +58,6 @@ SSH 需要服务器可达、系统 OpenSSH、配置好的密钥和可信主机�
 - 从旧版升级前先导出重要项目、停止旧服务并备份完整数据目录；不要让两份实例同时写同一目录。
 - 回退请使用升级前的独立备份，不要让旧版打开已迁移的数据。
 
-打不开或无法生成时，请通过[问题反馈](https://github.com/Fourques/Takeboard/issues/new/choose)提供系统、
+打不开或无法生成时，请通过[问题反馈](https://github.com/demon820308/yoyotv-comfyui/issues/new/choose)提供系统、
 芯片、应用版本、连接方式和报错，不要上传密码、密钥或私人素材。
 开发者入口：[贡献指南](../CONTRIBUTING.md) · [全部文档](README.md)。

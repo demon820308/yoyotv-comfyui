@@ -1,6 +1,6 @@
 # 视频工作流质量策略
 
-TakeBoard 将“快速预演”和“最终质量”拆成独立 Workflow。它们不是模糊的推荐值，而是不同的执行图与可复现 Recipe。
+YoYoTV 将“快速预演”和“最终质量”拆成独立 Workflow。它们不是模糊的推荐值，而是不同的执行图与可复现 Recipe。
 
 ## 当前工作流
 
@@ -29,15 +29,15 @@ python3 scripts/install-video-quality-workflows.py
 COMFY_DIR=/path/to/ComfyUI python3 scripts/install-video-quality-workflows.py
 ```
 
-安装完成后刷新 TakeBoard 的工作流列表即可。运行时参数由 TakeBoard Recipe 记录，直接在 ComfyUI 打开时也能看到相同的质量分层。
+安装完成后刷新 YoYoTV 的工作流列表即可。运行时参数由 YoYoTV Recipe 记录，直接在 ComfyUI 打开时也能看到相同的质量分层。
 
 ## 选择原则
 
 - 用预演工作流验证动作方向、镜头运动和首尾帧是否相容；不要把预演结果当最终镜头。
 - 最终 Wan 镜头使用高质量工作流。官方资料明确指出 4-step Lightning LoRA 会损失动态和质量，原始 20-step 路径是质量不足时的首选。
 - MiniMax H3 适合需要对白、环境声、音效或配乐共同生成的镜头。提示词应同时描述画面时间线与声音时间线。
-- H3 Ref2VA 与 FL2VA 是不同权重和执行图。参考视频会同时输入画面与原声；参考图、视频、音频必须在提示词中按接线顺序使用 `<Picture N>`、`<Video N>`、`<Audio N>`。TakeBoard 的 `@素材名` 会在提交时无损转换为这些模型标签，编辑框仍保留用户可读名称。
-- H3 固定使用 24 fps，支持 4–15 秒。改变播放器帧率只会改变时序，不会提升模型质量，因此 TakeBoard 不把帧率作为 H3 的可调质量参数。
+- H3 Ref2VA 与 FL2VA 是不同权重和执行图。参考视频会同时输入画面与原声；参考图、视频、音频必须在提示词中按接线顺序使用 `<Picture N>`、`<Video N>`、`<Audio N>`。YoYoTV 的 `@素材名` 会在提交时无损转换为这些模型标签，编辑框仍保留用户可读名称。
+- H3 固定使用 24 fps，支持 4–15 秒。改变播放器帧率只会改变时序，不会提升模型质量，因此 YoYoTV 不把帧率作为 H3 的可调质量参数。
 - Ref2VA 的“身份优先”会以更高参考图尺寸贯穿每个采样步骤，适合少量关键角色图；在 24 GB 显存上，多参考素材默认使用“平衡”更可靠。
 - H3 的本地开源权重直接工作在 768p 基础层；官方 2K Regenerate 是额外的再生成阶段，不应把普通插值冒充 2K 生成。
 - RTX 4090 24GB 上 Wan 2.2 14B 建议保持约 0.4MP，一次仅运行一个最终质量任务；镜头锁定后再统一做后期超分。
@@ -58,7 +58,7 @@ overall_soundscape: 环境声、动作声与非语言人声。
 non_diegetic_music: 配器、速度、节奏与动态；无配乐时写 N/A。
 ```
 
-Ref2VA 的完整高质量结构为 `subject_definitions`、`summary`、`retention_analysis`、`detailed_description`、`overall_soundscape`、`non_diegetic_music`。无需把文件改名成“图一”；在 TakeBoard 中输入 `@角色正面`，提交时会按实际接线顺序编译为 `<Picture 1>`。
+Ref2VA 的完整高质量结构为 `subject_definitions`、`summary`、`retention_analysis`、`detailed_description`、`overall_soundscape`、`non_diegetic_music`。无需把文件改名成“图一”；在 YoYoTV 中输入 `@角色正面`，提交时会按实际接线顺序编译为 `<Picture 1>`。
 
 ## 依据
 

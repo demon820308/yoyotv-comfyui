@@ -46,9 +46,9 @@ Already using ComfyUI? [Follow the first-session guide](first-session.md#english
 
 ## Connect a server
 
-For remote generation with projects stored on this computer, add remote ComfyUI in **Settings → Device connections**. TakeBoard manages the connection and collects outputs into the current project. See [generation devices and storage](generation-and-storage.md) (Chinese).
+For remote generation with projects stored on this computer, add remote ComfyUI in **Settings → Device connections**. YoYoTV manages the connection and collects outputs into the current project. See [generation devices and storage](generation-and-storage.md) (Chinese).
 
-To open and manage projects stored on another TakeBoard device, use **Settings → Remote projects**
+To open and manage projects stored on another YoYoTV device, use **Settings → Remote projects**
 for SSH, HTTPS or a self-hosted Portal. The desktop Connection menu opens the same settings. SSH needs a reachable
 server, system OpenSSH, configured keys and a trusted host fingerprint; Tailscale is not required.
 Portal needs deployment and explicit pairing, not just a matching email address. There is no operated
@@ -63,6 +63,6 @@ official cloud. See [remote access](remote-access.md) (Chinese).
   Never run two writers against the same data directory.
 - Roll back using a separate pre-upgrade backup, not by opening migrated data in an older app.
 
-For [support](https://github.com/Fourques/Takeboard/issues/new/choose), include OS, processor, app
+For [support](https://github.com/demon820308/yoyotv-comfyui/issues/new/choose), include OS, processor, app
 version, connection method and the error. Omit private media and credentials.
 For development, see [Contributing](../CONTRIBUTING.md) and the [documentation index](README.md).

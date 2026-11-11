@@ -1,4 +1,4 @@
-# TakeBoard 文档 / Documentation
+# YoYoTV 文档 / Documentation
 
 [项目首页](../README.md) · [English overview](../README.en.md) · [English downloads](downloads.en.md)
 
@@ -15,7 +15,7 @@
 
 ## 远程、账号与数据
 
-- [生成设备与项目位置](generation-and-storage.md)：本机项目连接远程 ComfyUI，与远程 TakeBoard 项目的区别。
+- [生成设备与项目位置](generation-and-storage.md)：本机项目连接远程 ComfyUI，与远程 YoYoTV 项目的区别。
 - [此电脑与远程设备](device-workflow.md)：设备选择、预构建安装、授权启动、项目文件夹与下载的完整流程。
 - [远程访问](remote-access.md)：桌面连接、标准 SSH、HTTPS、端口和会话排障。
 - [账号与权限](access-control.md)：可选登录、设备项目、账号项目与共享边界。
@@ -34,13 +34,19 @@
 - [设计决策](decisions.md)：重要行为和架构取舍。
 - [发布门槛](release-gates.md) · [桌面签名与发行](desktop-production-signing.md)：维护者验证与发行流程。
 
-## 项目方向与历史记录
+## 项目方向
 
 - [路线图](roadmap.md) · [产品策略](product-strategy.md) · [分发与门户策略](access-and-distribution-strategy.md)。
-- [易用性审计](usability-audit.md) · [2026-08-30 成熟度评估](maturity-audit-2026-08-30.md)。
-- [2026-09-10 全项目删减审计](simplification-review-2026-09-10.md)：删除依据、保留理由与待验证边界。
-- [当前发布说明](https://github.com/Fourques/Takeboard/releases/tag/v0.2.0-beta.19) · [历史 beta.4 说明](releases/v0.2.0-beta.4.md) · [产品短片](demo-guide.md) · [媒体素材](media-kit.md)。
+- [易用性审计](usability-audit.md)。
+- [当前发布说明](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1) · [历史 beta.4 说明（上游）](releases/v0.2.0-beta.4.md) · [产品短片](demo-guide.md) · [媒体素材](media-kit.md)。
+
+## 上游历史归档
+
+以下为上游时期的历史审计与版本记录，归档保留：
+- [上游时期成熟度评估](archive/maturity-audit-2026-08-30.md) · [全项目删减审计](archive/simplification-review-2026-09-10.md) · [流程收尾计划](archive/workflow-experience-plan.md) · [评审记录](archive/review-2026-08-13.md)
+- [上游推广与投放草稿](archive/outreach-2026-09.md) · [推广执行记录](archive/promotion-log.md)
+- [历史版本说明](archive/release-beta.8.md)（含 [beta.9](archive/release-beta.9.md)、[beta.10](archive/release-beta.10.md)、[beta.11](archive/release-beta.11.md)、[beta.12](archive/release-beta.12.md)、[beta.13](archive/release-beta.13.md)）
 
 历史审计、计划和旧发布说明记录当时状态；当前下载能力以下载指南及对应 Release 的附件为准。
-遇到问题请使用[反馈表单](https://github.com/Fourques/Takeboard/issues/new/choose)；漏洞与敏感信息按
+遇到问题请使用[反馈表单](https://github.com/demon820308/yoyotv-comfyui/issues/new/choose)；漏洞与敏感信息按
 [安全策略](../SECURITY.md)私下报告。

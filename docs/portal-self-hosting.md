@@ -1,11 +1,11 @@
-# TakeBoard 账号门户自托管
+# YoYoTV 账号门户自托管
 
 更新时间：2026-09-02
 
-账号门户让工作站主动建立出站连接。浏览器只访问门户域名，不需要开放家庭路由器端口，也不会把 ComfyUI 的 `8188` 暴露到公网。门户是独立服务；每台工作站仍运行完整 TakeBoard，并继续执行本地账号与项目角色校验。
+账号门户让工作站主动建立出站连接。浏览器只访问门户域名，不需要开放家庭路由器端口，也不会把 ComfyUI 的 `8188` 暴露到公网。门户是独立服务；每台工作站仍运行完整 YoYoTV，并继续执行本地账号与项目角色校验。
 
 > [!IMPORTANT]
-> 当前版本是可审计的自托管预览，不是 TakeBoard 官方运营的公共云。它适合个人和可信团队自行部署；正式公共服务仍需要 MFA / Passkey、邮件恢复、滥用治理、容量隔离和专业安全运营。
+> 当前版本是可审计的自托管预览，不是 YoYoTV 官方运营的公共云。它适合个人和可信团队自行部署；正式公共服务仍需要 MFA / Passkey、邮件恢复、滥用治理、容量隔离和专业安全运营。
 
 ## 运行边界
 
@@ -57,15 +57,15 @@ server {
 }
 ```
 
-通配符证书通常需要 DNS-01 验证。不要为了省略证书配置而把 Portal、TakeBoard 或 ComfyUI 的明文端口直接开放到互联网。
+通配符证书通常需要 DNS-01 验证。不要为了省略证书配置而把 Portal、YoYoTV 或 ComfyUI 的明文端口直接开放到互联网。
 
 ## 安装与启动
 
 需要 Node.js `>=22.12 <27`、pnpm 10 和持久化数据目录：
 
 ```bash
-git clone https://github.com/Fourques/Takeboard.git
-cd Takeboard
+git clone https://github.com/demon820308/yoyotv-comfyui.git
+cd yoyotv-comfyui
 corepack enable
 pnpm install --frozen-lockfile
 pnpm portal:build
@@ -151,7 +151,7 @@ docker compose ps
 
 ```ini
 [Unit]
-Description=TakeBoard account portal
+Description=YoYoTV account portal
 After=network-online.target
 Wants=network-online.target
 
@@ -175,9 +175,9 @@ WantedBy=multi-user.target
 
 ## 配对工作站
 
-1. 在本地 TakeBoard 创建或登录实例管理员账号；
+1. 在本地 YoYoTV 创建或登录实例管理员账号；
 2. 打开头像菜单中的“访问与安装”；
-3. 在“TakeBoard 账号门户”输入 `https://portal.example.com` 并生成一次性代码；
+3. 在“YoYoTV 账号门户”输入 `https://portal.example.com` 并生成一次性代码；
 4. 在门户登录，输入代码并确认工作站名称；
 5. 等待状态变为“在线”，再从设备卡片打开工作站。
 
@@ -205,7 +205,7 @@ curl -fsS https://portal.example.com/__portal/api/health
 ## 当前限制
 
 - 单次远程请求上限为 110 MB；请求体当前以有界内存缓冲后发送，视频响应按分片流式返回并支持 HTTP Range；
-- 不代理浏览器到本机服务的任意 WebSocket，TakeBoard 当前核心页面不依赖此能力；
+- 不代理浏览器到本机服务的任意 WebSocket，YoYoTV 当前核心页面不依赖此能力；
 - 没有云端项目索引、素材同步、云端生成或 ComfyUI 直连；
 - 没有 MFA / Passkey、邮件找回、组织共享、配额与滥用治理；
 - 桌面安装器仍未取得 Apple notarization 与 Windows 商业签名。
@@ -223,5 +223,5 @@ curl -fsS https://portal.example.com/__portal/api/health
 5. 运营：隐私政策、服务条款、滥用举报、安全响应、值班责任和服务状态页；
 6. 安全：上线前渗透测试，之后持续依赖扫描、日志审查和事件复盘。
 
-在域名、部署地区、账号开放方式、邮件供应商和实际运营责任人未确定前，TakeBoard 会继续把 Portal 准确
+在域名、部署地区、账号开放方式、邮件供应商和实际运营责任人未确定前，YoYoTV 会继续把 Portal 准确
 标记为自托管服务，不在 UI 或 README 中暗示官方公共云已经存在。

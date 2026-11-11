@@ -28,7 +28,7 @@ GitHub 构建来源证明不能替代操作系统代码签名。不要把 Previe
 缺少校验文件或摘要不一致会阻断发布；已存在的同名包不会被自动覆盖。
 GitHub 自动展示的源码归档与文件摘要不属于我们上传的附件，无需用户下载或操作。
 
-技术用户仍可通过 `gh attestation verify <下载文件路径> --repo Fourques/Takeboard` 检查支持来源证明的包。
+技术用户仍可通过 `gh attestation verify <下载文件路径> --repo demon820308/yoyotv-comfyui` 检查支持来源证明的包（注：上游时期发布的历史安装包，其来源证明仍由上游 `Fourques/Takeboard` 签发，验证历史包时仍用旧仓名）。
 校验和检查完整性，来源证明绑定构建来源，两者都不等于操作系统签名或完整安全审计。
 
 macOS 打包保留 Hardened Runtime，并为内置 Node 声明 JIT 与原生扩展库加载权限（`entitlements.plist`）。
@@ -91,7 +91,7 @@ Artifact Signing 配置步骤：
 2. 创建 Entra App Registration 和 Service Principal；
 3. 为它分配 `Artifact Signing Certificate Profile Signer`，权限范围只限该 Profile；
 4. 创建 GitHub OIDC federated credential，subject 精确限制到
-   `Fourques/Takeboard` 的 `production-release` Environment；
+   `demon820308/yoyotv-comfyui` 的 `production-release` Environment；
 5. 在环境配置：
 
 | 类型 | 名称 | 内容 |

@@ -1,6 +1,6 @@
 # Qwen-Image-2512 本地图片生成
 
-TakeBoard 的第一条真实图片生成链路选用 **Qwen-Image-2512 FP8**。它适合 24GB RTX 4090，
+YoYoTV 的第一条真实图片生成链路选用 **Qwen-Image-2512 FP8**。它适合 24GB RTX 4090，
 采用 Apache-2.0 许可，并有 ComfyUI 官方原生工作流。这里不把图片模型做成平台锁定项；它只是首个经过
 验证的本地 Recipe，之后仍可继续接入其他开源模型或付费 API。
 
@@ -10,7 +10,7 @@ TakeBoard 的第一条真实图片生成链路选用 **Qwen-Image-2512 FP8**。�
 - FP8 是 ComfyUI 对消费级 NVIDIA GPU 推荐的平衡版本，显著小于 BF16；
 - 既提供 50 步质量模式，也提供 LightX2V 4 步 Lightning 快速抽卡模式；
 - 官方推荐画幅包含 `1328×1328`、`1664×928` 和 `928×1664`，适合横版与竖版影视概念图；
-- TakeBoard 可把输出图片继续作为人物、场景、道具或图生图/图生视频输入资产。
+- YoYoTV 可把输出图片继续作为人物、场景、道具或图生图/图生视频输入资产。
 
 官方资料：
 
@@ -39,7 +39,7 @@ HF_ENDPOINT=https://hf-mirror.com \
 python3 scripts/install-qwen-image-workflows.py
 ```
 
-## TakeBoard 中的两种 Recipe
+## YoYoTV 中的两种 Recipe
 
 ### Qwen Image 2512 T2I
 
@@ -61,4 +61,4 @@ python3 scripts/install-qwen-image-workflows.py
 - 首次加载约 30GB 模型组件，速度明显慢于后续生成；
 - 4090 同时运行视频任务时可以下载模型，但不应重启 ComfyUI 或插入图片烟雾测试；
 - 50 步用于最终质量，4 步用于低成本抽卡，不建议把两者结果质量混为一谈；
-- TakeBoard 会把过大的任意尺寸限制到最长边 1664、约 1.8MP，并对齐 32 像素网格，避免无意中触发显存风险。
+- YoYoTV 会把过大的任意尺寸限制到最长边 1664、约 1.8MP，并对齐 32 像素网格，避免无意中触发显存风险。

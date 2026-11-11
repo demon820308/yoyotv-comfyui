@@ -1,3 +1,5 @@
+> 注：上游时期历史文档，品牌与链接为当时记录，YoYoTV 现行文档见 docs 根目录。
+
 # v0.2.0-beta.8 · 创作流程统一升级
 
 已发布：[Mac Apple Silicon（M 系列）调试版](https://github.com/Fourques/Takeboard/releases/tag/v0.2.0-beta.8)。仅提供一个 DMG 安装包。

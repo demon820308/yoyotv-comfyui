@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "workflowPath": "Qwen2.1 修图.json",
+  "workflowHash": "e8df2b3e64d7519bc01ce5a2b8c66bea047626fb96fee784ba564db70acd959b",
+  "capability": "image_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "485",
+        "input": "prompt"
+      }
+    ],
+    "negative_prompt": [
+      {
+        "nodeId": "485",
+        "input": "negative_prompt"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "482",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "482",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "482",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "480",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "480",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "470",
+        "input": "image"
+      },
+      {
+        "nodeId": "475",
+        "input": "image"
+      },
+      {
+        "nodeId": "491",
+        "input": "image"
+      },
+      {
+        "nodeId": "493",
+        "input": "image"
+      },
+      {
+        "nodeId": "494",
+        "input": "image"
+      },
+      {
+        "nodeId": "495",
+        "input": "image"
+      },
+      {
+        "nodeId": "497",
+        "input": "image"
+      },
+      {
+        "nodeId": "496",
+        "input": "image"
+      }
+    ],
+    "reference_image": [
+      {
+        "nodeId": "475",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-11T04:56:32.014Z"
+}

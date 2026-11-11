@@ -2,14 +2,14 @@
 
 更新时间：2026-11-11。当前公开安装版为全平台 [v1.0.0-beta.1](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.1)。
 
-- [产品短片](https://fourques.github.io/Takeboard/zh/#demo) · [English film](https://fourques.github.io/Takeboard/#demo)：42 秒真实项目中的创作流程。
-- [渠道文案](outreach-2026-09.md)：定位、中英文社区帖、短帖与渠道规则。
-- [发布案例与执行顺序](outreach-2026-09.md#发布案例与取舍2026-10-10)：本轮研究依据、各渠道稿与试用反馈闭环。
+- [产品短片](demo-guide.md) · [English film](demo-guide.md#english)：42 秒真实项目中的创作流程。
+- [渠道文案](archive/outreach-2026-09.md)：定位、中英文社区帖、短帖与渠道规则。
+- [发布案例与执行顺序](archive/outreach-2026-09.md#发布案例与取舍2026-10-10)：本轮研究依据、各渠道稿与试用反馈闭环。
 - [媒体素材包](media-kit.md)：成片、精选截图、品牌资源与简短来源说明。
 - [AI 搜索策略](ai-discovery-strategy.md)：官方依据、实施顺序、验证方法与边界。
 - [首次试用清单 / First session](first-session.md)：从安装到一次小测试。
 - [技术文章：设备连接不等于生成服务就绪](device-state-design.md)。
-- [实际执行记录](promotion-log.md)：已发布、待审核、未发布与阻塞分别记录。
+- [实际执行记录](archive/promotion-log.md)：已发布、待审核、未发布与阻塞分别记录。
 - [下载](downloads.md) · [Download](downloads.en.md)。
 
 只宣传已发布且有证据的能力。演示必须区分模拟交互与真实生成；投稿不等于收录，下载不等于用户。公开关联，不购买点赞、不群发骚扰、不伪装成独立推荐者。

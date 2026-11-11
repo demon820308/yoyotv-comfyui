@@ -54,7 +54,7 @@ test("public download documents and media kit point to the release advertised by
 });
 
 test("channel drafts use current evergreen entry points and fit submission fields", async () => {
-  const text = await readFile(new URL("../docs/outreach-2026-09.md", import.meta.url), "utf8");
+  const text = await readFile(new URL("../docs/archive/outreach-2026-09.md", import.meta.url), "utf8");
   const announcement = text
     .split("<!-- project-announcement:start -->")[1]
     .split("<!-- project-announcement:end -->")[0];
