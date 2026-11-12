@@ -1949,7 +1949,9 @@ export function App() {
         );
         setBlankCanvasGuideOpen(false);
         acceptPayload(payload);
-        selection.item(payload.itemId);
+        // Keep the current viewing mode: a new canvas shot should show its quick controls,
+        // not silently open the inspector that then suppresses them on the next click.
+        selection.quick(payload.itemId, false);
         setNotice("已添加镜头");
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "镜头创建失败");
@@ -1962,7 +1964,7 @@ export function App() {
       canEditProject,
       projectKey,
       projectMode,
-      selection.item,
+      selection.quick,
       visibleCanvasPosition,
       setError,
     ],
@@ -2866,6 +2868,9 @@ export function App() {
           nodesDraggable={canEditProject}
           nodesConnectable={canEditProject}
           onNodeClick={onNodeClick}
+          // Hand jitter of a few px must still count as a click, not a drag that swallows it.
+          nodeClickDistance={4}
+          nodeDragThreshold={4}
           // A second interaction must retire a deferred node toggle, including
           // input events whose child handlers stop propagation in the bubble phase.
           onPointerDownCapture={cancelNodeClick}
