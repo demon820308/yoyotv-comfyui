@@ -45,6 +45,7 @@ export type DeviceInfo = {
   platform: string;
   canManage: boolean;
   projectsDirectory: string | null;
+  suggestedProjectsRoot?: string | null;
 };
 
 export const deviceApi = {

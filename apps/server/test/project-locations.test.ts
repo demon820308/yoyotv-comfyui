@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
+import { resolveSuggestedProjectsRoot } from "../src/device-routes.js";
 import { projectDirectory } from "../src/project-locations.js";
 
 const cleanup: Array<() => Promise<unknown>> = [];
@@ -311,8 +312,15 @@ describe("device-scoped project folders", () => {
   it("returns server identity separately from GPU information and requires authentication", async () => {
     const { app, root } = await fixture();
     const status = await app.inject("/api/device");
-    expect(status.json()).toMatchObject({ projectsDirectory: root, canManage: true });
+    expect(status.json()).toMatchObject({
+      projectsDirectory: root,
+      canManage: true,
+      suggestedProjectsRoot: resolveSuggestedProjectsRoot(process.platform),
+    });
     expect(status.json()).not.toHaveProperty("gpu");
+    expect(resolveSuggestedProjectsRoot("win32")).toBe("D:\\YoYoTVProjects");
+    expect(resolveSuggestedProjectsRoot("darwin")).toBe("/data/YoYoTVProjects");
+    expect(resolveSuggestedProjectsRoot("linux")).toBe("/data/YoYoTVProjects");
     const protectedApp = buildApp({
       projectsRoot: root,
       webRoot: null,

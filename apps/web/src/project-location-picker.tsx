@@ -253,9 +253,7 @@ export function ProjectLocationPicker({
               aria-label="当前设备上的完整文件夹路径"
               value={newRoot}
               onChange={(event) => setNewRoot(event.target.value)}
-              placeholder={
-                device?.platform === "win32" ? "D:\\YoYoTVProjects" : "/data/YoYoTVProjects"
-              }
+              placeholder={device?.suggestedProjectsRoot || "输入完整文件夹路径"}
             />
             <button
               type="button"

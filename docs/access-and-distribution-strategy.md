@@ -142,7 +142,7 @@ Tailscale Serve 提供身份化的私网服务入口，Funnel 则面向更广互
 
 现有 React、Fastify、SQLite 和便携启动器仍是唯一业务实现。这样能避免桌面版和浏览器版形成两套产品逻辑。
 
-Tauri 官方支持 macOS App/DMG、Windows MSI/NSIS 与 Linux AppImage/Deb/RPM 等分发格式；Updater 强制验证更新签名。正式面向大众发布前，还必须完成 Apple Developer ID 签名与 notarization、Windows Authenticode 签名，并在原生系统上执行安装、升级、回滚和卸载测试。
+Tauri 官方支持 macOS App/DMG、Windows MSI/NSIS 与 Linux AppImage/Deb/RPM 等分发格式；Updater 强制验证更新签名。正式面向大众发布前，还必须完成 Apple Developer ID 签名与 notarization、Windows Authenticode 签名，并在原生系统上执行安装、升级、回滚和卸载测试。三端支持矩阵与详细平台差异（包型、路径、渲染引擎与签名机制）详见 [三端差异总表](platform-differences.md)。
 
 参考：
 

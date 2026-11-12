@@ -15,6 +15,17 @@ import { acquireProjectLock } from "./project-request-lock.js";
 import { projectKey } from "./project-routes.js";
 import { ProjectStore } from "./storage/project-store.js";
 
+/**
+ * 依据规范条 7：平台默认值单一来源、前端零字面量。
+ * 建议项目根路径由服务端按自身平台统一推导并下发。
+ */
+export function resolveSuggestedProjectsRoot(platform: NodeJS.Platform = process.platform): string {
+  if (platform === "win32") {
+    return "D:\\YoYoTVProjects";
+  }
+  return "/data/YoYoTVProjects";
+}
+
 /** Device identity is separate from the GPU returned by ComfyUI. */
 export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string) {
   const root = resolve(projectsRoot);
@@ -184,6 +195,7 @@ export function registerDeviceRoutes(app: FastifyInstance, projectsRoot: string)
       name: getEnv("INSTANCE_NAME")?.trim() || hostname(),
       platform: process.platform,
       canManage,
+      suggestedProjectsRoot: resolveSuggestedProjectsRoot(process.platform),
       // Never include filesystem locations in public health or support reports.
       projectsDirectory: canManage ? resolve(projectsRoot) : null,
     };

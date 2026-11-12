@@ -66,7 +66,7 @@ pnpm compatibility:matrix -- --check
 
 `.github/workflows/desktop-preview.yml` 可选择构建目标。调试阶段默认 `macos-arm64`，只在 Apple Silicon Runner 构建 M 系列 Mac 的 DMG；选择 `all` 才构建 Linux x64/arm64、macOS Intel/Apple Silicon、Windows x64/arm64 的全部安装包。运行时记录构建 Commit 与架构；macOS 挂载最终 DMG，Windows 与 Linux 安装最终安装包，再使用其中的 Node.js 验证数据库、图像依赖、服务健康和网页入口。所选目标检查通过后才上传安装包、校验文件与构建证明。这些检查不是 GPU 兼容性或原生窗口体验的替代验收。
 
-预览包只允许手动构建，不再由 Tag 自动发布。正式 Tag 发布使用独立的 `Signed production release`：必须等待 macOS 双架构完成 Developer ID 签名、notarization 和 stapling，以及 Windows x64 主程序与 NSIS 完成 Authenticode 签名并通过系统验证。Windows ARM64 和 Linux Tauri 当前仍只属于预览通道；详细配置与净机验收见[桌面正式签名与发行](desktop-production-signing.md)。
+预览包只允许手动构建，不再由 Tag 自动发布。正式 Tag 发布使用独立的 `Signed production release`：必须等待 macOS 双架构完成 Developer ID 签名、notarization 和 stapling，以及 Windows x64 主程序与 NSIS 完成 Authenticode 签名并通过系统验证。Windows ARM64 和 Linux Tauri 当前仍只属于预览通道；三端支持矩阵与完整平台差异见[三端差异总表](platform-differences.md)，详细签名配置与净机验收见[桌面正式签名与发行](desktop-production-signing.md)。
 
 ## Linux 原生安装包门槛
 
@@ -94,3 +94,18 @@ TAKEBOARD_DESKTOP_SMOKE=1 xvfb-run -a -s '-screen 0 1600x1000x24' \
 窗口和完整桌面截图保存在 `test-results/linux-desktop/`；额外的亮色内容下限只用于拒绝完全空白的深色登录卡片，不是文字识别或视觉质量评分。CI 保存截图供人工复核，截图生成本身不代表自动视觉验收通过。生成的 Tauri `gen/` schema 和安装包属于构建产物，不进入源码提交。
 
 2026-09-07 本地原生验收使用 Ubuntu 22.04 x64 隔离容器、D-Bus 1.12.20、GTK 3.24.33、WebKitGTK 2.50.4、内置 Node.js 22.23.1；未修改宿主机系统库。该门槛只证明 Linux `.deb` 的构建、安装和上述生命周期行为，不代表 AppImage、macOS/Windows 安装器、桌面签名、实际 GPU 生成或全部图形驱动组合已验证。
+
+## 发版核对清单
+
+发布任何版本前，维护者必须逐项确认以下发版核对项均已完成：
+
+- [ ] **自动化门槛**：`pnpm gate:release` 在干净分支上完全通过（无 lint、无类型错误、无测试回退、包体预算达标）。
+- [ ] **真实 GPU 门槛**：完成真实 GPU 环境门槛用例验证，生成脱敏报告并更新[真实生成兼容性矩阵](./compatibility-matrix.md)。
+- [ ] **三端规范与平台差异核对**：平台层与运行时行为严格符合[三端差异总表](platform-differences.md)。
+- [ ] **原生签名与净机验收**：macOS（Intel / Apple Silicon）完成 Developer ID 签名、notarization 与 stapling；Windows x64 完成 Authenticode 双阶段签名；并在无开发环境的净机上完成安装、首次启动、升级与数据保留验证。
+- [ ] **降级申报已写入本版 CHANGELOG 与 GitHub Release 说明（端＋功能/通道＋原因），无降级时明写『本版无单端降级』**。
+  
+  > **规范要求（条 29 / 条 24）**：自下一版本起，每个版本的 CHANGELOG 条目与 Release 说明必须包含一段「平台可用性」，当前口径示例（事实变化时逐版更新，不许沿用旧文）：
+  >
+  > > 平台可用性：本版正式签名安装包提供 macOS（Intel / Apple Silicon）与 Windows x64。Linux 桌面端与 Windows ARM64 仅有未签名预览构建，原因：正式签名流水线尚未覆盖这两端；服务端与 Web 端不受影响。
+

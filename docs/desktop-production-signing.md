@@ -2,7 +2,7 @@
 
 更新时间：2026-09-28
 
-TakeBoard 将预览与正式签名产物明确区分：
+TakeBoard 将预览与正式签名产物明确区分（三端完整差异、构建目标、包型与签名机制详见 [三端差异总表](platform-differences.md)）：
 
 - `Native installer previews` 只能手动运行，为六个平台生成原生安装包、运行最终包内运行时检查和
   GitHub Artifact Attestation；不再构建或发布便携包。工作流本身不会自动发布 Release，维护者核对
@@ -118,7 +118,7 @@ Artifact Signing 配置步骤：
 5. 检查 macOS `spctl` 与 Windows “数字签名”发布者名称；
 6. 使用同一个 Tag 再运行工作流并设 `publish=true`。
 
-目前 Linux Tauri 只在 Preview 提供，原因和退出条件见 [Security policy](../SECURITY.md)。Web 版不受
+目前 Linux Tauri 只在 Preview 提供（降级申报口径详见 [三端差异总表](platform-differences.md)，退出条件见 [Security policy](../SECURITY.md)）。Web 版不受
 Linux GTK 链影响。
 
 ## 五、凭据轮换与事故处理
