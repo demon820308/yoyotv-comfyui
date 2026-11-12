@@ -5338,6 +5338,154 @@ button.save-status {
   cursor: not-allowed;
 }
 
+.create-editable-copy-button {
+  margin: 8px 0 12px;
+  padding: 9px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--line));
+  border-radius: 6px;
+  color: var(--surface-root) !important;
+  background: var(--accent-strong) !important;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.create-editable-copy-button:hover {
+  opacity: 0.9;
+}
+.create-editable-copy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.binding-models-section {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+}
+.binding-models-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+.binding-models-header h4 {
+  margin: 0 0 4px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.binding-models-subtext {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.binding-models-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.binding-models-lock-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.binding-models-lock-btn.locked {
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  color: var(--accent-strong) !important;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-1)) !important;
+}
+.binding-models-lock-btn.locked:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-1)) !important;
+}
+.binding-models-lock-btn.unlocked {
+  border: 1px solid color-mix(in srgb, var(--warning) 60%, var(--line));
+  color: var(--warning) !important;
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface-1)) !important;
+}
+.binding-models-reset-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-2) !important;
+  background: var(--surface-1) !important;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.binding-models-reset-btn:hover {
+  color: var(--text-1) !important;
+  border-color: var(--accent);
+}
+.binding-models-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.binding-model-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr);
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-1);
+  gap: 14px;
+}
+.binding-model-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 4px;
+}
+.binding-model-meta strong {
+  font-size: 12px;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.binding-model-meta code {
+  font-size: 10px;
+  color: var(--faint);
+}
+.badge-overridden {
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  font-weight: 600;
+}
+.binding-model-control select {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text-1);
+  background: var(--surface-2);
+  font-size: 11px;
+}
+.binding-model-control select:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+  color: var(--text-2);
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 90%, black);
+}
+
 @media (max-width: 980px) {
   .recipe-studio,
   .asset-library {
@@ -6475,10 +6623,23 @@ html[data-theme="chroma"] .loading-mark {
   border-radius: 4px;
 }
 
+.shot-inline-console .prompt-mirror-wrap {
+  height: 160px;
+}
+
 .shot-inline-console .prompt-mirror-backdrop,
 .shot-inline-console .prompt-mirror-textarea {
-  min-height: 68px;
+  height: 100%;
+  min-height: 160px;
+  max-height: 160px;
   padding: 8px;
+}
+
+.shot-inline-console .prompt-mirror-textarea {
+  overflow-y: auto;
+  resize: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 .prompt-field .prompt-mirror-backdrop,

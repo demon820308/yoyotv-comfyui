@@ -538,10 +538,10 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
         !numericDraftValidity.height ||
         !Number.isFinite(settingsDraft.width) ||
         settingsDraft.width < 256 ||
-        settingsDraft.width > 4096 ||
+        settingsDraft.width > 8192 ||
         !Number.isFinite(settingsDraft.height) ||
         settingsDraft.height < 256 ||
-        settingsDraft.height > 4096)) ||
+        settingsDraft.height > 8192)) ||
     (Boolean(data.inlineControls?.supportsSeed) &&
       (!numericDraftValidity.seed ||
         !Number.isSafeInteger(settingsDraft.seed) ||
@@ -890,6 +890,9 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
               onChange={(event) => {
                 promptCursorRef.current = event.target.selectionStart;
                 updateSettingsDraft({ prompt: event.target.value });
+                if (promptBackdropRef.current) {
+                  promptBackdropRef.current.scrollTop = event.target.scrollTop;
+                }
               }}
             />
           </div>
@@ -982,6 +985,9 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                           window.requestAnimationFrame(() => {
                             textarea.focus();
                             textarea.setSelectionRange(nextPos, nextPos);
+                            if (promptBackdropRef.current) {
+                              promptBackdropRef.current.scrollTop = textarea.scrollTop;
+                            }
                           });
                         }
                       }}
@@ -1012,7 +1018,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                     draftKey={`${id}:${data.inlineControls.workflowPath}:width`}
                     aria-label="画布宽度"
                     min={256}
-                    max={4096}
+                    max={8192}
                     step={32}
                     value={settingsDraft.width}
                     preserveEmptyOnBlur
@@ -1025,7 +1031,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                     draftKey={`${id}:${data.inlineControls.workflowPath}:height`}
                     aria-label="画布高度"
                     min={256}
-                    max={4096}
+                    max={8192}
                     step={32}
                     value={settingsDraft.height}
                     preserveEmptyOnBlur
@@ -1043,7 +1049,7 @@ function ShotNode({ data, id }: NodeProps<BoardNode>) {
                   draftKey={`${id}:${data.inlineControls.workflowPath}:megapixels`}
                   aria-label="画布百万像素"
                   min={0.1}
-                  max={data.inlineControls.outputLabel === "图片" ? 4 : 2}
+                  max={data.inlineControls.outputLabel === "图片" ? 20 : 2}
                   step={0.1}
                   value={megapixelsFromResolution(settingsDraft.width, settingsDraft.height)}
                   onValueChange={(mp) =>

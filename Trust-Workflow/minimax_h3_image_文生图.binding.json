@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "workflowPath": "minimax_h3_image_文生图.json",
+  "workflowHash": "bab95deaabd676a23735e96050a37f419783f0e1eaa2d60868e6dbc0271296c9",
+  "capability": "text_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "32",
+        "input": "prompt"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "39",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "39",
+        "input": "steps"
+      }
+    ],
+    "denoise": [
+      {
+        "nodeId": "39",
+        "input": "denoise"
+      }
+    ],
+    "width": [
+      {
+        "nodeId": "32",
+        "input": "width"
+      }
+    ],
+    "height": [
+      {
+        "nodeId": "32",
+        "input": "height"
+      }
+    ]
+  },
+  "media": {},
+  "trusted": true,
+  "verifiedAt": "2026-11-12T14:40:25.284Z"
+}

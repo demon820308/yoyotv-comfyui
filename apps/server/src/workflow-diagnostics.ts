@@ -158,11 +158,20 @@ export function buildWorkflowDiagnostic(input: BuildWorkflowDiagnosticInput): Wo
   const missingModels = modelMissing(input.models, input.inventory);
   // A basename found in another loader's folder does not make this choice valid.
   // Compare exact advertised choices when ComfyUI exposes them, not just inventory.
-  for (const node of Object.values(input.prompt)) {
+  for (const [nodeId, node] of Object.entries(input.prompt)) {
     const definition = input.objectInfo[node.class_type]?.input;
-    for (const [field, value] of Object.entries(node.inputs)) {
-      if (typeof value !== "string" || !/\.(safetensors|ckpt|pt|pth|bin|gguf)$/i.test(value))
+    for (const [field, rawValue] of Object.entries(node.inputs)) {
+      if (typeof rawValue !== "string" || !/\.(safetensors|ckpt|pt|pth|bin|gguf)$/i.test(rawValue))
         continue;
+      let value = rawValue;
+      if (input.binding?.models) {
+        const override = Object.values(input.binding.models).find(
+          (m) => m.nodeId === nodeId && m.input === field,
+        );
+        if (override?.selectedModel) {
+          value = override.selectedModel;
+        }
+      }
       const fieldDefinition = definition?.required?.[field] ?? definition?.optional?.[field];
       const choices = Array.isArray(fieldDefinition) ? fieldDefinition[0] : undefined;
       if (Array.isArray(choices) && !choices.includes(value) && !missingModels.includes(value))

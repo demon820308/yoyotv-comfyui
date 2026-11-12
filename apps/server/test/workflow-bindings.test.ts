@@ -4,8 +4,10 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyWorkflowBinding,
+  clearComfyObjectInfoCache,
   disableTrustWorkflow,
   discoverBindingCandidates,
+  fetchComfyObjectInfo,
   loadExecutableWorkflow,
   readTrustWorkflow,
   suggestedBinding,
@@ -226,6 +228,54 @@ describe("workflow binding execution", () => {
       delete process.env.TAKEBOARD_TRUST_WORKFLOW_DIR;
       vi.unstubAllGlobals();
       rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("applies model override bindings during execution", () => {
+    const source = {
+      unet: { class_type: "UNETLoader", inputs: { unet_name: "default_model.safetensors" } },
+      save: { class_type: "SaveImage", inputs: { filename_prefix: "out" } },
+    };
+    const bindingWithModel: WorkflowBinding = {
+      ...binding,
+      capability: "text_to_image",
+      outputMediaType: "image",
+      parameters: {},
+      media: {},
+      models: {
+        "unet.unet_name": {
+          nodeId: "unet",
+          input: "unet_name",
+          defaultModel: "default_model.safetensors",
+          selectedModel: "custom_fp8_model.safetensors",
+        },
+      },
+    };
+    const result = applyWorkflowBinding(source, bindingWithModel, {
+      filenamePrefix: "test/prefix",
+    });
+    expect(result.unet?.inputs.unet_name).toBe("custom_fp8_model.safetensors");
+    expect(source.unet.inputs.unet_name).toBe("default_model.safetensors");
+  });
+
+  it("caches object_info responses when maxAgeMs is set and re-fetches on force", async () => {
+    clearComfyObjectInfoCache();
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      calls++;
+      return new Response(JSON.stringify({ TestNode: {} }), { status: 200 });
+    }));
+    try {
+      const first = await fetchComfyObjectInfo("http://127.0.0.1:9999", { maxAgeMs: 5000 });
+      const second = await fetchComfyObjectInfo("http://127.0.0.1:9999", { maxAgeMs: 5000 });
+      expect(calls).toBe(1);
+      expect(first).toEqual(second);
+
+      await fetchComfyObjectInfo("http://127.0.0.1:9999", { force: true, maxAgeMs: 5000 });
+      expect(calls).toBe(2);
+    } finally {
+      clearComfyObjectInfoCache();
+      vi.unstubAllGlobals();
     }
   });
 });

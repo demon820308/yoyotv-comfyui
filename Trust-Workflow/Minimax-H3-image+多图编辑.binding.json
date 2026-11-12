@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "workflowPath": "Minimax-H3-image+多图编辑.json",
+  "workflowHash": "3e88fadc0f32d1548480dc3786702bec95bdcb9a970796048bb2337dfff8fbb5",
+  "capability": "image_to_image",
+  "outputMediaType": "image",
+  "parameters": {
+    "prompt": [
+      {
+        "nodeId": "1",
+        "input": "value"
+      }
+    ],
+    "seed": [
+      {
+        "nodeId": "11",
+        "input": "seed"
+      }
+    ],
+    "steps": [
+      {
+        "nodeId": "11",
+        "input": "steps"
+      }
+    ]
+  },
+  "media": {
+    "first_frame": [
+      {
+        "nodeId": "20",
+        "input": "image"
+      }
+    ],
+    "reference_image": [
+      {
+        "nodeId": "25",
+        "input": "image"
+      }
+    ]
+  },
+  "trusted": true,
+  "verifiedAt": "2026-11-12T09:40:41.167Z"
+}

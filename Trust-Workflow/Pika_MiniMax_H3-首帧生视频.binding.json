@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "workflowPath": "Pika_MiniMax_H3-首尾帧生视频.json",
-  "workflowHash": "4b60c1e102a0436f5ebf576c6c7b58e1ddec5882f4d360234934f6635c16419a",
-  "capability": "first_last_video",
+  "workflowPath": "Pika_MiniMax_H3-首帧生视频.json",
+  "workflowHash": "4e3eda466eb1e32c010c16f946b232d93b21dfd76fff7865aadc78f5ca355f73",
+  "capability": "image_to_video",
   "outputMediaType": "video",
   "parameters": {
     "prompt": [
@@ -25,13 +25,13 @@
     ],
     "width": [
       {
-        "nodeId": "75",
+        "nodeId": "90",
         "input": "width"
       }
     ],
     "height": [
       {
-        "nodeId": "75",
+        "nodeId": "90",
         "input": "height"
       }
     ],
@@ -55,17 +55,11 @@
   "media": {
     "first_frame": [
       {
-        "nodeId": "95",
-        "input": "image"
-      }
-    ],
-    "last_frame": [
-      {
         "nodeId": "39",
         "input": "image"
       }
     ]
   },
   "trusted": true,
-  "verifiedAt": "2026-11-10T16:14:37.145Z"
+  "verifiedAt": "2026-11-12T07:09:13.374Z"
 }

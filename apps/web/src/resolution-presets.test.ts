@@ -44,5 +44,9 @@ describe("generation aspect presets", () => {
     expect(megapixelsFromResolution(1376, 768)).toBe(1);
     expect(scaleResolutionToMegapixels(1376, 768, 2)).toEqual({ width: 1920, height: 1088 });
     expect(scaleResolutionToMegapixels(736, 416, 0.4)).toEqual({ width: 864, height: 480 });
+    expect(scaleResolutionToMegapixels(2048, 2048, 8)).toEqual({ width: 2912, height: 2912 });
+    expect(scaleResolutionToMegapixels(2048, 2048, 16)).toEqual({ width: 4096, height: 4096 });
+    expect(scaleResolutionToMegapixels(1920, 1088, 16)).toEqual({ width: 5472, height: 3072 });
+    expect(scaleResolutionToMegapixels(2560, 1088, 16)).toEqual({ width: 6272, height: 2688 });
   });
 });

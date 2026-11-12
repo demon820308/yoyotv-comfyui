@@ -392,6 +392,22 @@ export type WorkflowMediaKey =
   | "reference_image"
   | "reference_video"
   | "reference_audio";
+export type WorkflowModelTarget = {
+  nodeId: string;
+  input: string;
+  defaultModel: string;
+  selectedModel?: string;
+};
+export type WorkflowModelCandidate = {
+  key: string;
+  nodeId: string;
+  input: string;
+  label: string;
+  classType: string;
+  defaultModel: string;
+  selectedModel?: string;
+  options: string[];
+};
 export type WorkflowBindingDraft = {
   version: 1;
   workflowPath: string;
@@ -400,6 +416,7 @@ export type WorkflowBindingDraft = {
   outputMediaType: "image" | "video";
   parameters: Partial<Record<WorkflowParameterKey, WorkflowBindingTarget[]>>;
   media: Partial<Record<WorkflowMediaKey, WorkflowBindingTarget[]>>;
+  models?: Record<string, WorkflowModelTarget> | undefined;
   trusted?: boolean;
   verifiedAt?: string;
 };
@@ -411,6 +428,7 @@ export type WorkflowBindingInspection = {
   candidates?: {
     parameters: Record<WorkflowParameterKey, WorkflowBindingCandidate[]>;
     media: Record<WorkflowMediaKey, WorkflowBindingCandidate[]>;
+    models?: WorkflowModelCandidate[] | undefined;
   };
   binding?: WorkflowBindingDraft;
   suggested?: WorkflowBindingDraft;

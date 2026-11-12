@@ -52,6 +52,24 @@ export type WorkflowBindingTransform =
   | "seconds_to_frames_plus_one"
   | "seconds_to_frames_minus_one";
 
+export type WorkflowModelTarget = {
+  nodeId: string;
+  input: string;
+  defaultModel: string;
+  selectedModel?: string;
+};
+
+export type WorkflowModelCandidate = {
+  key: string;
+  nodeId: string;
+  input: string;
+  label: string;
+  classType: string;
+  defaultModel: string;
+  selectedModel?: string;
+  options: string[];
+};
+
 export type WorkflowBinding = {
   version: typeof workflowBindingVersion;
   workflowPath: string;
@@ -60,6 +78,7 @@ export type WorkflowBinding = {
   outputMediaType: WorkflowOutputMediaType;
   parameters: Partial<Record<WorkflowParameterKey, WorkflowBindingTarget[]>>;
   media: Partial<Record<WorkflowMediaKey, WorkflowBindingTarget[]>>;
+  models?: Record<string, WorkflowModelTarget> | undefined;
   trusted: true;
   verifiedAt: string;
 };
@@ -74,6 +93,7 @@ export type WorkflowBindingCandidate = WorkflowBindingTarget & {
 export type WorkflowBindingCandidates = {
   parameters: Record<WorkflowParameterKey, WorkflowBindingCandidate[]>;
   media: Record<WorkflowMediaKey, WorkflowBindingCandidate[]>;
+  models?: WorkflowModelCandidate[] | undefined;
 };
 
 export type WorkflowDocument = UiWorkflow | ComfyPrompt;
@@ -211,10 +231,32 @@ export async function fetchWorkflowDocument(comfyUrl: string, path: string) {
   return (await fetchJson(comfyUrl, `workflows/${path}`)) as WorkflowDocument;
 }
 
-export async function fetchComfyObjectInfo(comfyUrl: string) {
+let comfyObjectInfoCache: { comfyUrl: string; data: ComfyObjectInfo; expiresAt: number } | null = null;
+
+export function clearComfyObjectInfoCache() {
+  comfyObjectInfoCache = null;
+}
+
+export async function fetchComfyObjectInfo(comfyUrl: string, options?: { maxAgeMs?: number; force?: boolean }) {
+  // In automated test runs, mock responses mutate synchronously between assertions.
+  const maxAgeMs = options?.maxAgeMs ?? (process.env.VITEST ? 0 : 15_000);
+  const now = Date.now();
+  if (
+    !options?.force &&
+    maxAgeMs > 0 &&
+    comfyObjectInfoCache &&
+    comfyObjectInfoCache.comfyUrl === comfyUrl &&
+    comfyObjectInfoCache.expiresAt > now
+  ) {
+    return comfyObjectInfoCache.data;
+  }
   const response = await fetch(`${comfyUrl}/object_info`, { signal: AbortSignal.timeout(15_000) });
   if (!response.ok) throw new Error(`ComfyUI object info returned ${response.status}`);
-  return (await response.json()) as ComfyObjectInfo;
+  const data = (await response.json()) as ComfyObjectInfo;
+  if (maxAgeMs > 0) {
+    comfyObjectInfoCache = { comfyUrl, data, expiresAt: now + maxAgeMs };
+  }
+  return data;
 }
 
 export function parseWorkflowBinding(value: unknown, expectedPath?: string) {
@@ -241,6 +283,25 @@ export function parseWorkflowBinding(value: unknown, expectedPath?: string) {
             }),
         ),
     );
+  const modelsValid =
+    !binding ||
+    binding.models === undefined ||
+    (Boolean(binding.models && typeof binding.models === "object") &&
+      Object.values(binding.models).every((m) => {
+        const item = m as Partial<WorkflowModelTarget> | null;
+        return (
+          item &&
+          typeof item === "object" &&
+          typeof item.nodeId === "string" &&
+          item.nodeId.length <= 200 &&
+          typeof item.input === "string" &&
+          item.input.length <= 200 &&
+          typeof item.defaultModel === "string" &&
+          item.defaultModel.length <= 500 &&
+          (item.selectedModel === undefined ||
+            (typeof item.selectedModel === "string" && item.selectedModel.length <= 500))
+        );
+      }));
   if (
     !binding ||
     binding.version !== workflowBindingVersion ||
@@ -264,7 +325,8 @@ export function parseWorkflowBinding(value: unknown, expectedPath?: string) {
     ].includes(String(binding.capability)) ||
     !["image", "video"].includes(String(binding.outputMediaType)) ||
     !targetGroupValid(binding.parameters) ||
-    !targetGroupValid(binding.media)
+    !targetGroupValid(binding.media) ||
+    !modelsValid
   ) {
     return null;
   }
@@ -628,6 +690,13 @@ export function validateWorkflowBinding(prompt: ComfyPrompt, binding: WorkflowBi
       if (target.transform) issues.push(`${key}：素材输入不能使用数值换算`);
     }
   }
+  if (binding.models) {
+    for (const [key, modelBinding] of Object.entries(binding.models)) {
+      if (!targetExists(prompt, modelBinding)) {
+        issues.push(`模型设置：节点 ${modelBinding.nodeId}.${modelBinding.input} 不存在`);
+      }
+    }
+  }
   const requiresPrompt = !["upscale_image", "upscale_video"].includes(binding.capability);
   if (requiresPrompt && !(binding.parameters.prompt?.length ?? 0)) issues.push("缺少提示词绑定");
   if (
@@ -672,6 +741,40 @@ export async function inspectWorkflowForBinding(comfyUrl: string, path: string) 
   return inspectWorkflowDocument(workflow, objectInfo, hash);
 }
 
+const modelFilePattern = /\.(?:safetensors|ckpt|pt|pth|bin|gguf)$/i;
+
+export function discoverModelCandidates(
+  prompt: ComfyPrompt,
+  objectInfo: ComfyObjectInfo,
+): WorkflowModelCandidate[] {
+  const candidates: WorkflowModelCandidate[] = [];
+  for (const [nodeId, node] of Object.entries(prompt)) {
+    const title = node._meta?.title ?? node.class_type;
+    const info = objectInfo[node.class_type];
+    for (const [input, value] of Object.entries(node.inputs)) {
+      if (typeof value !== "string" || !modelFilePattern.test(value)) continue;
+      const fieldDef =
+        info?.input?.required?.[input] ?? info?.input?.optional?.[input];
+      const rawOptions = Array.isArray(fieldDef) && Array.isArray(fieldDef[0]) ? fieldDef[0] : [];
+      const options = rawOptions
+        .filter((opt): opt is string => typeof opt === "string" && modelFilePattern.test(opt));
+      if (!options.includes(value)) {
+        options.unshift(value);
+      }
+      candidates.push({
+        key: `${nodeId}.${input}`,
+        nodeId,
+        input,
+        label: `${title} · ${input}`,
+        classType: node.class_type,
+        defaultModel: value,
+        options,
+      });
+    }
+  }
+  return candidates;
+}
+
 export function inspectWorkflowDocument(
   workflow: unknown,
   objectInfo: ComfyObjectInfo,
@@ -679,6 +782,7 @@ export function inspectWorkflowDocument(
 ) {
   const prompt = convertUiWorkflowToPrompt(workflow as WorkflowDocument, objectInfo);
   const candidates = discoverBindingCandidates(prompt);
+  candidates.models = discoverModelCandidates(prompt, objectInfo);
   return { workflow, workflowHash: hash, prompt, candidates, objectInfo };
 }
 
@@ -774,6 +878,15 @@ export function applyWorkflowBinding(
   values: GenericWorkflowValues,
 ) {
   const prompt = structuredClone(source);
+  if (binding.models) {
+    for (const modelBinding of Object.values(binding.models)) {
+      const selected = modelBinding.selectedModel?.trim();
+      const targetNode = prompt[modelBinding.nodeId];
+      if (selected && targetNode && targetNode.inputs) {
+        targetNode.inputs[modelBinding.input] = selected;
+      }
+    }
+  }
   for (const key of parameterKeys) {
     applyTargets(
       prompt,

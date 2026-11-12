@@ -22,6 +22,20 @@ export function megapixelsFromResolution(width: number, height: number) {
   return Math.max(0.1, Math.round(((width * height) / (1024 * 1024)) * 10) / 10);
 }
 
+function fitDimensions(wRatio: number, hRatio: number, totalPixels: number) {
+  const scale = Math.sqrt(totalPixels / (wRatio * hRatio));
+  let width = Math.max(256, Math.round((wRatio * scale) / 32) * 32);
+  let height = Math.max(256, Math.round((hRatio * scale) / 32) * 32);
+  if (width > 8192) {
+    width = 8192;
+    height = Math.max(256, Math.round((width * (hRatio / wRatio)) / 32) * 32);
+  } else if (height > 8192) {
+    height = 8192;
+    width = Math.max(256, Math.round((height * (wRatio / hRatio)) / 32) * 32);
+  }
+  return { width, height };
+}
+
 /** Presets are concrete generation dimensions from the 32-multiple standard aspect ratio table. */
 export function resolutionPresets(
   width: number,
@@ -32,12 +46,8 @@ export function resolutionPresets(
   const megapixels = megapixelsFromResolution(width, height);
   const totalPixels = megapixels * 1024 * 1024;
   return standardAspectRatios.map(([label, wRatio, hRatio]) => {
-    const scale = Math.sqrt(totalPixels / (wRatio * hRatio));
-    const size = resolveGenerationResolution(
-      policy,
-      Math.max(256, Math.round((wRatio * scale) / 32) * 32),
-      Math.max(256, Math.round((hRatio * scale) / 32) * 32),
-    ).effective;
+    const fitted = fitDimensions(wRatio, hRatio, totalPixels);
+    const size = resolveGenerationResolution(policy, fitted.width, fitted.height).effective;
     return { label, ...size };
   });
 }
@@ -56,12 +66,8 @@ export function scaleResolutionToMegapixels(
   const wRatio = ratioEntry ? ratioEntry[1] : width;
   const hRatio = ratioEntry ? ratioEntry[2] : height;
   const totalPixels = Math.max(0.1, megapixels) * 1024 * 1024;
-  const scale = Math.sqrt(totalPixels / (wRatio * hRatio));
-  return resolveGenerationResolution(
-    policy,
-    Math.max(256, Math.round((wRatio * scale) / 32) * 32),
-    Math.max(256, Math.round((hRatio * scale) / 32) * 32),
-  ).effective;
+  const fitted = fitDimensions(wRatio, hRatio, totalPixels);
+  return resolveGenerationResolution(policy, fitted.width, fitted.height).effective;
 }
 
 export function closestAspectRatio(

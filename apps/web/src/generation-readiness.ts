@@ -87,10 +87,10 @@ export function generationProblem({
     selectedWorkflow.inputs.includes("resolution") &&
     (!Number.isFinite(generationSettings.width) ||
       generationSettings.width < 256 ||
-      generationSettings.width > 4096 ||
+      generationSettings.width > 8192 ||
       !Number.isFinite(generationSettings.height) ||
       generationSettings.height < 256 ||
-      generationSettings.height > 4096);
+      generationSettings.height > 8192);
   const invalidSeed =
     selectedWorkflow.inputs.includes("seed") &&
     (!Number.isSafeInteger(generationSettings.seed) || generationSettings.seed < 0);

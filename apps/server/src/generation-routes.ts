@@ -1137,12 +1137,14 @@ export function registerGenerationRoutes(
         const requestedAssetId =
           typeof body.firstFrameAssetId === "string" ? body.firstFrameAssetId : null;
         const boundCapability = boundWorkflow?.binding.capability;
+        const boundNeedsFirst = Boolean(boundWorkflow?.binding.media.first_frame?.length);
         const requiresInputImage =
           wanImage ||
           wanFirstLast ||
           miniMaxImage ||
           ltxImage ||
           qwenImage ||
+          boundNeedsFirst ||
           ["image_to_image", "image_to_video", "first_last_video", "upscale_image"].includes(
             boundCapability ?? "",
           );
@@ -1307,13 +1309,13 @@ export function registerGenerationRoutes(
             : Math.floor(Math.random() * 2_147_483_647);
         const fallbackSize = resolution(shot.aspectRatio);
         const width =
-          typeof body.width === "number" && body.width >= 256 && body.width <= 4096
+          typeof body.width === "number" && body.width >= 256 && body.width <= 8192
             ? boundWorkflow
               ? Math.round(body.width)
               : Math.round(body.width / 32) * 32
             : fallbackSize.width;
         const height =
-          typeof body.height === "number" && body.height >= 256 && body.height <= 4096
+          typeof body.height === "number" && body.height >= 256 && body.height <= 8192
             ? boundWorkflow
               ? Math.round(body.height)
               : Math.round(body.height / 32) * 32

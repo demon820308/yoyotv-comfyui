@@ -1420,7 +1420,7 @@ export function Inspector({
                           <NumericInput
                             id="generation-width"
                             min={256}
-                            max={4096}
+                            max={8192}
                             step={32}
                             value={settings.width}
                             onValueChange={(width) => onSettingsChange({ ...settings, width })}
@@ -1431,7 +1431,7 @@ export function Inspector({
                           <NumericInput
                             id="generation-height"
                             min={256}
-                            max={4096}
+                            max={8192}
                             step={32}
                             value={settings.height}
                             onValueChange={(height) => onSettingsChange({ ...settings, height })}
@@ -1442,7 +1442,7 @@ export function Inspector({
                           <NumericInput
                             id="generation-megapixels"
                             min={0.1}
-                            max={profile.outputLabel === "图片" ? 4 : 2}
+                            max={profile.outputLabel === "图片" ? 20 : 2}
                             step={0.1}
                             value={megapixelsFromResolution(settings.width, settings.height)}
                             onValueChange={(mp) =>

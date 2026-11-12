@@ -1130,7 +1130,7 @@
       ],
       "widgets_values_named": {
         "lora_name": "pika_h3_flex_fl2va_comfy_bf16.safetensors",
-        "strength_model": 0
+        "strength_model": 1
       },
       "color": "#2a363b",
       "bgcolor": "#3f5159"

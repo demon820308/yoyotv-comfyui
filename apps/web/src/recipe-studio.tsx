@@ -138,6 +138,7 @@ export function RecipeStudio({
   };
   const [query, setQuery] = useState("");
   const [advanced, setAdvanced] = useState(false);
+  const [modelsUnlocked, setModelsUnlocked] = useState(false);
   const [inspection, setInspection] = useState<WorkflowBindingInspection | null>(null);
   const [bindingDraft, setBindingDraft] = useState<WorkflowBindingDraft | null>(null);
   const [bindingBusy, setBindingBusy] = useState(false);
@@ -202,12 +203,14 @@ export function RecipeStudio({
     const ticket = ++inspectionRequest.current;
     setBindingBusy(true);
     setBindingError("");
+    setModelsUnlocked(false);
     setInspection({ path: workflow.path, status: workflow.bindingStatus ?? "needs_binding" });
     setBindingDraft(null);
     try {
       const result = await workflowApi.inspectWorkflow(workflow.path);
       if (ticket !== inspectionRequest.current) return;
       setInspection(result);
+      setModelsUnlocked(false);
       setBindingDraft(result.binding ?? result.suggested ?? null);
       await onRefresh();
     } catch (error) {
@@ -300,6 +303,42 @@ export function RecipeStudio({
     });
   };
 
+  const updateModelBinding = (
+    candidateKey: string,
+    nodeId: string,
+    input: string,
+    defaultModel: string,
+    selectedModel: string,
+  ) => {
+    setBindingDraft((current) => {
+      if (!current) return current;
+      const previousModels = current.models ?? {};
+      const newModels = { ...previousModels };
+      if (!selectedModel || selectedModel === defaultModel) {
+        delete newModels[candidateKey];
+      } else {
+        newModels[candidateKey] = {
+          nodeId,
+          input,
+          defaultModel,
+          selectedModel,
+        };
+      }
+      return {
+        ...current,
+        models: Object.keys(newModels).length > 0 ? newModels : undefined,
+      };
+    });
+  };
+
+  const resetAllModelBindings = () => {
+    setBindingDraft((current) => {
+      if (!current) return current;
+      const { models: _, ...rest } = current;
+      return rest;
+    });
+  };
+
   const saveBinding = async () => {
     if (!bindingDraft || !inspection) return;
     setBindingBusy(true);
@@ -307,6 +346,7 @@ export function RecipeStudio({
     try {
       await workflowApi.saveBinding(inspection.path, bindingDraft);
       await onRefresh();
+      setModelsUnlocked(false);
       setInspection(null);
       setBindingDraft(null);
     } catch (error) {
@@ -553,7 +593,7 @@ export function RecipeStudio({
                   type="button"
                   className={`recipe-card ${selectedPath === workflow.path ? "selected" : ""}`}
                   aria-pressed={selectedPath === workflow.path}
-                  disabled={selectionLocked || !isLibraryWorkflow(workflow) || busy}
+                  disabled={selectionLocked || !isLibraryWorkflow(workflow) || bindingBusy}
                   onClick={() => {
                     if (!onSelect || !workflowAvailability(workflow).ready)
                       void configureBinding(workflow);
@@ -928,6 +968,7 @@ export function RecipeStudio({
                   {canManageWorkflows ? (
                     <button
                       type="button"
+                      className="create-editable-copy-button"
                       disabled={packageBusy}
                       onClick={() => void createEditableCopy(inspection.path)}
                     >
@@ -991,6 +1032,88 @@ export function RecipeStudio({
                         <p key={issue}>{issue}</p>
                       ))}
                     </details>
+                  ) : null}
+                  {inspection.candidates?.models && inspection.candidates.models.length > 0 ? (
+                    <div className="binding-models-section">
+                      <header className="binding-models-header">
+                        <div>
+                          <h4>模型设置</h4>
+                          <span className="binding-models-subtext">
+                            工作流引用的模型加载器节点，可选择本地已安装模型进行替换
+                          </span>
+                        </div>
+                        <div className="binding-models-actions">
+                          {modelsUnlocked ? (
+                            <>
+                              <button
+                                type="button"
+                                className="binding-models-reset-btn"
+                                onClick={resetAllModelBindings}
+                                title="恢复工作流原始模型设定"
+                              >
+                                ↺ 恢复默认
+                              </button>
+                              <button
+                                type="button"
+                                className="binding-models-lock-btn unlocked"
+                                onClick={() => setModelsUnlocked(false)}
+                                title="点击锁定配置防止误触"
+                              >
+                                🔓 已解锁编辑 (点击加锁)
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="binding-models-lock-btn locked"
+                              onClick={() => setModelsUnlocked(true)}
+                              title="点击解锁以选择自定义模型"
+                            >
+                              🔒 已锁定 (点击解锁)
+                            </button>
+                          )}
+                        </div>
+                      </header>
+                      <div className="binding-models-list">
+                        {inspection.candidates.models.map((cand) => {
+                          const boundModel = bindingDraft.models?.[cand.key]?.selectedModel;
+                          const activeModel = boundModel || cand.defaultModel;
+                          const isOverridden = Boolean(boundModel && boundModel !== cand.defaultModel);
+                          return (
+                            <div key={cand.key} className="binding-model-row">
+                              <div className="binding-model-meta">
+                                <strong>{cand.label}</strong>
+                                <code>{cand.classType} [{cand.nodeId}]</code>
+                                {isOverridden ? (
+                                  <span className="badge-overridden">已自定义</span>
+                                ) : null}
+                              </div>
+                              <div className="binding-model-control">
+                                <select
+                                  disabled={!modelsUnlocked}
+                                  value={activeModel}
+                                  onChange={(e) =>
+                                    updateModelBinding(
+                                      cand.key,
+                                      cand.nodeId,
+                                      cand.input,
+                                      cand.defaultModel,
+                                      e.target.value,
+                                    )
+                                  }
+                                >
+                                  {cand.options.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}{opt === cand.defaultModel ? " (原设定)" : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ) : null}
                   <div className="binding-map-groups">
                     <div>

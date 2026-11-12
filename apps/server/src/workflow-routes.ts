@@ -366,7 +366,16 @@ function workflowSummary(
   if (usesMask && inputs.includes("first_frame") && !inputs.includes("mask")) {
     inputs.push("mask");
   }
-  const models = detectModels(nodes);
+  const rawModels = detectModels(nodes);
+  const models = rawModels.map((model) => {
+    if (!effectiveBinding?.models) return model;
+    for (const bindingTarget of Object.values(effectiveBinding.models)) {
+      if (bindingTarget.defaultModel === model && bindingTarget.selectedModel) {
+        return bindingTarget.selectedModel;
+      }
+    }
+    return model;
+  });
   const mediaInputs = {
     first_frame: inputs.includes("first_frame") ? 1 : 0,
     last_frame: inputs.includes("last_frame") ? 1 : 0,
@@ -1041,6 +1050,31 @@ export function registerWorkflowRoutes(
         : {};
     const mediaInput =
       body.media && typeof body.media === "object" ? (body.media as Record<string, unknown>) : {};
+    const modelsInput =
+      body.models && typeof body.models === "object"
+        ? (body.models as Record<string, unknown>)
+        : undefined;
+    const parsedModels: Record<string, { nodeId: string; input: string; defaultModel: string; selectedModel?: string }> = {};
+    if (modelsInput) {
+      for (const [key, val] of Object.entries(modelsInput)) {
+        if (!val || typeof val !== "object") continue;
+        const candidate = val as Record<string, unknown>;
+        if (
+          typeof candidate.nodeId === "string" &&
+          typeof candidate.input === "string" &&
+          typeof candidate.defaultModel === "string"
+        ) {
+          parsedModels[key] = {
+            nodeId: candidate.nodeId.slice(0, 200),
+            input: candidate.input.slice(0, 200),
+            defaultModel: candidate.defaultModel.slice(0, 500),
+            ...(typeof candidate.selectedModel === "string" && candidate.selectedModel.trim()
+              ? { selectedModel: candidate.selectedModel.trim().slice(0, 500) }
+              : {}),
+          };
+        }
+      }
+    }
     try {
       const inspected = await inspectWorkflowForBinding(getComfyUrl(), path);
       const compactTargets = (entries: Array<[string, WorkflowBindingTarget[] | undefined]>) =>
@@ -1071,6 +1105,7 @@ export function registerWorkflowRoutes(
           ["reference_video", targets(mediaInput.reference_video)],
           ["reference_audio", targets(mediaInput.reference_audio)],
         ]),
+        ...(Object.keys(parsedModels).length > 0 ? { models: parsedModels } : {}),
         trusted: true,
         verifiedAt: new Date().toISOString(),
       };
