@@ -45,7 +45,7 @@ Desktop beta for macOS, Windows and Debian/Ubuntu. Connect your own local or rem
 
 ## 下载与进一步了解
 
-[v1.0.0-beta.2](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.2) · [中文安装](downloads.md) · [English installation](downloads.en.md) · [首次使用](first-session.md) · [工作流指南](creator-workstation.md) · [反馈](https://github.com/demon820308/yoyotv-comfyui/issues)
+[v2.0.0](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v2.0.0) · [中文安装](downloads.md) · [English installation](downloads.en.md) · [首次使用](first-session.md) · [工作流指南](creator-workstation.md) · [反馈](https://github.com/demon820308/yoyotv-comfyui/issues)
 
 当前为 Beta；自定义工作流的依赖与输入需要兼容。安装包不包含 ComfyUI、模型或第三方节点。Mac 包未完成 Apple 公证，Windows 包未进行商业代码签名，首次打开方式见安装说明。YoYoTV 是独立项目，与 Comfy Org 无隶属关系。
 

@@ -89,3 +89,19 @@ event log；事务提交后原子更新开放 JSON 快照。一个 `.takeboard` 
 原因：Day 2 首先要证明创建、修改、关闭重开和开放导出可靠，不应在命令边界尚未稳定时同时维护十余套
 ORM 映射。Run/Take/Approval 在进入独立队列和恢复流程前必须拆为可独立事务更新的规范化表，不能长期
 依赖整项目重写。该阶段性选择不改变 JSON 交换契约。
+
+## ADR-012：桌面身份标识与 IPC 双端契约长期保留
+
+状态：v2.0.0 接受（依据整改与收割报告 D2/D3 决策登记）
+
+桌面客户端中以下底层内部标识与契约作为私有实现细节长期保留，不随品牌整改重命名：
+1. Tauri Bundle Identifier：`app.takeboard.desktop`
+2. 桌面用户数据根目录名：`TakeBoardData`（`~/TakeBoardData`）
+3. 原生与前端 IPC 自定义协议：`takeboard-desktop://` 与 `https://takeboard-desktop.invalid/`
+4. 注入全局对象与底层命名：`window.__takeboardNativeActions`、`window.__takeboardPendingSettings`、`window.__takeboardReportSave`、`window.__takeboardRemoteProjects` 及 sidecar 二进制名 `takeboard-node`、Cargo 包名 `takeboard-desktop`。
+
+原因与定性：
+1. **系统连续性与用户升级体验**：操作系统安装器（尤其是 macOS bundle 与 Windows 安装程序）深度依赖 bundle identifier 与数据目录。修改 identifier 会被操作系统视作全新无关应用，导致覆盖升级断裂并产生数据分叉；
+2. **风险收益比**：上述契约均属于纯底层私有实现，在用户界面与公开 API 上完全不可见。在 v2.0.0 破坏性收割中，保持底层桌面外壳稳定可彻底规避双端 IPC 协议失配断裂的高危风险；
+3. **维护防误判**：本 ADR 明确登记上述留存标识为设计内长期保留项，后续全仓扫描与架构审计不得将其判定为漏改或未竟事项。
+

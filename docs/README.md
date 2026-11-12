@@ -38,7 +38,7 @@
 
 - [路线图](roadmap.md) · [产品策略](product-strategy.md) · [分发与门户策略](access-and-distribution-strategy.md)。
 - [易用性审计](usability-audit.md)。
-- [当前发布说明](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v1.0.0-beta.2) · [历史 beta.4 说明（上游）](releases/v0.2.0-beta.4.md) · [产品短片](demo-guide.md) · [媒体素材](media-kit.md)。
+- [当前发布说明](https://github.com/demon820308/yoyotv-comfyui/releases/tag/v2.0.0) · [历史 beta.4 说明（上游）](archive/v0.2.0-beta.4.md) · [产品短片](demo-guide.md) · [媒体素材](media-kit.md)。
 
 ## 上游历史归档
 

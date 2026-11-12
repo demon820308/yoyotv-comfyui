@@ -53,7 +53,7 @@ Actions 日志。
 
 需要付费 Apple Developer Program 账号。免费账号不能完成面向公众的 notarization。
 
-1. 确认应用标识继续使用 `app.takeboard.desktop`；如需更换，必须在第一次正式发布前完成；
+1. 确认应用标识继续使用 `app.takeboard.desktop`（参见 [ADR-012](decisions.md#adr-012桌面身份标识与-ipc-双端契约长期保留) 架构决策登记）；
 2. 由 Apple 团队 Account Holder 创建 `Developer ID Application` 证书；
 3. 在钥匙串中导出包含私钥的 `.p12`，设置独立强密码；
 4. 把 `.p12` 转成单行 Base64：

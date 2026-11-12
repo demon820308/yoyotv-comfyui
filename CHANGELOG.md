@@ -3,6 +3,20 @@
 YoYoTV follows [Semantic Versioning](https://semver.org/).
 YoYoTV is forked from Fourques/Takeboard at commit `45dd727` (upstream `v0.2.0-beta.21`).
 
+## 2.0.0 — 2026-11-12
+
+- **Breaking Changes (v2.0.0 全面收割与兼容层清理)**:
+  - **组一 数据层旧格式断代**: 彻底移除 `takeboard.db`、`project.takeboard.json`、`.takeboard-data` 目录回退、`.takeboard` 项目目录与归档、`.takeboard-location.json`、`takeboard-package.json`、旧实例备份包（`takeboard-instance.json` / `.takeboard-instance.tgz`）与旧 pid 文件（`.takeboard-comfy.pid`）的读取与迁移分支。旧格式数据在 2.0.0 起不再被识别。
+  - **组二 ComfyUI 协议与工作流旧路径清理**: 移除 `takeboard/bindings`、`takeboard/library`、`TakeBoard/` 工作流旧路径回退；移除 `takeboard-recipe.json` 清单兼容与 `.takeboard-recipe.tgz` 识别；移除 Kino 命名空间旧前缀回退，全面转入 `yoyotv/`、`YoYo/` 与 `Trust-Workflow/`。
+  - **组三 浏览器与门户存储/请求头收敛**: 移除 `takeboard_*` cookie、`takeboard.theme` / `takeboard.blankCanvasGuideSeen` 等 localStorage 回退，以及服务端对 `x-takeboard-csrf`、`x-takeboard-revision` 与 `x-takeboard-portal-csrf` 旧请求头的兼容兜底，统一使用 `yoyotv_` / `yoyotv:*` / `x-yoyotv-*`。
+  - **组四 别名导出与环境变量强制要求**: 移除 `takeBoardVersion`、`TakeBoardApiError`、`TakeBoardTheme` 等临时导出别名；`apps/server/src/env.ts` 移除 `TAKEBOARD_*` 自动回退，部署环境必须使用 `YOYOTV_*` 环境变量。
+  - **组五 桥与脚本垫片清理**: 彻底删除旧桥目录 `deploy/comfyui-takeboard-bridge`，新桥移除 `takeboard_workflow` 旧参数；删除 `scripts/takeboard`、`scripts/takeboard-easy.mjs`、`scripts/takeboard-tunnel` 转发垫片，统一使用 `scripts/yoyotv*`。
+  - **组六 部署配置与 Systemd 服务更新**: 删除旧 unit 文件（`takeboard.service.in`、`takeboard-comfy.service`）与旧环境变量示例文件 `deploy/takeboard.env.example`。
+  - **组七 架构决策正式登记（ADR-012）**: 桌面 Bundle Identifier（`app.takeboard.desktop`）、本地数据目录（`TakeBoardData`）、双端 IPC 协议（`takeboard-desktop://`）与注入对象作为底层私有契约长期保留，确保系统级覆盖升级平滑与跨端通信稳定。
+  - **组八 历史文档与归档完成**: 上游 16 篇历史发布说明全部迁移入 `docs/archive/` 并加注上游历史头注。
+- **UI & Branding**:
+  - 品牌图标与视觉体系更新：更换 YoYo 原生桌面全平台图标、登录与 Cinema 视觉组件（commit `08cc22a`）。
+
 ## 1.0.0-beta.2 — 2026-11-11
 
 - **P1 Remediations**:

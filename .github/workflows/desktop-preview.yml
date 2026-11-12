@@ -137,4 +137,4 @@ jobs:
             installers+=("$installer")
           done < <(find release -type f \( -name '*.dmg' -o -name '*.exe' -o -name '*.deb' \) -print0)
           test "${#installers[@]}" -gt 0
-          gh release create "$RELEASE_TAG" --verify-tag --prerelease --title "TakeBoard $RELEASE_TAG" --notes-file "docs/releases/$RELEASE_TAG.md" "${installers[@]}"
+          gh release create "$RELEASE_TAG" --verify-tag --prerelease --title "YoYoTV $RELEASE_TAG" --generate-notes "${installers[@]}"

@@ -32,7 +32,7 @@ import { registerWorkflowRoutes } from "./workflow-routes.js";
 
 syncProcessEnv();
 
-export const yoyotvVersion = "1.0.0-beta.2";
+export const yoyotvVersion = "2.0.0";
 
 export type AppOptions = {
   gpuPool?: { config: GpuPoolConfig; runtime?: GpuRuntime };
